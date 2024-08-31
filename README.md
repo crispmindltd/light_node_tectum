@@ -48,9 +48,6 @@ The Light Node supports the following types of requests:
 
 ### Additional functions: ###
 
--   POST /fee: Calculate transaction fee
-
-
 
 ## Launch ##
 To start testing Tectum blockchain, you need to run the Tectum Lite file Node.exe. During startup, a reaction from the antivirus / firewall is possible, this is due to the features of the software, it is necessary to ignore the warning and continue the launch. We do NOT DISTRIBUTE malware, and you can be sure of the security of the application being launched.
