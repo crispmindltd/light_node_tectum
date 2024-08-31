@@ -1,0 +1,324 @@
+object ExplorerForm: TExplorerForm
+  Left = 0
+  Top = 0
+  Caption = 'Explorer'
+  ClientHeight = 400
+  ClientWidth = 1200
+  Position = ScreenCenter
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  OnCreate = FormCreate
+  OnClose = FormClose
+  OnShow = FormShow
+  DesignerMasterStyle = 0
+  object MainPanel: TPanel
+    Align = Contents
+    Size.Width = 1200.000000000000000000
+    Size.Height = 400.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 1
+    object DataGrid: TStringGrid
+      Align = Client
+      CanFocus = True
+      ClipChildren = True
+      Size.Width = 936.000000000000000000
+      Size.Height = 400.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 0
+      RowHeight = 17.000000000000000000
+      RowCount = 20
+      Options = [AlternatingRowBackground, AlwaysShowEditor, ColumnResize, ColumnMove, ColLines, RowLines, Tabs, Header, HeaderClick, AutoDisplacement]
+      OnResize = DataGridResize
+      Viewport.Width = 936.000000000000000000
+      Viewport.Height = 400.000000000000000000
+      object BlockNumColumn: TIntegerColumn
+        Header = 'Block'
+        HeaderSettings.TextSettings.WordWrap = False
+        PopupMenu = PopupMenu
+        ReadOnly = True
+        Size.Width = 80.000000000000000000
+      end
+      object HashColumn: TStringColumn
+        Header = 'Hash'
+        HeaderSettings.TextSettings.WordWrap = False
+        PopupMenu = PopupMenu
+        ReadOnly = True
+        Size.Width = 387.000000000000000000
+      end
+      object StatusColumn: TIntegerColumn
+        Header = 'Status'
+        HeaderSettings.TextSettings.WordWrap = False
+        PopupMenu = PopupMenu
+        ReadOnly = True
+        Size.Width = 39.000000000000000000
+      end
+      object Fee1Column: TFloatColumn
+        Header = 'Fee 1'
+        HeaderSettings.TextSettings.WordWrap = False
+        Visible = False
+      end
+      object Fee2Column: TFloatColumn
+        Header = 'Fee 2'
+        HeaderSettings.TextSettings.WordWrap = False
+        Visible = False
+      end
+      object SmrtIDColumn: TIntegerColumn
+        Header = 'TknSmart ID'
+        HeaderSettings.TextSettings.WordWrap = False
+        PopupMenu = PopupMenu
+        ReadOnly = True
+        Size.Width = 87.000000000000000000
+      end
+      object SmrtStatusColumn: TStringColumn
+        Header = 'TknSmrt status'
+        HeaderSettings.TextSettings.WordWrap = False
+        PopupMenu = PopupMenu
+        ReadOnly = True
+        Size.Width = 95.000000000000000000
+      end
+      object SmrtDeltaColumn: TIntegerColumn
+        Header = 'TknSmart delta'
+        HeaderSettings.TextSettings.WordWrap = False
+        PopupMenu = PopupMenu
+        ReadOnly = True
+        Size.Width = 103.000000000000000000
+      end
+      object SmrtDateColumn: TDateTimeColumn
+        Header = 'TknSmart datetime'
+        HeaderSettings.TextSettings.WordWrap = False
+        PopupMenu = PopupMenu
+        ReadOnly = True
+        Size.Width = 135.000000000000000000
+      end
+    end
+    object SettingsLayout: TLayout
+      Align = MostRight
+      Padding.Left = 10.000000000000000000
+      Padding.Top = 5.000000000000000000
+      Padding.Right = 10.000000000000000000
+      Position.X = 941.000000000000000000
+      Size.Width = 259.000000000000000000
+      Size.Height = 400.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 1
+      object SettingsGroupBox: TGroupBox
+        Align = Top
+        StyledSettings = [Family, Style, FontColor, Other]
+        Padding.Left = 11.000000000000000000
+        Padding.Top = 28.000000000000000000
+        Padding.Right = 11.000000000000000000
+        Padding.Bottom = 11.000000000000000000
+        Margins.Top = 5.000000000000000000
+        Position.X = 10.000000000000000000
+        Position.Y = 100.000000000000000000
+        Size.Width = 239.000000000000000000
+        Size.Height = 235.000000000000000000
+        Size.PlatformDefault = False
+        Text = 'Settings'
+        TextSettings.Font.Size = 16.000000000000000000
+        TabOrder = 35
+        object CurrencyIDLayout: TLayout
+          Align = MostTop
+          Position.X = 11.000000000000000000
+          Position.Y = 28.000000000000000000
+          Size.Width = 217.000000000000000000
+          Size.Height = 25.000000000000000000
+          Size.PlatformDefault = False
+          TabOrder = 40
+          object CurrencyIDComboBox: TComboBox
+            Align = Client
+            Margins.Left = 10.000000000000000000
+            Size.Width = 153.000000000000000000
+            Size.Height = 25.000000000000000000
+            Size.PlatformDefault = False
+            TabOrder = 0
+            OnChange = CurrencyIDComboBoxChange
+          end
+          object CurrencyIDLabel: TLabel
+            Align = Left
+            AutoSize = True
+            StyledSettings = [Family, Style, FontColor]
+            Size.Width = 54.000000000000000000
+            Size.Height = 25.000000000000000000
+            Size.PlatformDefault = False
+            TextSettings.Font.Size = 13.000000000000000000
+            TextSettings.WordWrap = False
+            TextSettings.Trimming = None
+            Text = 'Currency:'
+            TabOrder = 1
+          end
+        end
+        object AmountLayout: TLayout
+          Align = Bottom
+          Margins.Top = 10.000000000000000000
+          Position.X = 11.000000000000000000
+          Position.Y = 97.000000000000000000
+          Size.Width = 217.000000000000000000
+          Size.Height = 25.000000000000000000
+          Size.PlatformDefault = False
+          TabOrder = 38
+          object AmountLabel: TLabel
+            Align = Left
+            AutoSize = True
+            StyledSettings = [Family, Style, FontColor]
+            Size.Width = 50.000000000000000000
+            Size.Height = 25.000000000000000000
+            Size.PlatformDefault = False
+            TextSettings.Font.Size = 13.000000000000000000
+            TextSettings.WordWrap = False
+            TextSettings.Trimming = None
+            Text = 'Amount:'
+            TabOrder = 0
+          end
+          object AmountEdit: TEdit
+            Touch.InteractiveGestures = [LongTap, DoubleTap]
+            Align = Client
+            TabOrder = 1
+            FilterChar = '0123456789'
+            Text = '20'
+            Margins.Left = 10.000000000000000000
+            Size.Width = 157.000000000000000000
+            Size.Height = 25.000000000000000000
+            Size.PlatformDefault = False
+          end
+        end
+        object AutoCheckBox: TCheckBox
+          Align = MostBottom
+          StyledSettings = [Family, Style, FontColor]
+          IsChecked = True
+          Margins.Top = 10.000000000000000000
+          Margins.Bottom = 2.000000000000000000
+          Position.X = 11.000000000000000000
+          Position.Y = 203.000000000000000000
+          Size.Width = 217.000000000000000000
+          Size.Height = 19.000000000000000000
+          Size.PlatformDefault = False
+          TabOrder = 41
+          Text = 'Refresh explorer automatically'
+          TextSettings.Font.Size = 14.000000000000000000
+          OnChange = AutoCheckBoxChange
+        end
+        object RefreshGridButton: TButton
+          Align = Bottom
+          StyledSettings = [Family, Style, FontColor]
+          Margins.Top = 10.000000000000000000
+          Position.X = 11.000000000000000000
+          Position.Y = 132.000000000000000000
+          Size.Width = 217.000000000000000000
+          Size.Height = 61.000000000000000000
+          Size.PlatformDefault = False
+          TabOrder = 39
+          Text = 'Refresh'
+          TextSettings.Font.Size = 17.000000000000000000
+          TextSettings.Trimming = None
+          OnClick = RefreshGridButtonClick
+        end
+        object BlockFromLayout: TLayout
+          Align = Top
+          Margins.Top = 10.000000000000000000
+          Position.X = 11.000000000000000000
+          Position.Y = 63.000000000000000000
+          Size.Width = 217.000000000000000000
+          Size.Height = 25.000000000000000000
+          Size.PlatformDefault = False
+          TabOrder = 37
+          object BlockFromLabel: TLabel
+            Align = Left
+            AutoSize = True
+            StyledSettings = [Family, Style, FontColor]
+            Size.Width = 67.000000000000000000
+            Size.Height = 25.000000000000000000
+            Size.PlatformDefault = False
+            TextSettings.Font.Size = 13.000000000000000000
+            TextSettings.WordWrap = False
+            TextSettings.Trimming = None
+            Text = 'From block:'
+            TabOrder = 0
+          end
+          object BlockFromEdit: TEdit
+            Touch.InteractiveGestures = [LongTap, DoubleTap]
+            Align = Client
+            TabOrder = 1
+            FilterChar = '0123456789'
+            Text = '0'
+            Margins.Left = 10.000000000000000000
+            Size.Width = 140.000000000000000000
+            Size.Height = 25.000000000000000000
+            Size.PlatformDefault = False
+          end
+        end
+      end
+      object ModeGroupBox: TGroupBox
+        Align = MostTop
+        StyledSettings = [Family, Style, FontColor, Other]
+        Padding.Left = 11.000000000000000000
+        Padding.Top = 28.000000000000000000
+        Padding.Right = 11.000000000000000000
+        Padding.Bottom = 11.000000000000000000
+        Position.X = 10.000000000000000000
+        Position.Y = 5.000000000000000000
+        Size.Width = 239.000000000000000000
+        Size.Height = 90.000000000000000000
+        Size.PlatformDefault = False
+        Text = 'Blocks to show'
+        TextSettings.Font.Size = 16.000000000000000000
+        TabOrder = 36
+        object FirstModeRadioButton: TRadioButton
+          Align = Top
+          StyledSettings = [Family, Style, FontColor]
+          GroupName = 'mode'
+          IsChecked = True
+          Position.X = 11.000000000000000000
+          Position.Y = 28.000000000000000000
+          Size.Width = 217.000000000000000000
+          Size.Height = 19.000000000000000000
+          Size.PlatformDefault = False
+          TabOrder = 37
+          Text = 'Last blocks'
+          TextSettings.Font.Size = 16.000000000000000000
+          OnChange = RadioButtonChange
+        end
+        object SecondModeRadioButton: TRadioButton
+          Align = Top
+          StyledSettings = [Family, Style, FontColor]
+          GroupName = 'mode'
+          Margins.Top = 10.000000000000000000
+          Position.X = 11.000000000000000000
+          Position.Y = 57.000000000000000000
+          Size.Width = 217.000000000000000000
+          Size.Height = 19.000000000000000000
+          Size.PlatformDefault = False
+          TabOrder = 4
+          Text = 'Selected blocks'
+          TextSettings.Font.Size = 16.000000000000000000
+          OnChange = RadioButtonChange
+        end
+      end
+    end
+    object Splitter: TSplitter
+      Align = Right
+      Cursor = crHSplit
+      MinSize = 20.000000000000000000
+      Position.X = 936.000000000000000000
+      Size.Width = 5.000000000000000000
+      Size.Height = 400.000000000000000000
+      Size.PlatformDefault = False
+    end
+  end
+  object Timer: TTimer
+    Interval = 500
+    OnTimer = TimerTimer
+    Left = 880
+    Top = 8
+  end
+  object PopupMenu: TPopupMenu
+    Left = 1144
+    Top = 344
+    object CopyMenuItem: TMenuItem
+      ShortCut = 16451
+      Text = 'Copy'
+      OnClick = CopyMenuItemClick
+    end
+  end
+end
