@@ -21,7 +21,7 @@ The Light Node supports the following types of requests:
 ### Token operations: ###
 
 -   GET /token/balance: Retrieve token balance
--   GET /token/balances: Retrieve balances for multiple tokens
+-   GET /coins/balances: Retrieve balances for multiple tokens
 -   GET /tokens: Retrieve a list of all tokens
 -   GET /tokens/ticker: Retrieve information about a specific token
 -   POST /tokens: Create a new token
@@ -43,8 +43,8 @@ The Light Node supports the following types of requests:
 
 -   POST /keys/generate: Generate new keys
 -   POST /keys/recover: Recover keys using a seed phrase
--   GET /keys/public/userid: Retrieve the public key by user ID
--   GET /keys/public/skey: Retrieve the public key by session key
+-   GET /keys/public/byuserid: Retrieve the public key by user ID
+-   GET /keys/public/byskey: Retrieve the public key by session key
 
 ### Additional functions: ###
 
