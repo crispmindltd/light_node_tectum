@@ -125,6 +125,7 @@ type
       ALastAmount: Integer): String;
     function DoNewToken(AReqID,ASessionKey,AFullName,AShortName,ATicker: String;
       AAmount: Int64; ADecimals: Integer): String;
+    function GetNewTokenFee(AAmount: Int64; ADecimals: Integer): Integer;
     function DoTokenTransfer(AReqID,AAddrTETFrom,AAddrTETTo,ASmartAddr: String;
       AAmount: Extended; APrKey,APubKey: String): String;
     function SendToConfirm(AReqID,AToSend: String): String;
@@ -329,6 +330,18 @@ begin
     bValue := Format('%s:%f',[sk.Abreviature,GetLocalTokenBalance(sk.SmartID,FUserID)]);
     Result := Result + [bValue];
   end;
+end;
+
+function TAppCore.GetNewTokenFee(AAmount: Int64; ADecimals: Integer): Integer;
+begin
+  if (AAmount < 1000) or (AAmount > 9999999999999999) then
+    raise EValidError.Create('invalid amount value');
+  if (ADecimals < 2) or (ADecimals > 8) then
+    raise EValidError.Create('invalid decimals value');
+  if Length(AAmount.ToString) + ADecimals > 18 then
+    raise EValidError.Create('invalid decimals value');
+
+  Result := Min((AAmount div (ADecimals * 10)) + 1,10);
 end;
 
 function TAppCore.DoGetTokenBalanceWithSmartAddress(AReqID, AAddressTET,
@@ -686,25 +699,6 @@ begin
   Result := FBlockchain.GetOneSmartKeyBlock(AFrom);
 end;
 
-function TAppCore.DoGetMyKeys(AReqID, ASessionKey: String): String;
-var
-  splt: TArray<String>;
-begin
-  if not(ASessionKey.StartsWith('ipa') and (Length(ASessionKey) = 34)) then
-    raise EValidError.Create('incorrect session key');
-
-  Result := FNodeClient.DoRequest(AReqID,'GetMyKeys * ' + ASessionKey + ' • ');
-  if Result.StartsWith('URKError') then
-  begin;
-    splt := Result.Split([' ']);
-    case splt[3].ToInteger of
-      20: raise EKeyExpiredError.Create('');
-      31202: raise ENoInfoForThisAccountError.Create('');
-      else raise EUnknownError.Create(splt[3]);
-    end;
-  end;
-end;
-
 function TAppCore.GetOneChainBlock(AFrom: Int64): TOneBlockBytes;
 begin
   Result := FBlockchain.GetOneChainBlock(AFrom);
@@ -885,7 +879,6 @@ end;
 function TAppCore.TrySaveKeysToFile(APrivateKey: String): Boolean;
 var
   sPath,PubKey: String;
-  i: Integer;
 begin
   Result := RestorePublicKey(APrivateKey,PubKey);
   if not Result then exit;

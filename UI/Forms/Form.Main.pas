@@ -670,7 +670,7 @@ begin
   if TryStrToInt64(CreateTokenAmountEdit.Text,l) and
     TryStrToInt(DecimalsEdit.Text,k) then
     TokenCreationFeeLabel.Text := Format('Creation token fee: %d TET',
-      [Min((l div (k*10)) + 1,10)])
+      [AppCore.GetNewTokenFee(l,k)])
   else
     TokenCreationFeeLabel.Text := 'Creation token fee: 0 TET';
 end;

@@ -256,3 +256,10 @@ logs
 sources/infrastructure/SoftNote.Vault.DataAccess/obj/Debug/
 sources/core/SoftNote.Vault.Data/obj/Debug/*
 sources/infrastructure/SoftNote.Vault.DataAccess/obj/
+*.deployproj
+*.local
+*.identcache
+*.rej
+*.dcu
+*.vlb
+Win32/

@@ -156,7 +156,7 @@ begin
       if Terminated then exit;
       if IsTimeout(StartTime,RECEIVE_TIMEOUT) then
         raise EReceiveTimeout.Create('');
-      Sleep(100);
+      Sleep(50);
     end;
 
     toReceiveNow := Min(Count,FSocket.ReceiveLength);

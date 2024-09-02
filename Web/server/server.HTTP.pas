@@ -211,12 +211,12 @@ begin
   FCommands.Add('/keys/recover',FMainEndpoints.recoverKeys);
   FCommands.Add('/keys/public/byuserid',FMainEndpoints.getPublicKeyByAccID);
   FCommands.Add('/keys/public/byskey',FMainEndpoints.getPublicKeyBySessionKey);
-  FCommands.Add('/keys/mykeys',FMainEndpoints.getMyKeys);
   FTokenEndpoints := TTokenEndpoints.Create;
   FCommands.Add('/coins/transfer',FTokenEndpoints.coinTransfer);
   FCommands.Add('/coins/balances',FTokenEndpoints.getCoinsBalances);
   FCommands.Add('/coins/transfers',FTokenEndpoints.coinsTransferHistory);
   FCommands.Add('/tokens',FTokenEndpoints.newToken);
+  FCommands.Add('/token/fee',FTokenEndpoints.getNewTokenFee);
   FCommands.Add('/token/transfer',FTokenEndpoints.tokenTransfer);
   FCommands.Add('/token/balance/byaddress',FTokenEndpoints.getTokenBalanceWithAddress);
   FCommands.Add('/token/balance/byticker',FTokenEndpoints.getTokenBalanceWithTicker);

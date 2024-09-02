@@ -102,6 +102,7 @@ type
       ALastAmount: Integer): String;
     function DoNewToken(AReqID,ASessionKey,AFullName,AShortName,ATicker: String;
       AAmount: Int64; ADecimals: Integer): String;
+    function GetNewTokenFee(AAmount: Int64; ADecimals: Integer): Integer;
     function DoTokenTransfer(AReqID,AAddrTETFrom,AAddrTETTo,ASmartAddr: String;
       AAmount: Extended; APrKey,APubKey: String): String;
     function SendToConfirm(AReqID,AToSend: String): String;
@@ -114,7 +115,6 @@ type
     function GetSmartAddressByTicker(ATicker: String): String;
     function GetPubKeyByID(AReqID: String; AID: Int64): String;
     function GetPubKeyBySessionKey(AReqID,ASessionKey: String): String;
-    function DoGetMyKeys(AReqID,ASessionKey: String): String;
     function TrySaveKeysToFile(APrivateKey: String): Boolean;
     function TryExtractPrivateKeyFromFile(out PrKey: String;
       out PubKey: String): Boolean;
