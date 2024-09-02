@@ -31,8 +31,6 @@ type
       AParams: TStrings; ABody: String): TEndpointResponse;
     function getPublicKeyBySessionKey(AReqID: String; AEvent: TEvent; AComType: THTTPCommandType;
       AParams: TStrings; ABody: String): TEndpointResponse;
-    function getMyKeys(AReqID: String; AEvent: TEvent; AComType: THTTPCommandType;
-      AParams: TStrings; ABody: String): TEndpointResponse;
   end;
 
 implementation
@@ -81,42 +79,6 @@ destructor TMainEndpoints.Destroy;
 begin
 
   inherited;
-end;
-
-function TMainEndpoints.getMyKeys(AReqID: String; AEvent: TEvent;
-  AComType: THTTPCommandType; AParams: TStrings;
-  ABody: String): TEndpointResponse;
-var
-  JSON: TJSONObject;
-  response: String;
-  params: TStringList;
-  splt: TArray<String>;
-begin
-  Result.ReqID := AReqID;
-  params := TStringList.Create(dupIgnore,True,False);
-  try
-    if AComType <> hcGET then
-      raise ENotSupportedError.Create('');
-
-    params.AddStrings(AParams);
-    if params.Values['session_key'].IsEmpty then
-      raise EValidError.Create('request parameters error');
-
-    response := AppCore.DoGetMyKeys(AReqID,params.Values['session_key']);
-    splt := response.Split([' '],'<','>');
-    JSON := TJSONObject.Create;
-    try
-      JSON.AddPair('public_key',splt[2].Trim(['<','>']));
-      JSON.AddPair('private_key',splt[3].Trim(['<','>']));
-      Result.Code := HTTP_SUCCESS;
-      Result.Response := JSON.ToString;
-    finally
-      JSON.Free;
-    end;
-  finally
-    params.Free;
-    if Assigned(AEvent) then AEvent.SetEvent;
-  end;
 end;
 
 function TMainEndpoints.getPublicKeyByAccID(AReqID: String; AEvent: TEvent;

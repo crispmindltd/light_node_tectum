@@ -4,8 +4,8 @@
         <ProjectVersion>20.1</ProjectVersion>
         <FrameworkType>FMX</FrameworkType>
         <Base>True</Base>
-        <Config Condition="'$(Config)'==''">Debug</Config>
-        <Platform Condition="'$(Platform)'==''">Win32</Platform>
+        <Config Condition="'$(Config)'==''">Release</Config>
+        <Platform Condition="'$(Platform)'==''">Win64</Platform>
         <TargetedPlatforms>32915</TargetedPlatforms>
         <AppType>Application</AppType>
         <MainSource>LNode.dpr</MainSource>
@@ -262,10 +262,11 @@
         <VerInfo_Locale>1033</VerInfo_Locale>
         <DCC_ExeOutput>.\$(Platform)\$(Config)\exe</DCC_ExeOutput>
         <VerInfo_MajorVer>0</VerInfo_MajorVer>
-        <VerInfo_MinorVer>8</VerInfo_MinorVer>
+        <VerInfo_MinorVer>9</VerInfo_MinorVer>
         <VerInfo_DLL>true</VerInfo_DLL>
         <VerInfo_AutoGenVersion>true</VerInfo_AutoGenVersion>
-        <VerInfo_Keys>CompanyName=CrispMind;FileDescription=$(MSBuildProjectName);FileVersion=0.8.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=0.8.0.0;Comments=</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=Crispmind Ltd;FileDescription=$(MSBuildProjectName);FileVersion=0.9.1.0;InternalName=Light node for tectum blockchain;LegalCopyright=2024 Crispmind;LegalTrademarks=;OriginalFilename=Light node;ProgramID=light.node.tectum;ProductName=Light node for tectum blockchain;ProductVersion=0.9.1.0;Comments=https://tectum.io/</VerInfo_Keys>
+        <VerInfo_Release>1</VerInfo_Release>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
         <DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
@@ -278,6 +279,12 @@
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win64)'!=''">
         <AppDPIAwarenessMode>PerMonitorV2</AppDPIAwarenessMode>
+        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
+        <VerInfo_Locale>1033</VerInfo_Locale>
+        <VerInfo_Keys>CompanyName=Crispmind Ltd;FileDescription=$(MSBuildProjectName);FileVersion=0.9.1.0;InternalName=Light node for tectum blockchain;LegalCopyright=2024 Crispmind;LegalTrademarks=;OriginalFilename=Light node;ProgramID=light.node.tectum;ProductName=Light node for tectum blockchain;ProductVersion=0.9.1.0;Comments=https://tectum.io/</VerInfo_Keys>
+        <VerInfo_MajorVer>0</VerInfo_MajorVer>
+        <VerInfo_MinorVer>9</VerInfo_MinorVer>
+        <VerInfo_Release>1</VerInfo_Release>
     </PropertyGroup>
     <ItemGroup>
         <DelphiCompile Include="$(MainSource)">
@@ -835,10 +842,6 @@
             <Form>HistoryTransactionFrame</Form>
             <FormType>fmx</FormType>
             <DesignClass>TFrame</DesignClass>
-        </DCCReference>
-        <DCCReference Include="UI\Forms\Form.EnterKey.pas">
-            <Form>EnterPrivateKeyForm</Form>
-            <FormType>fmx</FormType>
         </DCCReference>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>

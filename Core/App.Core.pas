@@ -125,6 +125,7 @@ type
       ALastAmount: Integer): String;
     function DoNewToken(AReqID,ASessionKey,AFullName,AShortName,ATicker: String;
       AAmount: Int64; ADecimals: Integer): String;
+    function GetNewTokenFee(AAmount: Int64; ADecimals: Integer): Integer;
     function DoTokenTransfer(AReqID,AAddrTETFrom,AAddrTETTo,ASmartAddr: String;
       AAmount: Extended; APrKey,APubKey: String): String;
     function SendToConfirm(AReqID,AToSend: String): String;
@@ -329,6 +330,18 @@ begin
     bValue := Format('%s:%f',[sk.Abreviature,GetLocalTokenBalance(sk.SmartID,FUserID)]);
     Result := Result + [bValue];
   end;
+end;
+
+function TAppCore.GetNewTokenFee(AAmount: Int64; ADecimals: Integer): Integer;
+begin
+  if (AAmount < 1000) or (AAmount > 9999999999999999) then
+    raise EValidError.Create('invalid amount value');
+  if (ADecimals < 2) or (ADecimals > 8) then
+    raise EValidError.Create('invalid decimals value');
+  if Length(AAmount.ToString) + ADecimals > 18 then
+    raise EValidError.Create('invalid decimals value');
+
+  Result := Min((AAmount div (ADecimals * 10)) + 1,10);
 end;
 
 function TAppCore.DoGetTokenBalanceWithSmartAddress(AReqID, AAddressTET,
@@ -885,7 +898,6 @@ end;
 function TAppCore.TrySaveKeysToFile(APrivateKey: String): Boolean;
 var
   sPath,PubKey: String;
-  i: Integer;
 begin
   Result := RestorePublicKey(APrivateKey,PubKey);
   if not Result then exit;

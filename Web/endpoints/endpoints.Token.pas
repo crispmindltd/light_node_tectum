@@ -24,6 +24,8 @@ type
 
     function newToken(AReqID: String; AEvent: TEvent; AComType: THTTPCommandType;
       AParams: TStrings; ABody: String): TEndpointResponse;
+    function getNewTokenFee(AReqID: String; AEvent: TEvent; AComType: THTTPCommandType;
+      AParams: TStrings; ABody: String): TEndpointResponse;
     function tokenTransfer(AReqID: String; AEvent: TEvent; AComType: THTTPCommandType;
       AParams: TStrings; ABody: String): TEndpointResponse;
     function coinTransfer(AReqID: String; AEvent: TEvent; AComType: THTTPCommandType;
@@ -336,6 +338,43 @@ begin
     JSON := TJSONObject.Create;
     try
       JSON.AddPair('tet_balance',FormatFloat('#################0.########',response));
+      Result.Code := HTTP_SUCCESS;
+      Result.Response := JSON.ToString;
+    finally
+      JSON.Free;
+    end;
+  finally
+    params.Free;
+    if Assigned(AEvent) then AEvent.SetEvent;
+  end;
+end;
+
+function TTokenEndpoints.getNewTokenFee(AReqID: String; AEvent: TEvent;
+  AComType: THTTPCommandType; AParams: TStrings;
+  ABody: String): TEndpointResponse;
+var
+  JSON: TJSONObject;
+  splt: TArray<String>;
+  params: TStringList;
+  response: Integer;
+  tamount: Int64;
+  decimals: Integer;
+begin
+  Result.ReqID := AReqID;
+  params := TStringList.Create(dupIgnore,True,False);
+  try
+    if AComType <> hcGET then
+      raise ENotSupportedError.Create('');
+
+    params.AddStrings(AParams);
+    if params.Values['token_amount'].IsEmpty or params.Values['decimals'].IsEmpty then
+      raise EValidError.Create('request parameters error');
+
+    response := AppCore.GetNewTokenFee(params.Values['token_amount'].ToInt64,
+      params.Values['decimals'].ToInteger);
+    JSON := TJSONObject.Create;
+    try
+      JSON.AddPair('fee',TJSONNumber.Create(response));
       Result.Code := HTTP_SUCCESS;
       Result.Response := JSON.ToString;
     finally

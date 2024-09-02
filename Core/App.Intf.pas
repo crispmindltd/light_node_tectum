@@ -102,6 +102,7 @@ type
       ALastAmount: Integer): String;
     function DoNewToken(AReqID,ASessionKey,AFullName,AShortName,ATicker: String;
       AAmount: Int64; ADecimals: Integer): String;
+    function GetNewTokenFee(AAmount: Int64; ADecimals: Integer): Integer;
     function DoTokenTransfer(AReqID,AAddrTETFrom,AAddrTETTo,ASmartAddr: String;
       AAmount: Extended; APrKey,APubKey: String): String;
     function SendToConfirm(AReqID,AToSend: String): String;
