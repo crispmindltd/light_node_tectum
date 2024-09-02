@@ -219,6 +219,7 @@ begin
   FCommands.Add('/tokens',FTokenEndpoints.newToken);
   FCommands.Add('/token/fee',FTokenEndpoints.getNewTokenFee);
   FCommands.Add('/token/transfer',FTokenEndpoints.tokenTransfer);
+  FCommands.Add('/token/transfer/fee',FTokenEndpoints.getTokenTransferFee);
   FCommands.Add('/token/balance/byaddress',FTokenEndpoints.getTokenBalanceWithAddress);
   FCommands.Add('/token/balance/byticker',FTokenEndpoints.getTokenBalanceWithTicker);
   FCommands.Add('/token/address/byid',FTokenEndpoints.getAddressByID);
