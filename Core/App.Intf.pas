@@ -115,7 +115,6 @@ type
     function GetSmartAddressByTicker(ATicker: String): String;
     function GetPubKeyByID(AReqID: String; AID: Int64): String;
     function GetPubKeyBySessionKey(AReqID,ASessionKey: String): String;
-    function DoGetMyKeys(AReqID,ASessionKey: String): String;
     function TrySaveKeysToFile(APrivateKey: String): Boolean;
     function TryExtractPrivateKeyFromFile(out PrKey: String;
       out PubKey: String): Boolean;

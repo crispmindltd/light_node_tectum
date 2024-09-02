@@ -699,25 +699,6 @@ begin
   Result := FBlockchain.GetOneSmartKeyBlock(AFrom);
 end;
 
-function TAppCore.DoGetMyKeys(AReqID, ASessionKey: String): String;
-var
-  splt: TArray<String>;
-begin
-  if not(ASessionKey.StartsWith('ipa') and (Length(ASessionKey) = 34)) then
-    raise EValidError.Create('incorrect session key');
-
-  Result := FNodeClient.DoRequest(AReqID,'GetMyKeys * ' + ASessionKey + ' • ');
-  if Result.StartsWith('URKError') then
-  begin;
-    splt := Result.Split([' ']);
-    case splt[3].ToInteger of
-      20: raise EKeyExpiredError.Create('');
-      31202: raise ENoInfoForThisAccountError.Create('');
-      else raise EUnknownError.Create(splt[3]);
-    end;
-  end;
-end;
-
 function TAppCore.GetOneChainBlock(AFrom: Int64): TOneBlockBytes;
 begin
   Result := FBlockchain.GetOneChainBlock(AFrom);
