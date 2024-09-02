@@ -213,6 +213,7 @@ begin
   FCommands.Add('/keys/public/byskey',FMainEndpoints.getPublicKeyBySessionKey);
   FTokenEndpoints := TTokenEndpoints.Create;
   FCommands.Add('/coins/transfer',FTokenEndpoints.coinTransfer);
+  FCommands.Add('/coins/transfer/fee',FTokenEndpoints.getCoinTransferFee);
   FCommands.Add('/coins/balances',FTokenEndpoints.getCoinsBalances);
   FCommands.Add('/coins/transfers',FTokenEndpoints.coinsTransferHistory);
   FCommands.Add('/tokens',FTokenEndpoints.newToken);
