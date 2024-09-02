@@ -28,6 +28,8 @@ type
       AParams: TStrings; ABody: String): TEndpointResponse;
     function tokenTransfer(AReqID: String; AEvent: TEvent; AComType: THTTPCommandType;
       AParams: TStrings; ABody: String): TEndpointResponse;
+    function getTokenTransferFee(AReqID: String; AEvent: TEvent; AComType: THTTPCommandType;
+      AParams: TStrings; ABody: String): TEndpointResponse;
     function coinTransfer(AReqID: String; AEvent: TEvent; AComType: THTTPCommandType;
       AParams: TStrings; ABody: String): TEndpointResponse;
     function getCoinsBalances(AReqID: String; AEvent: TEvent; AComType: THTTPCommandType;
@@ -300,6 +302,30 @@ begin
     end;
   finally
     params.Free;
+    if Assigned(AEvent) then AEvent.SetEvent;
+  end;
+end;
+
+function TTokenEndpoints.getTokenTransferFee(AReqID: String; AEvent: TEvent;
+  AComType: THTTPCommandType; AParams: TStrings;
+  ABody: String): TEndpointResponse;
+var
+  JSON: TJSONObject;
+begin
+  Result.ReqID := AReqID;
+  try
+    if AComType <> hcGET then
+      raise ENotSupportedError.Create('');
+
+    JSON := TJSONObject.Create;
+    try
+      JSON.AddPair('fee',TJSONNumber.Create(0));
+      Result.Code := HTTP_SUCCESS;
+      Result.Response := JSON.ToString;
+    finally
+      JSON.Free;
+    end;
+  finally
     if Assigned(AEvent) then AEvent.SetEvent;
   end;
 end;
