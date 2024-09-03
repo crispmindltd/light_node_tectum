@@ -667,7 +667,7 @@ begin
     (Length(CreateTokenInformationMemo.Text) >= 10) and
     (TokenCreatingStatusLabel.Opacity = 0);
 
-  if TryStrToInt64(CreateTokenAmountEdit.Text,l) and
+  if CreateTokenButton.Enabled and TryStrToInt64(CreateTokenAmountEdit.Text,l) and
     TryStrToInt(DecimalsEdit.Text,k) then
     TokenCreationFeeLabel.Text := Format('Creation token fee: %d TET',
       [AppCore.GetNewTokenFee(l,k)])

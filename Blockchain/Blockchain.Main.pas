@@ -377,26 +377,26 @@ begin
 
   Bytes := ChainFileWorker.ReadBlocks(Amount);
   SetLength(Result,Amount);
-  for i := 0 to Amount-1 do
+  for i := Amount-1 downto 0 do
   begin
     Move(Bytes[i*SizeOf(bc4)],TCbc4Arr[0],SizeOf(bc4));
 
-    Result[i].DateTime := bc4.Smart.TimeEvent;
+    Result[Amount-i-1].DateTime := bc4.Smart.TimeEvent;
     dynID := SmartIDByTicker(ATicker);
-    Result[i].BlockNum := GetSmartBlocksCount(dynID)-Amount+i;
+    Result[Amount-i-1].BlockNum := GetSmartBlocksCount(dynID)-Amount+i;
 
     if GetOneSmartDynBlock(dynID,bc4.Smart.tkn[1].TokenID,tcb) then
-      Result[i].TransFrom := tcb.Token;
+      Result[Amount-i-1].TransFrom := tcb.Token;
     if GetOneSmartDynBlock(dynID,bc4.Smart.tkn[2].TokenID,tcb) then
-      Result[i].TransTo := tcb.Token;
+      Result[Amount-i-1].TransTo := tcb.Token;
 
     hashHex := '';
     for j := 1 to CHashLength do
       hashHex := hashHex + IntToHex(bc4.Hash[j],2);
-    Result[i].Hash := hashHex.ToLower;
+    Result[Amount-i-1].Hash := hashHex.ToLower;
 
     if TryGetOneICOBlock(ATicker,tICO) then
-      Result[i].Amount := bc4.Smart.Delta/Power(10,tICO.FloatSize);
+      Result[Amount-i-1].Amount := bc4.Smart.Delta/Power(10,tICO.FloatSize);
   end;
 end;
 

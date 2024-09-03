@@ -7,7 +7,7 @@ uses
   FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs,
   FMX.Controls.Presentation, FMX.StdCtrls, FMX.Memo.Types, FMX.ScrollBox,
   FMX.Memo, Styles, FMX.Objects, Crypto, App.Intf, FMX.Effects, ShellApi,
-  FMX.Platform.Win;
+  FMX.Platform.Win, FMX.Layouts;
 
 type
   TEnterPrivateKeyForm = class(TForm)
@@ -20,6 +20,7 @@ type
     ErrorLabel: TLabel;
     ShadowEffect1: TShadowEffect;
     LinkLabel: TLabel;
+    MainRectangle: TRectangle;
     procedure PrKeyMemoChangeTracking(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
@@ -78,14 +79,12 @@ end;
 
 procedure TEnterPrivateKeyForm.LinkLabelMouseEnter(Sender: TObject);
 begin
-  LinkLabel.TextSettings.Font.Style := LinkLabel.TextSettings.Font.Style +
-    [TFontStyle.fsUnderline];
+  LinkLabel.TextSettings.Font.Style := [TFontStyle.fsUnderline];
 end;
 
 procedure TEnterPrivateKeyForm.LinkLabelMouseLeave(Sender: TObject);
 begin
-  LinkLabel.TextSettings.Font.Style := LinkLabel.TextSettings.Font.Style -
-    [TFontStyle.fsUnderline];
+  LinkLabel.TextSettings.Font.Style := [];
 end;
 
 procedure TEnterPrivateKeyForm.PrKeyMemoChangeTracking(Sender: TObject);
