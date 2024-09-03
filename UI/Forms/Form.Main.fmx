@@ -1168,7 +1168,7 @@ object MainForm: TMainForm
               Enabled = False
               StyledSettings = []
               Position.X = -1.000000000000000000
-              Position.Y = 175.000000000000000000
+              Position.Y = 174.000000000000000000
               Size.Width = 170.000000000000000000
               Size.Height = 35.000000000000000000
               Size.PlatformDefault = False
@@ -1241,7 +1241,7 @@ object MainForm: TMainForm
             end
             object InputPrKeyButton: TButton
               StyledSettings = []
-              Position.X = 184.000000000000000000
+              Position.X = 186.000000000000000000
               Position.Y = 174.000000000000000000
               Size.Width = 220.000000000000000000
               Size.Height = 35.000000000000000000
