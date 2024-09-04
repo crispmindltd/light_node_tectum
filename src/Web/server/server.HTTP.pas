@@ -216,6 +216,7 @@ begin
   FCommands.Add('/coins/transfer/fee',FTokenEndpoints.getCoinTransferFee);
   FCommands.Add('/coins/balances',FTokenEndpoints.getCoinsBalances);
   FCommands.Add('/coins/transfers',FTokenEndpoints.coinsTransferHistory);
+  FCommands.Add('/coins/transfers/user',FTokenEndpoints.coinsTransferHistoryUser);
   FCommands.Add('/tokens',FTokenEndpoints.tokens);
   FCommands.Add('/token/fee',FTokenEndpoints.getNewTokenFee);
   FCommands.Add('/token/transfer',FTokenEndpoints.tokenTransfer);

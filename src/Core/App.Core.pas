@@ -71,6 +71,7 @@ type
     function GetChainBlocks(AFrom: Int64; out AAmount: Integer): TBytesBlocks; overload;
     function GetChainBlocks(var AAmount: Integer): TBytesBlocks; overload;
     procedure SetChainBlocks(APos: Int64; ABytes: TBytesBlocks; AAmount: Integer);
+    function GetChainTransations(ASkip: Integer; var ARows: Integer): TArray<TExplorerTransactionInfo>;
     function GetChainLastTransactions(var Amount: Integer): TArray<TExplorerTransactionInfo>;
     function GetChainLastUserTransactions(AUserID: Integer;
       var Amount: Integer): TArray<THistoryTransactionInfo>;
@@ -805,6 +806,19 @@ function TAppCore.GetChainLastUserTransactions(AUserID: Integer;
   var Amount: Integer): TArray<THistoryTransactionInfo>;
 begin
   Result := FBlockchain.GetLastChainUserTransactions(AUserID,Amount);
+end;
+
+function TAppCore.GetChainTransations(ASkip: Integer;
+  var ARows: Integer): TArray<TExplorerTransactionInfo>;
+begin
+  if ASkip < 0 then
+    raise EValidError.Create('invalid "skip" value');
+  if ARows <= 0 then
+    raise EValidError.Create('invalid "rows" value');
+  if ARows > 50 then
+    raise EValidError.Create('"rows" value can''t be more than 50');
+
+  Result := FBlockchain.GetChainTransactions(ASkip,ARows);
 end;
 
 function TAppCore.GetSessionKey: String;

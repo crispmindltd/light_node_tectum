@@ -41,6 +41,8 @@ type
       AParams: TStrings; ABody: String): TEndpointResponse;
     function coinsTransferHistory(AReqID: String; AEvent: TEvent; AComType: THTTPCommandType;
       AParams: TStrings; ABody: String): TEndpointResponse;
+    function coinsTransferHistoryUser(AReqID: String; AEvent: TEvent; AComType: THTTPCommandType;
+      AParams: TStrings; ABody: String): TEndpointResponse;
     function getTokenBalanceWithAddress(AReqID: String; AEvent: TEvent; AComType: THTTPCommandType;
       AParams: TStrings; ABody: String): TEndpointResponse;
     function getTokenBalanceWithTicker(AReqID: String; AEvent: TEvent; AComType: THTTPCommandType;
@@ -92,6 +94,61 @@ begin
 end;
 
 function TTokenEndpoints.coinsTransferHistory(AReqID: String; AEvent: TEvent;
+  AComType: THTTPCommandType; AParams: TStrings;
+  ABody: String): TEndpointResponse;
+var
+  JSON,JSONNestedObject: TJSONObject;
+  JSONArray: TJSONArray;
+  params: TStringList;
+  TETTransfersInfo: TArray<TExplorerTransactionInfo>;
+  i,rows,skip: Integer;
+begin
+  Result.ReqID := AReqID;
+  params := TStringList.Create(dupIgnore,True,False);
+  try
+    if AComType <> hcGET then
+      raise ENotSupportedError.Create('');
+
+    params.AddStrings(AParams);
+    if params.Values['rows'].IsEmpty then
+      rows := 20
+    else if not TryStrToInt(params.Values['rows'],rows) then
+      raise EValidError.Create('request parameters error');
+    if params.Values['skip'].IsEmpty then
+      skip := 0
+    else if not TryStrToInt(params.Values['skip'],skip) then
+      raise EValidError.Create('request parameters error');
+
+    TETTransfersInfo := AppCore.GetChainTransations(skip,rows);
+    JSON := TJSONObject.Create;
+    try
+      JSONArray := TJSONArray.Create;
+      for i := 0 to rows-1 do
+      begin
+        JSONArray.AddElement(TJSONObject.Create);
+        JSONNestedObject := JSONArray.Items[pred(JSONArray.Count)] as TJSONObject;
+        JSONNestedObject.AddPair('date', FormatDateTime('dd.mm.yyyy hh:mm:ss',FloatToDateTime(TETTransfersInfo[i].DateTime)));
+        JSONNestedObject.AddPair('block', TJSONNumber.Create(TETTransfersInfo[i].BlockNum));
+        JSONNestedObject.AddPair('address_from', TETTransfersInfo[i].TransFrom);
+        JSONNestedObject.AddPair('address_to', TETTransfersInfo[i].TransTo);
+        JSONNestedObject.AddPair('hash', TETTransfersInfo[i].Hash);
+        JSONNestedObject.AddPair('amount', TJSONNumber.Create(TETTransfersInfo[i].Amount));
+        JSONNestedObject.AddPair('fee', TJSONNumber.Create(0));
+      end;
+      JSON.AddPair('transactions',JSONArray);
+
+      Result.Code := HTTP_SUCCESS;
+      Result.Response := JSON.ToString;
+    finally
+      JSON.Free;
+    end;
+  finally
+    params.Free;
+    if Assigned(AEvent) then AEvent.SetEvent;
+  end;
+end;
+
+function TTokenEndpoints.coinsTransferHistoryUser(AReqID: String; AEvent: TEvent;
   AComType: THTTPCommandType; AParams: TStrings;
   ABody: String): TEndpointResponse;
 var
