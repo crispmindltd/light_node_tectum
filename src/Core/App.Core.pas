@@ -143,6 +143,7 @@ type
       out PubKey: String): Boolean;
 
     function TryGetTokenICO(ATicker: String; var tICO: TTokenICODat): Boolean;
+    function GetTokensICOs: TArray<TTokenICODat>;
 
     property DownloadRemain: Int64 read GetDownloadRemain write SetDownloadRemain;
     property SessionKey: String read GetSessionKey write SetSessionKey;
@@ -832,6 +833,11 @@ end;
 function TAppCore.GetTETAddress: String;
 begin
   Result := FTETAddress;
+end;
+
+function TAppCore.GetTokensICOs: TArray<TTokenICODat>;
+begin
+  Result := FBlockchain.GetICOsInfo;
 end;
 
 function TAppCore.GetUserID: Int64;
