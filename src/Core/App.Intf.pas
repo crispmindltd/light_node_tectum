@@ -120,6 +120,7 @@ type
       out PubKey: String): Boolean;
 
     function TryGetTokenICO(ATicker: String; var tICO: TTokenICODat): Boolean;
+    function GetTokensICOs: TArray<TTokenICODat>;
 
     property DownloadRemain: Int64 read GetDownloadRemain write SetDownloadRemain;
     property SessionKey: String read GetSessionKey write SetSessionKey;

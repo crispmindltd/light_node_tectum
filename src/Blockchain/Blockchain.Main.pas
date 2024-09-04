@@ -104,6 +104,7 @@ type
         out AAmount: Integer): TBytesBlocks;
       procedure SetICOBlocks(APos: Int64; ABytes: TBytesBlocks;
         AAmount: Integer);
+      function GetICOsInfo: TArray<TTokenICODat>;
 
      procedure UpdateLists;
   end;
@@ -254,6 +255,15 @@ end;
 function TBlockchain.GetICOBlockSize: Integer;
 begin
   Result := FTokenICO.GetBlockSize;
+end;
+
+function TBlockchain.GetICOsInfo: TArray<TTokenICODat>;
+var
+  i: Integer;
+begin
+  SetLength(Result,FTokenICO.GetBlocksCount-2);
+  for i := 0 to Length(Result)-1 do
+    TBlockchainICODat(FTokenICO).TryGetTokenICO(i+2,Result[i]);
 end;
 
 function TBlockchain.GetLastChainTransactions(
