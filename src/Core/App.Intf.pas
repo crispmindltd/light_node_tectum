@@ -46,6 +46,7 @@ type
     function GetChainBlocks(AFrom: Int64; out AAmount: Integer): TBytesBlocks; overload;
     function GetChainBlocks(var AAmount: Integer): TBytesBlocks; overload;
     procedure SetChainBlocks(APos: Int64; ABytes: TBytesBlocks; AAmount: Integer);
+    function GetChainTransations(ASkip: Integer; var ARows: Integer): TArray<TExplorerTransactionInfo>;
     function GetChainLastTransactions(var Amount: Integer): TArray<TExplorerTransactionInfo>;
     function GetChainLastUserTransactions(AUserID: Integer;
       var Amount: Integer): TArray<THistoryTransactionInfo>;

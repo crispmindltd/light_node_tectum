@@ -54,6 +54,7 @@ type
       function GetChainBlocks(var AAmount: Integer): TBytesBlocks; overload;
       procedure SetChainBlocks(APos: Int64; ABytes: TBytesBlocks;
         AAmount: Integer);
+      function GetChainTransactions(ASkip: Integer; var ARows: Integer): TArray<TExplorerTransactionInfo>;
       function GetLastChainTransactions(var Amount: Integer): TArray<TExplorerTransactionInfo>;
       function GetLastChainUserTransactions(AUserID: Integer;
         var AAmount: Integer): TArray<THistoryTransactionInfo>;
@@ -210,6 +211,42 @@ end;
 function TBlockchain.GetChainBlockSize: Integer;
 begin
   Result := FTokenCHN.GetBlockSize;
+end;
+
+function TBlockchain.GetChainTransactions(ASkip: Integer;
+  var ARows: Integer): TArray<TExplorerTransactionInfo>;
+var
+  Bytes: TBytesBlocks;
+  TCbc2Arr: array[0..SizeOf(Tbc2)-1] of Byte;
+  bc2: Tbc2 absolute TCbc2Arr;
+  i,j,count: Integer;
+  hashHex: String;
+  tb: TTokenBase;
+begin
+  count := ARows;
+  Bytes := FTokenCHN.ReadBlocks(ASkip,ARows);
+  ARows := Min(Min(ARows,count),50);
+
+  SetLength(Result,ARows);
+  for i := 0 to ARows-1 do
+  begin
+    Move(Bytes[i*SizeOf(bc2)],TCbc2Arr[0],SizeOf(bc2));
+
+    Result[i].DateTime := bc2.Smart.TimeEvent;
+    Result[i].BlockNum := ASkip + i;
+
+    if GetOneChainDynBlock(bc2.Smart.tkn[1].TokenID,tb) then
+      Result[i].TransFrom := tb.Token;
+    if GetOneChainDynBlock(bc2.Smart.tkn[2].TokenID,tb) then
+      Result[i].TransTo := tb.Token;
+
+    hashHex := '';
+    for j := 1 to CHashLength do
+      hashHex := hashHex + IntToHex(bc2.Hash[j],2);
+    Result[i].Hash := hashHex.ToLower;
+
+    Result[i].Amount := bc2.Smart.Delta / 100000000;
+  end;
 end;
 
 function TBlockchain.GetDynBlocks(ADynID: Integer; AFrom: Int64;
