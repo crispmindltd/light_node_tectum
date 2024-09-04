@@ -90,6 +90,8 @@ type
     function GetOneSmartBlock(ASmartID: Integer; AFrom: Int64): TCbc4;
     procedure SetSmartBlocks(ASmartID: Integer; APos: Int64;
       ABytes: TBytesBlocks; AAmount: Integer);
+    function GetSmartTransactions(ATicker: String; ASkip: Integer;
+      var ARows: Integer): TArray<TExplorerTransactionInfo>;
     function GetSmartLastTransactions(ATicker: String;
       var Amount: Integer): TArray<TExplorerTransactionInfo>;
     function GetSmartLastUserTransactions(AUserID: Integer; ATicker: String;
@@ -795,6 +797,21 @@ function TAppCore.GetSmartLastUserTransactions(AUserID: Integer;
   ATicker: String; var Amount: Integer): TArray<THistoryTransactionInfo>;
 begin
   Result := FBlockchain.GetLastSmartUserTransactions(AUserID,ATicker,Amount);
+end;
+
+function TAppCore.GetSmartTransactions(ATicker: String; ASkip: Integer;
+  var ARows: Integer): TArray<TExplorerTransactionInfo>;
+begin
+  if not CheckTickerName(ATicker) then
+    raise EValidError.Create('invalid ticker');
+  if ASkip < 0 then
+    raise EValidError.Create('invalid "skip" value');
+  if ARows <= 0 then
+    raise EValidError.Create('invalid "rows" value');
+  if ARows > 50 then
+    raise EValidError.Create('"rows" value can''t be more than 50');
+
+  Result := FBlockchain.GetSmartTransactions(ATicker,ASkip,ARows);
 end;
 
 function TAppCore.GetChainLastTransactions(var Amount: Integer): TArray<TExplorerTransactionInfo>;
