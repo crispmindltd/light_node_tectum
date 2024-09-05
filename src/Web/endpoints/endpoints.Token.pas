@@ -174,7 +174,7 @@ var
   JSONArray: TJSONArray;
   Params: TStringList;
   TETTransfersInfo: TArray<THistoryTransactionInfo>;
-  SplittedResponse, TransInfo: TArray<string>;
+  TransInfo: TArray<string>;
   i, UserId, Rows, Skip: Integer;
 begin
   Result.ReqID := AReqID;

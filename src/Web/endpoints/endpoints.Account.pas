@@ -44,6 +44,7 @@ function TMainEndpoints.DoAuth(AReqID: string; AEvent: TEvent;
   AComType: THTTPCommandType; AParams: TStrings; ABody: string): TEndpointResponse;
 var
   JSON: TJSONObject;
+  SplittedResponse: TArray<string>;
   Login, Password, Response, SessionKey: string;
 begin
   Result.ReqID := AReqID;
@@ -61,10 +62,11 @@ begin
     end;
 
     Response := AppCore.DoAuth(AReqID, login, Password);
+    SplittedResponse := Response.Split([' ']);
     JSON := TJSONObject.Create;
     try
-      SessionKey := Response.Split([' '])[2];
-      JSON.AddPair('session_key', SessionKey);
+      JSON.AddPair('user_id', TJSONNumber.Create(SplittedResponse[4]));
+      JSON.AddPair('session_key', SplittedResponse[2]);
       Result.Code := HTTP_SUCCESS;
       Result.Response := JSON.ToString;
     finally
