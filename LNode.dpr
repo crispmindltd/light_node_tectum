@@ -1,4 +1,4 @@
-program LNode;
+﻿program LNode;
 
 uses
   System.StartUpCopy,

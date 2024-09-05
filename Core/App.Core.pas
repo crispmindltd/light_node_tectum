@@ -16,7 +16,6 @@ uses
   ClpIECPublicKeyParameters,
   ClpCryptoLibTypes,
   Crypto,
-  FMX.Dialogs,
   IOUtils,
   Math,
   Net.Client,
@@ -875,7 +874,6 @@ begin
     on E:Exception do
     begin
       errStr := 'Error starting node: ' + E.Message;
-      ShowMessage(errStr);
       Logs.DoLog(errStr, ERROR);
       raise;
     end;
