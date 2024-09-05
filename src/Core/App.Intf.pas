@@ -66,6 +66,8 @@ type
     function GetOneSmartBlock(ASmartID: Integer; AFrom: Int64): TCbc4;
     procedure SetSmartBlocks(ASmartID: Integer; APos: Int64; ABytes: TBytesBlocks;
       AAmount: Integer);
+    function GetSmartTransactions(ATicker: String; ASkip: Integer;
+      var ARows: Integer): TArray<TExplorerTransactionInfo>;
     function GetSmartLastTransactions(ATicker: String;
       var Amount: Integer): TArray<TExplorerTransactionInfo>;
     function GetSmartLastUserTransactions(AUserID: Integer; ATicker: String;
