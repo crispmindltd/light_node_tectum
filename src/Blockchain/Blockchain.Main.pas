@@ -289,7 +289,7 @@ begin
   begin
     oneBlock1 := GetOneChainBlock(i);
     if bc2.Smart.tkn[1].TokenID = TokenID then
-		begin
+    begin
       hashHex := '';
       for j := 1 to CHashLength do
         hashHex := hashHex + IntToHex(bc2.Hash[j],2);
@@ -302,14 +302,14 @@ begin
       transaction.Address := tb.Token;
       transaction.Incom := False;
       Result := Result + [transaction];
-			i := bc2.Smart.tkn[1].FromBlock;
-		end;
+      i := bc2.Smart.tkn[1].FromBlock;
+    end;
 
-		if bc2.Smart.tkn[2].TokenID = TokenID then
-		begin
+    if bc2.Smart.tkn[2].TokenID = TokenID then
+    begin
       hashHex := '';
       for j := 1 to CHashLength do
-        hashHex := hashHex + IntToHex(bc2.Hash[j],2);
+      hashHex := hashHex + IntToHex(bc2.Hash[j],2);
 
       if not GetOneChainDynBlock(bc2.Smart.tkn[1].TokenID,tb) then break;
       transaction.DateTime := bc2.Smart.TimeEvent;
@@ -319,8 +319,8 @@ begin
       transaction.Address := tb.Token;
       transaction.Incom := True;
       Result := Result + [transaction];
-			i := bc2.Smart.tkn[2].FromBlock;
-		end;
+      i := bc2.Smart.tkn[2].FromBlock;
+    end;
   end;
   ARows := Length(Result);
 end;
