@@ -23,14 +23,16 @@ uses
 type
   THTTPServer = class(TIdHTTPServer)
   const
-    COMMAND_DOING_TIMEOUT = 12000;
+    CommandDoingTimeout = 12000;
   strict private
     FMainEndpoints: TMainEndpoints;
     FChainEndpoints: TChainEndpoints;
     FTokenEndpoints: TTokenEndpoints;
   private
-    FCommands: TDictionary<String,TEndpointFunc>;
-    procedure CommandGet(AContext: TIdContext; ARequestInfo: TIdHTTPRequestInfo; AResponseInfo: TIdHTTPResponseInfo);
+    FCommands: TDictionary<string, TEndpointFunc>;
+
+    procedure CommandGet(AContext: TIdContext; ARequestInfo: TIdHTTPRequestInfo;
+      AResponseInfo: TIdHTTPResponseInfo);
   public
     constructor Create;
     destructor Destroy; override;
@@ -46,154 +48,186 @@ implementation
 procedure THTTPServer.CommandGet(AContext: TIdContext;
   ARequestInfo: TIdHTTPRequestInfo; AResponseInfo: TIdHTTPResponseInfo);
 var
-  rawBODY: AnsiString;
-  URI, body: String;
-  FNum: LongWord;
-  event: TEvent;
-  answer: TEndpointResponse;
-  epfunc: TEndpointFunc;
+  RawBody: AnsiString;
+  URI, Body: string;
+  ThreadID: LongWord;
+  ReqDoneEvent: TEvent;
+  EndpointResponse: TEndpointResponse;
+  EndpointFunc: TEndpointFunc;
 begin
-  URI := ARequestInfo.Uri.ToLower.Trim;
-  FNum := TThread.CurrentThread.ThreadID;
-  Logs.DoLog(Format('<R%d> %s',[FNum,ARequestInfo.RawHTTPCommand]), INCOM, http);
+  URI := ARequestInfo.URI.ToLower.Trim;
+  ThreadID := TThread.CurrentThread.ThreadID;
+  Logs.DoLog(Format('<R%d> %s', [ThreadID, ARequestInfo.RawHTTPCommand]),
+    INCOM, HTTP);
 
   try
     try
-      if not FCommands.TryGetValue(URI,epfunc) then
+      if not FCommands.TryGetValue(URI, EndpointFunc) then
         raise ENotFoundError.Create('')
       else if AppCore.DownloadRemain > 0 then
         raise EDownloadingNotFinished.Create('');
 
-      //get http request body
+      // get http request body
       if Assigned(ARequestInfo.PostStream) then
       begin
         if (ARequestInfo.PostStream is TMemoryStream) then
         begin
-          const ms = TMemoryStream(ARequestInfo.PostStream);
-          SetString(rawBODY, PAnsiChar(ms.memory), ms.Size);
-          body := UTF8ToWideString(rawBODY);
+          const
+            MemStream = TMemoryStream(ARequestInfo.PostStream);
+          SetString(RawBody, PAnsiChar(MemStream.Memory), MemStream.Size);
+          Body := UTF8ToWideString(RawBody);
         end;
       end;
 
-      event := TEvent.Create;
+      ReqDoneEvent := TEvent.Create;
       try
-        answer := epfunc('R'+FNum.ToString,event,ARequestInfo.CommandType,ARequestInfo.Params,body);
-        if not (event.WaitFor(COMMAND_DOING_TIMEOUT) = wrSignaled) then
+        EndpointResponse := EndpointFunc('R' + ThreadID.ToString, ReqDoneEvent,
+          ARequestInfo.CommandType, ARequestInfo.Params, Body);
+        if not(ReqDoneEvent.WaitFor(CommandDoingTimeout) = wrSignaled) then
           raise ESocketError.Create('');
       finally
-        event.Free;
+        ReqDoneEvent.Free;
       end;
     except
-      on E:ENotFoundError do
+      on E: ENotFoundError do
       begin
-        answer.Code := HTTP_NOT_FOUND;
-        answer.Response := GetJSONErrorAsString(ERROR_NOT_FOUND,'unknown request');
+        EndpointResponse.Code := HTTP_NOT_FOUND;
+        EndpointResponse.Response := GetJSONErrorAsString(ERROR_NOT_FOUND,
+          'unknown request');
       end;
-      on E:EDownloadingNotFinished do
+      on E: EDownloadingNotFinished do
       begin
-        answer.Code := HTTP_SERVICE_UNAVAILABLE;
-        answer.Response := GetJSONErrorAsString(ERROR_DOWNLOADING_NOT_FINISHED,'please wait until the blocks are loaded.');
+        EndpointResponse.Code := HTTP_SERVICE_UNAVAILABLE;
+        EndpointResponse.Response :=
+          GetJSONErrorAsString(ERROR_DOWNLOADING_NOT_FINISHED,
+          'please wait until the blocks are loaded');
       end;
-      on E:ENotSupportedError do
+      on E: ENotSupportedError do
       begin
-        answer.Code := HTTP_BAD_REQUEST;
-        answer.Response := GetJSONErrorAsString(ERROR_NOT_SUPPORTED,'method not supported');
+        EndpointResponse.Code := HTTP_BAD_REQUEST;
+        EndpointResponse.Response := GetJSONErrorAsString(ERROR_NOT_SUPPORTED,
+          'method not supported');
       end;
-      on E:EJSONParseException do
+      on E: EJSONParseException do
       begin
-        answer.Code := HTTP_BAD_REQUEST;
-        answer.Response := GetJSONErrorAsString(ERROR_VALID,'request body parsing error');
+        EndpointResponse.Code := HTTP_BAD_REQUEST;
+        EndpointResponse.Response := GetJSONErrorAsString(ERROR_VALID,
+          'request body parsing error');
       end;
-      on E:EValidError do
+      on E: EValidError do
       begin
-        answer.Code := HTTP_BAD_REQUEST;
-        answer.Response := GetJSONErrorAsString(ERROR_VALID,E.Message);
+        EndpointResponse.Code := HTTP_BAD_REQUEST;
+        EndpointResponse.Response := GetJSONErrorAsString(ERROR_VALID,
+          E.Message);
       end;
-      on E:EAuthError do
+      on E: EAuthError do
       begin
-        answer.Code := HTTP_BAD_REQUEST;
-        answer.Response := GetJSONErrorAsString(ERROR_AUTH,'incorrect login or password');
+        EndpointResponse.Code := HTTP_BAD_REQUEST;
+        EndpointResponse.Response := GetJSONErrorAsString(ERROR_AUTH,
+          'incorrect login or password');
       end;
-      on E:EKeyExpiredError do
+      on E: EKeyExpiredError do
       begin
-        answer.Code := HTTP_BAD_REQUEST;
-        answer.Response := GetJSONErrorAsString(ERROR_KEY_EXPIRED,'key expired');
+        EndpointResponse.Code := HTTP_BAD_REQUEST;
+        EndpointResponse.Response := GetJSONErrorAsString(ERROR_KEY_EXPIRED,
+          'key expired');
       end;
-      on E:EAccAlreadyExistsError do
+      on E: EAccAlreadyExistsError do
       begin
-        answer.Code := HTTP_BAD_REQUEST;
-        answer.Response := GetJSONErrorAsString(ERROR_ACCOUNT_EXISTS,'account already exists');
+        EndpointResponse.Code := HTTP_BAD_REQUEST;
+        EndpointResponse.Response := GetJSONErrorAsString(ERROR_ACCOUNT_EXISTS,
+          'account already exists');
       end;
-      on E:EAddressNotExistsError do
+      on E: EAddressNotExistsError do
       begin
-        answer.Code := HTTP_BAD_REQUEST;
-        answer.Response := GetJSONErrorAsString(ERROR_ADDRESS_NOT_EXISTS,'the address does not exists');
+        EndpointResponse.Code := HTTP_BAD_REQUEST;
+        EndpointResponse.Response :=
+          GetJSONErrorAsString(ERROR_ADDRESS_NOT_EXISTS,
+          'the address does not exists');
       end;
-      on E:EInsufficientFundsError do
+      on E: EInsufficientFundsError do
       begin
-        answer.Code := HTTP_BAD_REQUEST;
-        answer.Response := GetJSONErrorAsString(ERROR_INSUFFICIENT_FUNDS,'insufficient funds');
+        EndpointResponse.Code := HTTP_BAD_REQUEST;
+        EndpointResponse.Response :=
+          GetJSONErrorAsString(ERROR_INSUFFICIENT_FUNDS, 'insufficient funds');
       end;
-      on E:ETokenAlreadyExists do
+      on E: ETokenAlreadyExists do
       begin
-        answer.Code := HTTP_BAD_REQUEST;
-        answer.Response := GetJSONErrorAsString(ERROR_TOKEN_EXISTS,'account already exists');
+        EndpointResponse.Code := HTTP_BAD_REQUEST;
+        EndpointResponse.Response := GetJSONErrorAsString(ERROR_TOKEN_EXISTS,
+          'account already exists');
       end;
-      on E:ESameAddressesError do
+      on E: ESameAddressesError do
       begin
-        answer.Code := HTTP_BAD_REQUEST;
-        answer.Response := GetJSONErrorAsString(ERROR_SAME_ADDRESSES,E.Message);
+        EndpointResponse.Code := HTTP_BAD_REQUEST;
+        EndpointResponse.Response := GetJSONErrorAsString(ERROR_SAME_ADDRESSES,
+          E.Message);
       end;
-      on E:EValidatorDidNotAnswerError do
+      on E: EValidatorDidNotAnswerError do
       begin
-        answer.Code := HTTP_INTERNAL_ERROR;
-        answer.Response := GetJSONErrorAsString(ERROR_VALIDATOR_DID_NOT_ANSWER,'validator did not answer, try later');
+        EndpointResponse.Code := HTTP_INTERNAL_ERROR;
+        EndpointResponse.Response :=
+          GetJSONErrorAsString(ERROR_VALIDATOR_DID_NOT_ANSWER,
+          'validator did not answer, try later');
       end;
-      on E:ESmartNotExistsError do
+      on E: ESmartNotExistsError do
       begin
-        answer.Code := HTTP_BAD_REQUEST;
-        answer.Response := GetJSONErrorAsString(ERROR_SMART_NOT_EXISTS,'smart contract does not exists');
+        EndpointResponse.Code := HTTP_BAD_REQUEST;
+        EndpointResponse.Response :=
+          GetJSONErrorAsString(ERROR_SMART_NOT_EXISTS,
+          'smart contract does not exists');
       end;
-      on E:ENoInfoForThisSmartError do
+      on E: ENoInfoForThisSmartError do
       begin
-        answer.Code := HTTP_BAD_REQUEST;
-        answer.Response := GetJSONErrorAsString(ERROR_NO_INFO_FOR_SMART,'this smartcontract does not have the requested information');
+        EndpointResponse.Code := HTTP_BAD_REQUEST;
+        EndpointResponse.Response :=
+          GetJSONErrorAsString(ERROR_NO_INFO_FOR_SMART,
+          'this smartcontract does not have the requested information');
       end;
-      on E:ENoInfoForThisAccountError do
+      on E: ENoInfoForThisAccountError do
       begin
-        answer.Code := HTTP_INTERNAL_ERROR;
-        answer.Response := GetJSONErrorAsString(ERROR_NO_INFO_FOR_ACCOUNT,'this account does not have the requested information');
+        EndpointResponse.Code := HTTP_INTERNAL_ERROR;
+        EndpointResponse.Response :=
+          GetJSONErrorAsString(ERROR_NO_INFO_FOR_ACCOUNT,
+          'this account does not have the requested information');
       end;
-      on E:ESocketError do
+      on E: ESocketError do
       begin
-        answer.Code := HTTP_INTERNAL_ERROR;
-        answer.Response := GetJSONErrorAsString(ERROR_NO_RESPONSE,'server did not respond, try later');
+        EndpointResponse.Code := HTTP_INTERNAL_ERROR;
+        EndpointResponse.Response := GetJSONErrorAsString(ERROR_NO_RESPONSE,
+          'server did not respond, try later');
       end;
-      on E:EInvalidSignError do
+      on E: EInvalidSignError do
       begin
-        answer.Code := HTTP_BAD_REQUEST;
-        answer.Response := GetJSONErrorAsString(ERROR_INVALID_SIGN,'signature not verified');
+        EndpointResponse.Code := HTTP_BAD_REQUEST;
+        EndpointResponse.Response := GetJSONErrorAsString(ERROR_INVALID_SIGN,
+          'signature not verified');
       end;
-      on E:ERequestInProgressError do
+      on E: ERequestInProgressError do
       begin
-        answer.Code := HTTP_BAD_REQUEST;
-        answer.Response := GetJSONErrorAsString(ERROR_REQUEST_IN_PROGRESS,'the previous transaction has not yet been processed');
+        EndpointResponse.Code := HTTP_BAD_REQUEST;
+        EndpointResponse.Response :=
+          GetJSONErrorAsString(ERROR_REQUEST_IN_PROGRESS,
+          'the previous transaction has not yet been processed');
       end;
-      on E:EUnknownError do
+      on E: EUnknownError do
       begin
-        answer.Code := HTTP_INTERNAL_ERROR;
-        answer.Response := GetJSONErrorAsString(ERROR_UNKNOWN,'unknown error with code ' + E.Message);
+        EndpointResponse.Code := HTTP_INTERNAL_ERROR;
+        EndpointResponse.Response := GetJSONErrorAsString(ERROR_UNKNOWN,
+          'unknown error with code ' + E.Message);
       end;
-      on E:Exception do
+      on E: Exception do
       begin
-        answer.Code := HTTP_INTERNAL_ERROR;
-        answer.Response := GetJSONErrorAsString(ERROR_UNKNOWN,'unknown error with message:' + E.Message);
+        EndpointResponse.Code := HTTP_INTERNAL_ERROR;
+        EndpointResponse.Response := GetJSONErrorAsString(ERROR_UNKNOWN,
+          'unknown error with message:' + E.Message);
       end;
     end;
   finally
-    AResponseInfo.ResponseNo := answer.Code;
-    AResponseInfo.ContentText := answer.Response;
-    Logs.DoLog(Format('<%s> [%d] %s',[answer.ReqID, AResponseInfo.ResponseNo, AResponseInfo.ContentText]), OUTGO, http);
+    AResponseInfo.ResponseNo := EndpointResponse.Code;
+    AResponseInfo.ContentText := EndpointResponse.Response;
+    Logs.DoLog(Format('<%s> [%d] %s', [EndpointResponse.ReqID,
+      AResponseInfo.ResponseNo, AResponseInfo.ContentText]), OUTGO, HTTP);
   end;
 end;
 
@@ -201,31 +235,34 @@ constructor THTTPServer.Create;
 begin
   inherited;
 
-  FCommands := TDictionary<String,TEndpointFunc>.Create;
+  FCommands := TDictionary<string, TEndpointFunc>.Create;
   FChainEndpoints := TChainEndpoints.Create;
-  FCommands.Add('/blockscountl',FChainEndpoints.blocksCountL);
-  FCommands.Add('/blockscount',FChainEndpoints.blocksCount);
+  FCommands.Add('/blockscountl', FChainEndpoints.BlocksCountLocal);
+  FCommands.Add('/blockscount', FChainEndpoints.BlocksCount);
   FMainEndpoints := TMainEndpoints.Create;
-  FCommands.Add('/user/registration',FMainEndpoints.reg);
-  FCommands.Add('/user/auth',FMainEndpoints.auth);
-  FCommands.Add('/keys/recover',FMainEndpoints.recoverKeys);
-  FCommands.Add('/keys/public/byuserid',FMainEndpoints.getPublicKeyByAccID);
-  FCommands.Add('/keys/public/byskey',FMainEndpoints.getPublicKeyBySessionKey);
+  FCommands.Add('/user/registration', FMainEndpoints.DoReg);
+  FCommands.Add('/user/auth', FMainEndpoints.DoAuth);
+  FCommands.Add('/keys/recover', FMainEndpoints.DoRecoverKeys);
+  FCommands.Add('/keys/public/byuserid', FMainEndpoints.GetPublicKeyByAccID);
+  FCommands.Add('/keys/public/byskey', FMainEndpoints.GetPublicKeyBySessionKey);
   FTokenEndpoints := TTokenEndpoints.Create;
-  FCommands.Add('/coins/transfer',FTokenEndpoints.coinTransfer);
-  FCommands.Add('/coins/transfer/fee',FTokenEndpoints.getCoinTransferFee);
-  FCommands.Add('/coins/balances',FTokenEndpoints.getCoinsBalances);
-  FCommands.Add('/coins/transfers',FTokenEndpoints.coinsTransferHistory);
-  FCommands.Add('/coins/transfers/user',FTokenEndpoints.coinsTransferHistoryUser);
-  FCommands.Add('/tokens',FTokenEndpoints.tokens);
-  FCommands.Add('/token/fee',FTokenEndpoints.getNewTokenFee);
-  FCommands.Add('/token/transfer',FTokenEndpoints.tokenTransfer);
-  FCommands.Add('/token/transfer/fee',FTokenEndpoints.getTokenTransferFee);
-  FCommands.Add('/token/balance/byaddress',FTokenEndpoints.getTokenBalanceWithAddress);
-  FCommands.Add('/token/balance/byticker',FTokenEndpoints.getTokenBalanceWithTicker);
-  FCommands.Add('/tokens/transfers',FTokenEndpoints.tokensTransferHistory);
-  FCommands.Add('/token/address/byid',FTokenEndpoints.getAddressByID);
-  FCommands.Add('/token/address/byticker',FTokenEndpoints.getAddressByTicker);
+  FCommands.Add('/coins/transfer', FTokenEndpoints.DoCoinTransfer);
+  FCommands.Add('/coins/transfer/fee', FTokenEndpoints.GetCoinTransferFee);
+  FCommands.Add('/coins/balances', FTokenEndpoints.GetCoinsBalances);
+  FCommands.Add('/coins/transfers', FTokenEndpoints.GetCoinsTransferHistory);
+  FCommands.Add('/coins/transfers/user',
+    FTokenEndpoints.GetCoinsTransferHistoryUser);
+  FCommands.Add('/tokens', FTokenEndpoints.Tokens);
+  FCommands.Add('/tokens/fee', FTokenEndpoints.GetNewTokenFee);
+  FCommands.Add('/tokens/transfer', FTokenEndpoints.DoTokenTransfer);
+  FCommands.Add('/tokens/transfer/fee', FTokenEndpoints.GetTokenTransferFee);
+  FCommands.Add('/tokens/balance/byaddress',
+    FTokenEndpoints.GetTokenBalanceWithAddress);
+  FCommands.Add('/tokens/balance/byticker',
+    FTokenEndpoints.GetTokenBalanceWithTicker);
+  FCommands.Add('/tokens/transfers', FTokenEndpoints.GetTokensTransferHistory);
+  FCommands.Add('/tokens/address/byid', FTokenEndpoints.GetAddressByID);
+  FCommands.Add('/tokens/address/byticker', FTokenEndpoints.GetAddressByTicker);
 
   OnCommandGet := CommandGet;
 end;
@@ -244,13 +281,13 @@ procedure THTTPServer.Start(APort: Word);
 begin
   DefaultPort := APort;
   Active := True;
-  Logs.DoLog('HTTP server started',NONE);
+  Logs.DoLog('HTTP server started', NONE);
 end;
 
 procedure THTTPServer.Stop;
 begin
   Active := False;
-  Logs.DoLog('HTTP server stoped',NONE);
+  Logs.DoLog('HTTP server stoped', NONE);
 end;
 
 end.

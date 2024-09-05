@@ -8,12 +8,12 @@ uses
 
 type
   TEndpointsBase = class
-    private
-    protected
-      function GetBodyParamsFromJSON(AJSON: TJSONObject): TArray<String>;
-    public
-      constructor Create;
-      destructor Destroy; override;
+  private
+  protected
+    function GetBodyParamsFromJSON(AJSON: TJSONObject): TArray<string>;
+  public
+    constructor Create;
+    destructor Destroy; override;
   end;
 
 implementation
@@ -31,22 +31,21 @@ begin
   inherited;
 end;
 
-function TEndpointsBase.GetBodyParamsFromJSON(
-  AJSON: TJSONObject): TArray<String>;
+function TEndpointsBase.GetBodyParamsFromJSON(AJSON: TJSONObject): TArray<string>;
 var
   JSONEnum: TJSONObject.TEnumerator;
-  str: String;
+  ParamStr: string;
 begin
   Result := [];
   try
     JSONEnum := AJSON.GetEnumerator;
     while JSONEnum.MoveNext do
     begin
-      str := JSONEnum.Current.ToString.Replace(':','=');
-      str := str.Replace('"','',[rfReplaceAll]);
-      str := str.Replace('[','',[rfReplaceAll]);
-      str := str.Replace(']','',[rfReplaceAll]);
-      Result := Result + [str];
+      ParamStr := JSONEnum.Current.ToString.Replace(':', '=');
+      ParamStr := ParamStr.Replace('"', '', [rfReplaceAll]);
+      ParamStr := ParamStr.Replace('[', '', [rfReplaceAll]);
+      ParamStr := ParamStr.Replace(']', '', [rfReplaceAll]);
+      Result := Result + [ParamStr];
     end;
   finally
     JSONEnum.Free;
