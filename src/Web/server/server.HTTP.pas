@@ -211,13 +211,16 @@ begin
   FCommands.Add('/keys/recover',FMainEndpoints.recoverKeys);
   FCommands.Add('/keys/public/byuserid',FMainEndpoints.getPublicKeyByAccID);
   FCommands.Add('/keys/public/byskey',FMainEndpoints.getPublicKeyBySessionKey);
-  FCommands.Add('/keys/mykeys',FMainEndpoints.getMyKeys);
   FTokenEndpoints := TTokenEndpoints.Create;
   FCommands.Add('/coins/transfer',FTokenEndpoints.coinTransfer);
+  FCommands.Add('/coins/transfer/fee',FTokenEndpoints.getCoinTransferFee);
   FCommands.Add('/coins/balances',FTokenEndpoints.getCoinsBalances);
   FCommands.Add('/coins/transfers',FTokenEndpoints.coinsTransferHistory);
-  FCommands.Add('/tokens',FTokenEndpoints.newToken);
+  FCommands.Add('/coins/transfers/user',FTokenEndpoints.coinsTransferHistoryUser);
+  FCommands.Add('/tokens',FTokenEndpoints.tokens);
+  FCommands.Add('/token/fee',FTokenEndpoints.getNewTokenFee);
   FCommands.Add('/token/transfer',FTokenEndpoints.tokenTransfer);
+  FCommands.Add('/token/transfer/fee',FTokenEndpoints.getTokenTransferFee);
   FCommands.Add('/token/balance/byaddress',FTokenEndpoints.getTokenBalanceWithAddress);
   FCommands.Add('/token/balance/byticker',FTokenEndpoints.getTokenBalanceWithTicker);
   FCommands.Add('/token/address/byid',FTokenEndpoints.getAddressByID);

@@ -5,6 +5,7 @@ interface
 uses
   App.Exceptions,
   App.Intf,
+  Blockchain.BaseTypes,
   Classes,
   endpoints.Base,
   JSON,
@@ -18,19 +19,29 @@ uses
 type
   TTokenEndpoints = class(TEndpointsBase)
   private
+    function getTokensList: TEndpointResponse;
+    function newToken(AReqID: String; ABody: String): TEndpointResponse;
   public
     constructor Create;
     destructor Destroy; override;
 
-    function newToken(AReqID: String; AEvent: TEvent; AComType: THTTPCommandType;
+    function tokens(AReqID: String; AEvent: TEvent; AComType: THTTPCommandType;
+      AParams: TStrings; ABody: String): TEndpointResponse;
+    function getNewTokenFee(AReqID: String; AEvent: TEvent; AComType: THTTPCommandType;
       AParams: TStrings; ABody: String): TEndpointResponse;
     function tokenTransfer(AReqID: String; AEvent: TEvent; AComType: THTTPCommandType;
       AParams: TStrings; ABody: String): TEndpointResponse;
+    function getTokenTransferFee(AReqID: String; AEvent: TEvent; AComType: THTTPCommandType;
+      AParams: TStrings; ABody: String): TEndpointResponse;
     function coinTransfer(AReqID: String; AEvent: TEvent; AComType: THTTPCommandType;
+      AParams: TStrings; ABody: String): TEndpointResponse;
+    function getCoinTransferFee(AReqID: String; AEvent: TEvent; AComType: THTTPCommandType;
       AParams: TStrings; ABody: String): TEndpointResponse;
     function getCoinsBalances(AReqID: String; AEvent: TEvent; AComType: THTTPCommandType;
       AParams: TStrings; ABody: String): TEndpointResponse;
     function coinsTransferHistory(AReqID: String; AEvent: TEvent; AComType: THTTPCommandType;
+      AParams: TStrings; ABody: String): TEndpointResponse;
+    function coinsTransferHistoryUser(AReqID: String; AEvent: TEvent; AComType: THTTPCommandType;
       AParams: TStrings; ABody: String): TEndpointResponse;
     function getTokenBalanceWithAddress(AReqID: String; AEvent: TEvent; AComType: THTTPCommandType;
       AParams: TStrings; ABody: String): TEndpointResponse;
@@ -83,6 +94,61 @@ begin
 end;
 
 function TTokenEndpoints.coinsTransferHistory(AReqID: String; AEvent: TEvent;
+  AComType: THTTPCommandType; AParams: TStrings;
+  ABody: String): TEndpointResponse;
+var
+  JSON,JSONNestedObject: TJSONObject;
+  JSONArray: TJSONArray;
+  params: TStringList;
+  TETTransfersInfo: TArray<TExplorerTransactionInfo>;
+  i,rows,skip: Integer;
+begin
+  Result.ReqID := AReqID;
+  params := TStringList.Create(dupIgnore,True,False);
+  try
+    if AComType <> hcGET then
+      raise ENotSupportedError.Create('');
+
+    params.AddStrings(AParams);
+    if params.Values['rows'].IsEmpty then
+      rows := 20
+    else if not TryStrToInt(params.Values['rows'],rows) then
+      raise EValidError.Create('request parameters error');
+    if params.Values['skip'].IsEmpty then
+      skip := 0
+    else if not TryStrToInt(params.Values['skip'],skip) then
+      raise EValidError.Create('request parameters error');
+
+    TETTransfersInfo := AppCore.GetChainTransations(skip,rows);
+    JSON := TJSONObject.Create;
+    try
+      JSONArray := TJSONArray.Create;
+      for i := 0 to rows-1 do
+      begin
+        JSONArray.AddElement(TJSONObject.Create);
+        JSONNestedObject := JSONArray.Items[pred(JSONArray.Count)] as TJSONObject;
+        JSONNestedObject.AddPair('date', FormatDateTime('dd.mm.yyyy hh:mm:ss',FloatToDateTime(TETTransfersInfo[i].DateTime)));
+        JSONNestedObject.AddPair('block', TJSONNumber.Create(TETTransfersInfo[i].BlockNum));
+        JSONNestedObject.AddPair('address_from', TETTransfersInfo[i].TransFrom);
+        JSONNestedObject.AddPair('address_to', TETTransfersInfo[i].TransTo);
+        JSONNestedObject.AddPair('hash', TETTransfersInfo[i].Hash);
+        JSONNestedObject.AddPair('amount', TJSONNumber.Create(TETTransfersInfo[i].Amount));
+        JSONNestedObject.AddPair('fee', TJSONNumber.Create(0));
+      end;
+      JSON.AddPair('transactions',JSONArray);
+
+      Result.Code := HTTP_SUCCESS;
+      Result.Response := JSON.ToString;
+    finally
+      JSON.Free;
+    end;
+  finally
+    params.Free;
+    if Assigned(AEvent) then AEvent.SetEvent;
+  end;
+end;
+
+function TTokenEndpoints.coinsTransferHistoryUser(AReqID: String; AEvent: TEvent;
   AComType: THTTPCommandType; AParams: TStrings;
   ABody: String): TEndpointResponse;
 var
@@ -302,12 +368,69 @@ begin
   end;
 end;
 
+function TTokenEndpoints.getTokensList: TEndpointResponse;
+var
+  JSON,JSONNestedObject: TJSONObject;
+  JSONArray: TJSONArray;
+  ICOs: TArray<TTokenICODat>;
+  i: Integer;
+begin
+  ICOs := AppCore.GetTokensICOs;
+
+  JSON := TJSONObject.Create;
+  try
+    JSONArray := TJSONArray.Create;
+    for i := 0 to Length(ICOs) - 1 do
+    begin
+      JSONArray.AddElement(TJSONObject.Create);
+      JSONNestedObject := JSONArray.Items[pred(JSONArray.Count)] as TJSONObject;
+      JSONNestedObject.AddPair('id', TJSONNumber.Create(ICOs[i].ICOID));
+      JSONNestedObject.AddPair('owner_id', TJSONNumber.Create(ICOs[i].OwnerID));
+      JSONNestedObject.AddPair('name', ICOs[i].ShortName);
+      JSONNestedObject.AddPair('date', FormatDateTime('dd.mm.yyyy hh:mm:ss',FloatToDateTime(ICOs[i].RegDate)));
+      JSONNestedObject.AddPair('ticker', Trim(ICOs[i].Abreviature));
+      JSONNestedObject.AddPair('amount', TJSONNumber.Create(ICOs[i].TockenCount));
+      JSONNestedObject.AddPair('decimals', TJSONNumber.Create(ICOs[i].FloatSize));
+      JSONNestedObject.AddPair('info', ICOs[i].FullName);
+    end;
+    JSON.AddPair('tokens',JSONArray);
+
+    Result.Code := HTTP_SUCCESS;
+    Result.Response := JSON.ToString;
+  finally
+    JSON.Free;
+  end;
+end;
+
+function TTokenEndpoints.getTokenTransferFee(AReqID: String; AEvent: TEvent;
+  AComType: THTTPCommandType; AParams: TStrings;
+  ABody: String): TEndpointResponse;
+var
+  JSON: TJSONObject;
+begin
+  Result.ReqID := AReqID;
+  try
+    if AComType <> hcGET then
+      raise ENotSupportedError.Create('');
+
+    JSON := TJSONObject.Create;
+    try
+      JSON.AddPair('fee',TJSONNumber.Create(0));
+      Result.Code := HTTP_SUCCESS;
+      Result.Response := JSON.ToString;
+    finally
+      JSON.Free;
+    end;
+  finally
+    if Assigned(AEvent) then AEvent.SetEvent;
+  end;
+end;
+
 function TTokenEndpoints.getCoinsBalances(AReqID: String; AEvent: TEvent;
   AComType: THTTPCommandType; AParams: TStrings;
   ABody: String): TEndpointResponse;
 var
-  JSON,JSONNestedObject: TJSONObject;
-  JSONArray: TJSONArray;
+  JSON: TJSONObject;
   params: TStringList;
   response: Extended;
   tokenInfo: TArray<String>;
@@ -347,7 +470,101 @@ begin
   end;
 end;
 
-function TTokenEndpoints.newToken(AReqID: String; AEvent: TEvent;
+function TTokenEndpoints.getCoinTransferFee(AReqID: String; AEvent: TEvent;
+  AComType: THTTPCommandType; AParams: TStrings;
+  ABody: String): TEndpointResponse;
+var
+  JSON: TJSONObject;
+begin
+  Result.ReqID := AReqID;
+  try
+    if AComType <> hcGET then
+      raise ENotSupportedError.Create('');
+
+    JSON := TJSONObject.Create;
+    try
+      JSON.AddPair('fee',TJSONNumber.Create(0));
+      Result.Code := HTTP_SUCCESS;
+      Result.Response := JSON.ToString;
+    finally
+      JSON.Free;
+    end;
+  finally
+    if Assigned(AEvent) then AEvent.SetEvent;
+  end;
+end;
+
+function TTokenEndpoints.getNewTokenFee(AReqID: String; AEvent: TEvent;
+  AComType: THTTPCommandType; AParams: TStrings;
+  ABody: String): TEndpointResponse;
+var
+  JSON: TJSONObject;
+  splt: TArray<String>;
+  params: TStringList;
+  response: Integer;
+  tamount: Int64;
+  decimals: Integer;
+begin
+  Result.ReqID := AReqID;
+  params := TStringList.Create(dupIgnore,True,False);
+  try
+    if AComType <> hcGET then
+      raise ENotSupportedError.Create('');
+
+    params.AddStrings(AParams);
+    if params.Values['token_amount'].IsEmpty or params.Values['decimals'].IsEmpty then
+      raise EValidError.Create('request parameters error');
+
+    response := AppCore.GetNewTokenFee(params.Values['token_amount'].ToInt64,
+      params.Values['decimals'].ToInteger);
+    JSON := TJSONObject.Create;
+    try
+      JSON.AddPair('fee',TJSONNumber.Create(response));
+      Result.Code := HTTP_SUCCESS;
+      Result.Response := JSON.ToString;
+    finally
+      JSON.Free;
+    end;
+  finally
+    params.Free;
+    if Assigned(AEvent) then AEvent.SetEvent;
+  end;
+end;
+
+function TTokenEndpoints.newToken(AReqID: String; ABody: String): TEndpointResponse;
+var
+  JSON: TJSONObject;
+  splt: TArray<String>;
+  fname,sname,ticker,response,sKey: String;
+  tamount: Int64;
+  decimals: Integer;
+begin
+  Result.ReqID := AReqID;
+
+  JSON := TJSONObject.ParseJSONValue(ABody, False, True) as TJSONObject;
+  try
+    if not(JSON.TryGetValue('session_key', sKey) and JSON.TryGetValue('full_name', fname) and
+      JSON.TryGetValue('short_name', sname) and JSON.TryGetValue('ticker', ticker) and
+      JSON.TryGetValue('token_amount', tamount) and JSON.TryGetValue('decimals', decimals)) then
+        raise EValidError.Create('request parameters error');
+  finally
+    JSON.Free;
+  end;
+
+  response := AppCore.DoNewToken(AReqID,sKey,fname,sname,ticker.ToUpper,tamount,decimals);
+  splt := response.Split([' ']);
+  JSON := TJSONObject.Create;
+  try
+    JSON.AddPair('transaction_hash',splt[2]);
+    JSON.AddPair('smartcontract_ID',TJSONNumber.Create(splt[3].ToInt64));
+    Result.Code := HTTP_SUCCESS;
+    Result.Response := JSON.ToString;
+  finally
+    JSON.Free;
+  end;
+end;
+
+function TTokenEndpoints.tokens(AReqID: String; AEvent: TEvent;
   AComType: THTTPCommandType; AParams: TStrings;
   ABody: String): TEndpointResponse;
 var
@@ -359,29 +576,13 @@ var
 begin
   Result.ReqID := AReqID;
   try
-    if AComType <> hcPOST then
-      raise ENotSupportedError.Create('');
-
-    JSON := TJSONObject.ParseJSONValue(ABody, False, True) as TJSONObject;
-    try
-      if not(JSON.TryGetValue('session_key', sKey) and JSON.TryGetValue('full_name', fname) and
-        JSON.TryGetValue('short_name', sname) and JSON.TryGetValue('ticker', ticker) and
-        JSON.TryGetValue('token_amount', tamount) and JSON.TryGetValue('decimals', decimals)) then
-          raise EValidError.Create('request parameters error');
-    finally
-      JSON.Free;
-    end;
-
-    response := AppCore.DoNewToken(AReqID,sKey,fname,sname,ticker.ToUpper,tamount,decimals);
-    splt := response.Split([' ']);
-    JSON := TJSONObject.Create;
-    try
-      JSON.AddPair('transaction_hash',splt[2]);
-      JSON.AddPair('smartcontract_ID',TJSONNumber.Create(splt[3].ToInt64));
-      Result.Code := HTTP_SUCCESS;
-      Result.Response := JSON.ToString;
-    finally
-      JSON.Free;
+    case AComType of
+      hcGET:
+        Result := getTokensList;
+      hcPOST:
+        Result := newToken(AReqID,ABody);
+      else
+        raise ENotSupportedError.Create('');
     end;
   finally
     if Assigned(AEvent) then AEvent.SetEvent;

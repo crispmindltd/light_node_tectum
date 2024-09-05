@@ -46,6 +46,7 @@ type
     function GetChainBlocks(AFrom: Int64; out AAmount: Integer): TBytesBlocks; overload;
     function GetChainBlocks(var AAmount: Integer): TBytesBlocks; overload;
     procedure SetChainBlocks(APos: Int64; ABytes: TBytesBlocks; AAmount: Integer);
+    function GetChainTransations(ASkip: Integer; var ARows: Integer): TArray<TExplorerTransactionInfo>;
     function GetChainLastTransactions(var Amount: Integer): TArray<TExplorerTransactionInfo>;
     function GetChainLastUserTransactions(AUserID: Integer;
       var Amount: Integer): TArray<THistoryTransactionInfo>;
@@ -102,6 +103,7 @@ type
       ALastAmount: Integer): String;
     function DoNewToken(AReqID,ASessionKey,AFullName,AShortName,ATicker: String;
       AAmount: Int64; ADecimals: Integer): String;
+    function GetNewTokenFee(AAmount: Int64; ADecimals: Integer): Integer;
     function DoTokenTransfer(AReqID,AAddrTETFrom,AAddrTETTo,ASmartAddr: String;
       AAmount: Extended; APrKey,APubKey: String): String;
     function SendToConfirm(AReqID,AToSend: String): String;
@@ -114,12 +116,12 @@ type
     function GetSmartAddressByTicker(ATicker: String): String;
     function GetPubKeyByID(AReqID: String; AID: Int64): String;
     function GetPubKeyBySessionKey(AReqID,ASessionKey: String): String;
-    function DoGetMyKeys(AReqID,ASessionKey: String): String;
     function TrySaveKeysToFile(APrivateKey: String): Boolean;
     function TryExtractPrivateKeyFromFile(out PrKey: String;
       out PubKey: String): Boolean;
 
     function TryGetTokenICO(ATicker: String; var tICO: TTokenICODat): Boolean;
+    function GetTokensICOs: TArray<TTokenICODat>;
 
     property DownloadRemain: Int64 read GetDownloadRemain write SetDownloadRemain;
     property SessionKey: String read GetSessionKey write SetSessionKey;

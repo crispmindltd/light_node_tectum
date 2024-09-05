@@ -10,7 +10,7 @@ uses
   SysUtils;
 
 const
-  NODE_VERSION = 'v0.90 - beta';
+  NODE_VERSION = 'v0.9.1 - beta';
 
 type
   TSettingsFile = class

@@ -70,6 +70,7 @@ type
     function GetChainBlocks(AFrom: Int64; out AAmount: Integer): TBytesBlocks; overload;
     function GetChainBlocks(var AAmount: Integer): TBytesBlocks; overload;
     procedure SetChainBlocks(APos: Int64; ABytes: TBytesBlocks; AAmount: Integer);
+    function GetChainTransations(ASkip: Integer; var ARows: Integer): TArray<TExplorerTransactionInfo>;
     function GetChainLastTransactions(var Amount: Integer): TArray<TExplorerTransactionInfo>;
     function GetChainLastUserTransactions(AUserID: Integer;
       var Amount: Integer): TArray<THistoryTransactionInfo>;
@@ -124,6 +125,7 @@ type
       ALastAmount: Integer): String;
     function DoNewToken(AReqID,ASessionKey,AFullName,AShortName,ATicker: String;
       AAmount: Int64; ADecimals: Integer): String;
+    function GetNewTokenFee(AAmount: Int64; ADecimals: Integer): Integer;
     function DoTokenTransfer(AReqID,AAddrTETFrom,AAddrTETTo,ASmartAddr: String;
       AAmount: Extended; APrKey,APubKey: String): String;
     function SendToConfirm(AReqID,AToSend: String): String;
@@ -136,12 +138,12 @@ type
     function GetSmartAddressByTicker(ATicker: String): String;
     function GetPubKeyByID(AReqID: String; AID: Int64): String;
     function GetPubKeyBySessionKey(AReqID,ASessionKey: String): String;
-    function DoGetMyKeys(AReqID,ASessionKey: String): String;
     function TrySaveKeysToFile(APrivateKey: String): Boolean;
     function TryExtractPrivateKeyFromFile(out PrKey: String;
       out PubKey: String): Boolean;
 
     function TryGetTokenICO(ATicker: String; var tICO: TTokenICODat): Boolean;
+    function GetTokensICOs: TArray<TTokenICODat>;
 
     property DownloadRemain: Int64 read GetDownloadRemain write SetDownloadRemain;
     property SessionKey: String read GetSessionKey write SetSessionKey;
@@ -328,6 +330,18 @@ begin
     bValue := Format('%s:%f',[sk.Abreviature,GetLocalTokenBalance(sk.SmartID,FUserID)]);
     Result := Result + [bValue];
   end;
+end;
+
+function TAppCore.GetNewTokenFee(AAmount: Int64; ADecimals: Integer): Integer;
+begin
+  if (AAmount < 1000) or (AAmount > 9999999999999999) then
+    raise EValidError.Create('invalid amount value');
+  if (ADecimals < 2) or (ADecimals > 8) then
+    raise EValidError.Create('invalid decimals value');
+  if Length(AAmount.ToString) + ADecimals > 18 then
+    raise EValidError.Create('invalid decimals value');
+
+  Result := Min((AAmount div (ADecimals * 10)) + 1,10);
 end;
 
 function TAppCore.DoGetTokenBalanceWithSmartAddress(AReqID, AAddressTET,
@@ -685,25 +699,6 @@ begin
   Result := FBlockchain.GetOneSmartKeyBlock(AFrom);
 end;
 
-function TAppCore.DoGetMyKeys(AReqID, ASessionKey: String): String;
-var
-  splt: TArray<String>;
-begin
-  if not(ASessionKey.StartsWith('ipa') and (Length(ASessionKey) = 34)) then
-    raise EValidError.Create('incorrect session key');
-
-  Result := FNodeClient.DoRequest(AReqID,'GetMyKeys * ' + ASessionKey + ' • ');
-  if Result.StartsWith('URKError') then
-  begin;
-    splt := Result.Split([' ']);
-    case splt[3].ToInteger of
-      20: raise EKeyExpiredError.Create('');
-      31202: raise ENoInfoForThisAccountError.Create('');
-      else raise EUnknownError.Create(splt[3]);
-    end;
-  end;
-end;
-
 function TAppCore.GetOneChainBlock(AFrom: Int64): TOneBlockBytes;
 begin
   Result := FBlockchain.GetOneChainBlock(AFrom);
@@ -812,6 +807,19 @@ begin
   Result := FBlockchain.GetLastChainUserTransactions(AUserID,Amount);
 end;
 
+function TAppCore.GetChainTransations(ASkip: Integer;
+  var ARows: Integer): TArray<TExplorerTransactionInfo>;
+begin
+  if ASkip < 0 then
+    raise EValidError.Create('invalid "skip" value');
+  if ARows <= 0 then
+    raise EValidError.Create('invalid "rows" value');
+  if ARows > 50 then
+    raise EValidError.Create('"rows" value can''t be more than 50');
+
+  Result := FBlockchain.GetChainTransactions(ASkip,ARows);
+end;
+
 function TAppCore.GetSessionKey: String;
 begin
   Result := FSessionKey;
@@ -838,6 +846,11 @@ end;
 function TAppCore.GetTETAddress: String;
 begin
   Result := FTETAddress;
+end;
+
+function TAppCore.GetTokensICOs: TArray<TTokenICODat>;
+begin
+  Result := FBlockchain.GetICOsInfo;
 end;
 
 function TAppCore.GetUserID: Int64;
@@ -883,7 +896,6 @@ end;
 function TAppCore.TrySaveKeysToFile(APrivateKey: String): Boolean;
 var
   sPath,PubKey: String;
-  i: Integer;
 begin
   Result := RestorePublicKey(APrivateKey,PubKey);
   if not Result then exit;
