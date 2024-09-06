@@ -144,7 +144,7 @@ end;
 
 constructor TLogs.Create;
 begin
-  FPath := TPath.Combine(TDirectory.GetCurrentDirectory,mainLogsFolderName);
+  FPath := TPath.Combine(ExtractFilePath(ParamStr(0)),mainLogsFolderName);
   Init;
 end;
 

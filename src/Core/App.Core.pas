@@ -146,7 +146,8 @@ type
       out PubKey: String): Boolean;
 
     function TryGetTokenICO(ATicker: String; var tICO: TTokenICODat): Boolean;
-    function GetTokensICOs: TArray<TTokenICODat>;
+    function GetTokensICOs(ASkip: Integer; var ARows: Integer): TArray<TTokenICODat>;
+    function TryGetTokenBase(ATicker: string; var sk: TCSmartKey): Boolean;
 
     property DownloadRemain: Int64 read GetDownloadRemain write SetDownloadRemain;
     property SessionKey: String read GetSessionKey write SetSessionKey;
@@ -467,7 +468,7 @@ begin
   arr := (FKeys.Private as IECPrivateKeyParameters).D.ToByteArray;
   PrKey := BytesToHex(arr).ToLower;
 
-  sPath := TPath.Combine(TDirectory.GetCurrentDirectory,'keys');
+  sPath := TPath.Combine(ExtractFilePath(ParamStr(0)),'keys');
   if not DirectoryExists(sPath) then TDirectory.CreateDirectory(sPath);
   sPath := TPath.Combine(sPath,'keys');
   sPath := Format('%s_%s.txt',[sPath,Result.Split([' '])[2]]);
@@ -554,7 +555,7 @@ var
   lines: TArray<String>;
   i: Integer;
 begin
-  sPath := TPath.Combine(TDirectory.GetCurrentDirectory,'keys');
+  sPath := TPath.Combine(ExtractFilePath(ParamStr(0)),'keys');
   sPath := TPath.Combine(sPath,'keys');
   sPath := Format('%s_%d.txt',[sPath,AppCore.UserID]);
   if not FileExists(sPath) then raise EFileNotExistsError.Create('');
@@ -860,9 +861,16 @@ begin
   Result := FTETAddress;
 end;
 
-function TAppCore.GetTokensICOs: TArray<TTokenICODat>;
+function TAppCore.GetTokensICOs(ASkip: Integer; var ARows: Integer): TArray<TTokenICODat>;
 begin
-  Result := FBlockchain.GetICOsInfo;
+  if ASkip < 0 then
+    raise EValidError.Create('invalid "skip" value');
+  if ARows <= 0 then
+    raise EValidError.Create('invalid "rows" value');
+  if ARows > 50 then
+    raise EValidError.Create('"rows" value can''t be more than 50');
+
+  Result := FBlockchain.GetICOsInfo(ASkip, ARows);
 end;
 
 function TAppCore.GetUserID: Int64;
@@ -913,7 +921,7 @@ begin
   Result := RestorePublicKey(APrivateKey,PubKey);
   if not Result then exit;
 
-  sPath := TPath.Combine(TDirectory.GetCurrentDirectory,'keys');
+  sPath := TPath.Combine(ExtractFilePath(ParamStr(0)),'keys');
   if not DirectoryExists(sPath) then TDirectory.CreateDirectory(sPath);
   sPath := TPath.Combine(sPath,'keys');
   sPath := Format('%s_%d.txt',[sPath,FUserID]);
@@ -989,6 +997,11 @@ begin
   FNodeServer.Stop;
   FHTTPServer.Stop;
   FNodeClient.Stop;
+end;
+
+function TAppCore.TryGetTokenBase(ATicker: string; var sk: TCSmartKey): Boolean;
+begin
+  Result := FBlockchain.TryGetSmartKey(ATicker,sk);
 end;
 
 function TAppCore.TryGetTokenICO(ATicker: String;
