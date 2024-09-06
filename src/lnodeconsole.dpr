@@ -1,4 +1,4 @@
-program LConsoleNode;
+program lnodeconsole;
 
 {$APPTYPE CONSOLE}
 

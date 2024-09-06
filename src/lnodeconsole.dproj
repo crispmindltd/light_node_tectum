@@ -4,12 +4,11 @@
         <ProjectVersion>20.1</ProjectVersion>
         <FrameworkType>None</FrameworkType>
         <Base>True</Base>
-        <Config Condition="'$(Config)'==''">Debug</Config>
-        <Platform Condition="'$(Platform)'==''">Win32</Platform>
-        <ProjectName Condition="'$(ProjectName)'==''">LConsoleNode</ProjectName>
-        <TargetedPlatforms>1</TargetedPlatforms>
+        <Config Condition="'$(Config)'==''">Release</Config>
+        <Platform Condition="'$(Platform)'==''">Linux64</Platform>
+        <TargetedPlatforms>129</TargetedPlatforms>
         <AppType>Console</AppType>
-        <MainSource>LConsoleNode.dpr</MainSource>
+        <MainSource>lnodeconsole.dpr</MainSource>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
         <Base>true</Base>
@@ -84,7 +83,7 @@
         <DCC_F>false</DCC_F>
         <DCC_K>false</DCC_K>
         <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;$(DCC_Namespace)</DCC_Namespace>
-        <SanitizedProjectName>LConsoleNode</SanitizedProjectName>
+        <SanitizedProjectName>lnodeconsole</SanitizedProjectName>
         <DCC_UnitSearchPath>.\Crypto\CryptoLib\Asn1;.\Crypto\CryptoLib\Asn1\Bsi;.\Crypto\CryptoLib\Asn1\CryptLib;.\Crypto\CryptoLib\Asn1\CryptoPro;.\Crypto\CryptoLib\Asn1\Eac;.\Crypto\CryptoLib\Asn1\Edec;.\Crypto\CryptoLib\Asn1\Iana;.\Crypto\CryptoLib\Asn1\Misc;.\Crypto\CryptoLib\Asn1\Nist;.\Crypto\CryptoLib\Asn1\Oiw;.\Crypto\CryptoLib\Asn1\Pkcs;.\Crypto\CryptoLib\Asn1\RossStandart;.\Crypto\CryptoLib\Asn1\Sec;.\Crypto\CryptoLib\Asn1\TeleTrust;.\Crypto\CryptoLib\Asn1\X9;.\Crypto\CryptoLib\Crypto;.\Crypto\CryptoLib\Crypto\Agreement;.\Crypto\CryptoLib\Crypto\Digests;.\Crypto\CryptoLib\Crypto\EC;.\Crypto\CryptoLib\Crypto\Engines;.\Crypto\CryptoLib\Crypto\Generators;.\Crypto\CryptoLib\Crypto\Macs;.\Crypto\CryptoLib\Crypto\Modes;.\Crypto\CryptoLib\Crypto\Paddings;.\Crypto\CryptoLib\Crypto\Parsers;.\Crypto\CryptoLib\Crypto\Parameters;.\Crypto\CryptoLib\Crypto\Prng;.\Crypto\CryptoLib\Crypto\Signers;.\Crypto\CryptoLib\Crypto\Signers\SignersEncodings;.\Crypto\CryptoLib\Interfaces;.\Crypto\CryptoLib\Math;.\Crypto\CryptoLib\Math\EC;.\Crypto\CryptoLib\Math\EC\Abc;.\Crypto\CryptoLib\Math\EC\Custom\Djb;.\Crypto\CryptoLib\Math\EC\Custom\Sec;.\Crypto\CryptoLib\Math\EC\Endo;.\Crypto\CryptoLib\Math\EC\Multiplier;.\Crypto\CryptoLib\Math\EC\Rfc7748;.\Crypto\CryptoLib\Math\EC\Rfc8032;.\Crypto\CryptoLib\Math\Field;.\Crypto\CryptoLib\Math\Raw;.\Crypto\CryptoLib\Security;.\Crypto\CryptoLib\Utils;.\Crypto\CryptoLib\Utils\Encoders;.\Crypto\CryptoLib\Utils\Randoms;.\Crypto\CryptoLib\Utils\Rng;.\Crypto\HashLib\Base;.\Crypto\HashLib\Checksum;.\Crypto\HashLib\Crypto;.\Crypto\HashLib\Crypto\Blake2BParams;.\Crypto\HashLib\Crypto\Blake2SParams;.\Crypto\HashLib\Hash128;.\Crypto\HashLib\Hash32;.\Crypto\HashLib\Hash64;.\Crypto\HashLib\Interfaces;.\Crypto\HashLib\Interfaces\IBlake2BParams;.\Crypto\HashLib\Interfaces\IBlake2SParams;.\Crypto\HashLib\KDF;.\Crypto\HashLib\Nullable;.\Crypto\HashLib\NullDigest;.\Crypto\HashLib\Utils;.\Crypto\SimpleBaseLib\Bases;.\Crypto\SimpleBaseLib\Interfaces;.\Crypto\SimpleBaseLib\Utils;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <VerInfo_Locale>1049</VerInfo_Locale>
         <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProgramID=com.embarcadero.$(MSBuildProjectName);ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
@@ -159,6 +158,7 @@
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Linux64)'!=''">
         <DCC_UsePackage>DataSnapServer;emshosting;fmx;DbxCommonDriver;bindengine;FireDACCommonODBC;emsclient;FireDACCommonDriver;IndyProtocols;dbxcds;emsedge;inetdb;FireDACSqliteDriver;DbxClientDriver;FireDACASADriver;soapmidas;dbexpress;FireDACInfxDriver;inet;DataSnapCommon;dbrtl;FireDACOracleDriver;CustomIPTransport;FireDACMSSQLDriver;DataSnapIndy10ServerTransport;DataSnapConnectors;FireDACMongoDBDriver;IndySystem;FireDACTDataDriver;bindcomp;FireDACCommon;DataSnapServerMidas;FireDACODBCDriver;emsserverresource;IndyCore;RESTBackendComponents;rtl;FireDACMySQLDriver;FireDACADSDriver;RESTComponents;dsnapxml;DataSnapClient;DataSnapFireDAC;emsclientfiredac;FireDACPgDriver;FireDAC;xmlrtl;dsnap;CloudService;FireDACDb2Driver;DataSnapNativeClient;DatasnapConnectorsFreePascal;soaprtl;soapserver;FireDACIBDriver;$(DCC_UsePackage)</DCC_UsePackage>
+        <DCC_UnitSearchPath>$(fmxlinux)\Lib\$(ProductVersion)\$(Config);$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_OSX64)'!=''">
         <DCC_UsePackage>DataSnapServer;fmx;DbxCommonDriver;bindengine;FireDACCommonODBC;IndyIPCommon;emsclient;FireDACCommonDriver;IndyProtocols;dbxcds;IndyIPClient;FmxTeeUI;bindcompfmx;DBXFirebirdDriver;inetdb;ibmonitor;FireDACSqliteDriver;DbxClientDriver;FireDACASADriver;soapmidas;fmxFireDAC;dbexpress;DBXMySQLDriver;inet;DataSnapCommon;fmxase;dbrtl;FireDACOracleDriver;FireDACDBXDriver;fmxdae;CustomIPTransport;FireDACMSSQLDriver;DataSnapIndy10ServerTransport;DBXInterBaseDriver;FireDACMongoDBDriver;IndySystem;FireDACTDataDriver;ibxbindings;bindcomp;FireDACCommon;DataSnapServerMidas;FireDACODBCDriver;IndyCore;RESTBackendComponents;bindcompdbx;rtl;FireDACMySQLDriver;RESTComponents;DBXSqliteDriver;dsnapxml;IndyIPServer;DataSnapClient;DataSnapProviderClient;DataSnapFireDAC;emsclientfiredac;FireDACPgDriver;FireDAC;FireDACDSDriver;inetdbxpress;xmlrtl;tethering;ibxpress;dsnap;DBXSybaseASADriver;CloudService;DBXOracleDriver;DBXInformixDriver;DataSnapNativeClient;fmxobj;FMXTee;soaprtl;soapserver;FireDACIBDriver;$(DCC_UsePackage)</DCC_UsePackage>
@@ -261,7 +261,7 @@
         <BorlandProject>
             <Delphi.Personality>
                 <Source>
-                    <Source Name="MainSource">LConsoleNode.dpr</Source>
+                    <Source Name="MainSource">lnodeconsole.dpr</Source>
                 </Source>
                 <Excluded_Packages>
                     <Excluded_Packages Name="$(BDSBIN)\dcloffice2k290.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
@@ -284,9 +284,15 @@
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
-                <DeployFile LocalName="Win32\Debug\LConsoleNode.exe" Configuration="Debug" Class="ProjectOutput">
+                <DeployFile LocalName="Linux64\Release\lnodeconsole" Configuration="Release" Class="ProjectOutput">
+                    <Platform Name="Linux64">
+                        <RemoteName>lnodeconsole</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="Win32\Debug\lnodeconsole.exe" Configuration="Debug" Class="ProjectOutput">
                     <Platform Name="Win32">
-                        <RemoteName>LConsoleNode.exe</RemoteName>
+                        <RemoteName>lnodeconsole.exe</RemoteName>
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
@@ -1246,7 +1252,7 @@
                 <Platform value="Android64">False</Platform>
                 <Platform value="iOSDevice64">False</Platform>
                 <Platform value="iOSSimARM64">False</Platform>
-                <Platform value="Linux64">False</Platform>
+                <Platform value="Linux64">True</Platform>
                 <Platform value="OSX64">False</Platform>
                 <Platform value="OSXARM64">False</Platform>
                 <Platform value="Win32">True</Platform>

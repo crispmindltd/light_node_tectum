@@ -126,15 +126,15 @@ constructor TBlockchain.Create;
 var
   ChainFileWorker: TChainFileWorker;
 begin
-  FTokenCHN := TBlockchainTokenCHN.Create('Token.chn');
-  FSmartKey := TBlockchainSmartkey.Create('SmartKey.db');
-  FTokenICO := TBlockchainICODat.Create('IcoDat.db');
+  FTokenCHN := TBlockchainTokenCHN.Create('token.chn');
+  FSmartKey := TBlockchainSmartkey.Create('smartkey.db');
+  FTokenICO := TBlockchainICODat.Create('icodat.db');
   FSmartcontracts := TDictionary<String,TChainFileWorker>.Create;
   FSmartcontracts.Capacity := 100;
 
   FDynamicBlocks := TDictionary<String,TChainFileWorker>.Create;
   FDynamicBlocks.Capacity := 100;
-  ChainFileWorker := TBlockchainTETDynamic.Create('Token64.db');
+  ChainFileWorker := TBlockchainTETDynamic.Create('token64.db');
   FDynamicBlocks.Add(ChainFileWorker.Name,ChainFileWorker);
 
   UpdateLists;
@@ -163,7 +163,7 @@ begin
   if AID <> -1 then
     Result := Format('%d.tkn',[AID])
   else
-    Result := 'Token64.db';
+    Result := 'token64.db';
 end;
 
 procedure TBlockchain.UpdateLists;
@@ -521,7 +521,7 @@ var
   OneBlock: TOneBlockBytes;
   tb: TTokenBase absolute OneBlock;
 begin
-  FDynamicBlocks.TryGetValue('Token64.db',ChainFileWorker);
+  FDynamicBlocks.TryGetValue('token64.db',ChainFileWorker);
   if (ChainFileWorker.GetBlocksCount <= AFrom) or (AFrom < 0) then
     Exit(False)
   else
@@ -937,7 +937,7 @@ function TBlockchain.TryGetTETAddressByOwnerID(const AOwnerID: Int64;
 var
   ChainFileWorker: TChainFileWorker;
 begin
-  FDynamicBlocks.TryGetValue('Token64.db',ChainFileWorker);
+  FDynamicBlocks.TryGetValue('token64.db',ChainFileWorker);
 
   Result := TBlockchainTETDynamic(ChainFileWorker).TryGetTETAddress(AOwnerID,ATETAddress);
 end;
@@ -947,7 +947,7 @@ function TBlockchain.TryGetTETTokenBase(const ATETAddress: String;
 var
   ChainFileWorker: TChainFileWorker;
 begin
-  FDynamicBlocks.TryGetValue('Token64.db',ChainFileWorker);
+  FDynamicBlocks.TryGetValue('token64.db',ChainFileWorker);
 
   Result := TBlockchainTETDynamic(ChainFileWorker).TryGetTokenBase(ATETAddress,AID,tb);
 end;
@@ -957,7 +957,7 @@ function TBlockchain.TryGetTETTokenBase(const AOwnerID: Int64;
 var
   ChainFileWorker: TChainFileWorker;
 begin
-  FDynamicBlocks.TryGetValue('Token64.db',ChainFileWorker);
+  FDynamicBlocks.TryGetValue('token64.db',ChainFileWorker);
 
   Result := TBlockchainTETDynamic(ChainFileWorker).TryGetTokenBase(AOwnerID,AID,tb);
 end;

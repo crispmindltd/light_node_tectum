@@ -36,7 +36,7 @@ implementation
 
 constructor TBlockchainTETDynamic.Create(AFileName: String);
 begin
-  inherited Create('DBC',AFileName);
+  inherited Create('dbc',AFileName);
 
 end;
 

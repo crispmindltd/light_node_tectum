@@ -32,7 +32,7 @@ implementation
 
 constructor TBlockchainTokenCHN.Create(AFileName: String);
 begin
-  inherited Create('DBC',AFileName,True);
+  inherited Create('dbc',AFileName,True);
 
 end;
 

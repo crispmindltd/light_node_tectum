@@ -5,7 +5,8 @@ interface
 uses
   Blockchain.BaseTypes,
   Blockchain.Intf,
-  Math;
+  System.SyncObjs,
+  System.Math;
 
 type
   TBlockchainICODat = class(TChainFileWorker)
@@ -33,7 +34,7 @@ implementation
 
 constructor TBlockchainICODat.Create(AFileName: String);
 begin
-  inherited Create('DBC',AFileName);
+  inherited Create('dbc',AFileName);
 
 end;
 

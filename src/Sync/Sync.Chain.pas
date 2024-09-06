@@ -42,7 +42,7 @@ implementation
 
 constructor TChainBlocksUpdater.Create(AAddress: String; APort: Word);
 begin
-  inherited Create('DBC',AAddress,APort);
+  inherited Create('dbc',AAddress,APort);
 
 end;
 

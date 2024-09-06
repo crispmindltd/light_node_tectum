@@ -33,7 +33,7 @@ implementation
 
 constructor TBlockchainTokenDynamic.Create(AFileName: String);
 begin
-  inherited Create('SmartC',AFileName);
+  inherited Create('smartc',AFileName);
 
 end;
 

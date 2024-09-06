@@ -3,11 +3,14 @@ unit Console;
 interface
 
 uses
+  System.SysUtils,
+  System.SyncObjs,
   App.Intf;
 
 type
   TConsoleCore = class(TInterfacedObject, IUI)
   private
+    CS:TCriticalSection;
     function IsChainNeedSync(const AName: String): Boolean;
 
   public
@@ -32,69 +35,81 @@ implementation
 
 procedure TConsoleCore.AddNewChain(const AName: String; AIsSystemChain: Boolean);
 begin
-  Writeln('AddNewChain: ' + AName);
+  DoMessage('New chain: ' + AName);
 end;
 
 constructor TConsoleCore.Create;
 begin
-   Writeln('Create');
+  CS := TCriticalSection.Create;
 end;
 
 destructor TConsoleCore.Destroy;
 begin
-   Writeln('Destroy');
-  inherited;
+  try
+    DoMessage('');
+  finally
+    CS.Free;
+    inherited;
+  end;
 end;
 
 procedure TConsoleCore.DoMessage(const AMessage: String);
 begin
-  Writeln(AMessage);
+  CS.Enter;
+  try
+    Write(#13#10 + AMessage);
+  finally
+    CS.Leave;
+  end;
 end;
 
 function TConsoleCore.IsChainNeedSync(const AName: String): Boolean;
 begin
-
 end;
 
 procedure TConsoleCore.NotifyNewChainBlocks;
 begin
-  Writeln('New chain blocks');
 end;
 
 procedure TConsoleCore.NotifyNewSmartBlocks;
 begin
-  Writeln('New smart blocks');
 end;
 
 procedure TConsoleCore.NullForm(var Form);
 begin
-  Writeln('NullForm');
 end;
 
 procedure TConsoleCore.Run;
 begin
-   writeln('Lite node is running. Press Enter to stop.');
+   DoMessage(Format('Tectum Light Node version %s. Copyright (c) 2024 CrispMind.',[AppCore.GetVersion]));
+   DoMessage('Lite node is running. Press Enter to stop.');
    Readln;
 end;
 
 procedure TConsoleCore.ShowDownloadProgress;
 begin
-   Writeln('ShowDownloadProgress');
+  const Remain = AppCore.DownloadRemain;
+
+  CS.Enter;
+  try
+    Write(Format('Downloading blocks ... %d left    '#13, [Remain]));
+  finally
+    CS.Leave;
+  end;
 end;
 
 procedure TConsoleCore.ShowEnterPrivateKeyForm;
 begin
-  Writeln('ShowEnterPrivateKeyForm');
 end;
 
 procedure TConsoleCore.ShowMainForm;
 begin
-  Writeln('ShowMainForm');
 end;
 
 procedure TConsoleCore.ShowTotalCountBlocksDownloadRemain;
 begin
-  Writeln('ShowTotalCountBlocksDownloadRemain');
+  DoMessage('');
 end;
 
 end.
+

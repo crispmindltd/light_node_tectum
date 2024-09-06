@@ -33,7 +33,7 @@ implementation
 
 constructor TBlockchainSmartKey.Create(AFileName: String);
 begin
-  inherited Create('SmartC',AFileName,True);
+  inherited Create('smartc',AFileName,True);
 
 end;
 

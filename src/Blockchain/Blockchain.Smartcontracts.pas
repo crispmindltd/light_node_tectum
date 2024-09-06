@@ -31,7 +31,7 @@ implementation
 
 constructor TBlockchainSmart.Create(AFileName: String);
 begin
-  inherited Create('SmartC',AFileName);
+  inherited Create('smartc',AFileName);
 
 end;
 
