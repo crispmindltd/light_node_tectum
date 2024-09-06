@@ -19,57 +19,65 @@ type
     constructor Create;
     destructor Destroy; override;
 
-    function blocksCountL(AReqID: String; AEvent: TEvent; AComType: THTTPCommandType;
-      AParams: TStrings; ABody: String): TEndpointResponse;
-    function blocksCount(AReqID: String; AEvent: TEvent; AComType: THTTPCommandType;
-      AParams: TStrings; ABody: String): TEndpointResponse;
+    function BlocksCountLocal(AReqID: string; AEvent: TEvent;
+      AComType: THTTPCommandType; AParams: TStrings; ABody: string)
+      : TEndpointResponse;
+    function BlocksCount(AReqID: string; AEvent: TEvent;
+      AComType: THTTPCommandType; AParams: TStrings; ABody: string)
+      : TEndpointResponse;
   end;
 
 implementation
 
-function TChainEndpoints.blocksCount(AReqID: String; AEvent: TEvent;
-  AComType: THTTPCommandType; AParams: TStrings; ABody: String): TEndpointResponse;
+function TChainEndpoints.BlocksCount(AReqID: string; AEvent: TEvent;
+  AComType: THTTPCommandType; AParams: TStrings; ABody: string): TEndpointResponse;
 var
   JSON: TJSONObject;
-  response: String;
-  blockCount: Int64;
+  Response: string;
+  BlocksNumber: Int64;
 begin
   Result.ReqID := AReqID;
   try
-    if AComType <> hcGET then raise ENotSupportedError.Create('');
+    if AComType <> hcGET then
+      raise ENotSupportedError.Create('');
+
     JSON := TJSONObject.Create;
     try
-      response := AppCore.GetBlocksCount(AReqID);
-      blockCount := response.Split([' '])[2].ToInt64;
-      JSON.AddPair('blocksCount',TJSONNumber.Create(blockCount));
+      Response := AppCore.GetBlocksCount(AReqID);
+      BlocksNumber := Response.Split([' '])[2].ToInt64;
+      JSON.AddPair('blocksCount', TJSONNumber.Create(BlocksNumber));
       Result.Code := HTTP_SUCCESS;
       Result.Response := JSON.ToString;
     finally
       JSON.Free;
     end;
   finally
-    if Assigned(AEvent) then AEvent.SetEvent;
+    if Assigned(AEvent) then
+      AEvent.SetEvent;
   end;
 end;
 
-function TChainEndpoints.blocksCountL(AReqID: String; AEvent: TEvent;
-  AComType: THTTPCommandType; AParams: TStrings; ABody: String): TEndpointResponse;
+function TChainEndpoints.BlocksCountLocal(AReqID: string; AEvent: TEvent;
+  AComType: THTTPCommandType; AParams: TStrings; ABody: string): TEndpointResponse;
 var
   JSON: TJSONObject;
 begin
   Result.ReqID := AReqID;
   try
     JSON := TJSONObject.Create;
-    if AComType <> hcGET then raise ENotSupportedError.Create('');
+    if AComType <> hcGET then
+      raise ENotSupportedError.Create('');
     try
-      JSON.AddPair('blocksCount',TJSONNumber.Create(AppCore.GetChainBlocksCount));
+      JSON.AddPair('blocksCount',
+        TJSONNumber.Create(AppCore.GetChainBlocksCount));
       Result.Code := HTTP_SUCCESS;
-      Result.Response := JSON.ToString;
+      Result.response := JSON.ToString;
     finally
       JSON.Free;
     end;
   finally
-    if Assigned(AEvent) then AEvent.SetEvent;
+    if Assigned(AEvent) then
+      AEvent.SetEvent;
   end;
 end;
 

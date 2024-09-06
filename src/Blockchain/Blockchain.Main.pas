@@ -3,6 +3,7 @@ unit Blockchain.Main;
 interface
 
 uses
+  App.Exceptions,
   App.Intf,
   Blockchain.BaseTypes,
   Blockchain.ICODat,
@@ -56,6 +57,8 @@ type
         AAmount: Integer);
       function GetChainTransactions(ASkip: Integer; var ARows: Integer): TArray<TExplorerTransactionInfo>;
       function GetLastChainTransactions(var Amount: Integer): TArray<TExplorerTransactionInfo>;
+      function GetChainUserTransactions(AUserID: Integer; ASkip: Integer;
+        var ARows: Integer): TArray<THistoryTransactionInfo>;
       function GetLastChainUserTransactions(AUserID: Integer;
         var AAmount: Integer): TArray<THistoryTransactionInfo>;
 
@@ -79,12 +82,12 @@ type
         AAmount: Integer);
       procedure SetSmartBlocks(ASmartID: Integer; APos: Int64; ABytes: TBytesBlocks;
         AAmount: Integer);
+      function GetSmartTransactions(ATicker: String; ASkip: Integer;
+        var ARows: Integer): TArray<TExplorerTransactionInfo>;
       function GetLastSmartTransactions(ATicker: String;
         var Amount: Integer): TArray<TExplorerTransactionInfo>;
       function GetSmartAddress(ATicker: String): String; overload;
       function GetSmartAddress(AID: Integer): String; overload;
-      function GetTokenTransfersHistory(ATicker: String;
-        ATETAddress: String): String;
       function GetLastSmartUserTransactions(AUserID: Integer; ATicker: String;
         var AAmount: Integer): TArray<THistoryTransactionInfo>;
 
@@ -247,6 +250,79 @@ begin
 
     Result[i].Amount := bc2.Smart.Delta / 100000000;
   end;
+end;
+
+function TBlockchain.GetChainUserTransactions(AUserID: Integer; ASkip: Integer;
+  var ARows: Integer): TArray<THistoryTransactionInfo>;
+var
+  oneBlock1: TOneBlockBytes;
+  bc2: Tbc2 absolute oneBlock1;
+  tICO: TTokenICODat;
+  tb: TTokenBase;
+  hashHex: String;
+  TokenID,startBlock,i,j: Integer;
+  transaction: THistoryTransactionInfo;
+begin
+  Result := [];
+  if not TryGetTETTokenBase(AUserID,TokenID,tb) then exit;
+  oneBlock1 := GetOneChainBlock(tb.LastBlock);
+  if not TryGetOneICOBlock(tb.TokenDatID,tICO) then exit;
+
+  startBlock := tb.StartBlock;
+  i := tb.LastBlock;
+  while (ASkip > 0) and (i > 0) and (i > StartBlock) do
+  begin
+    oneBlock1 := GetOneChainBlock(i);  // do skipping
+    if bc2.Smart.tkn[1].TokenID = TokenID then
+    begin
+      i := bc2.Smart.tkn[1].FromBlock;
+      Dec(ASkip);
+    end else
+    if bc2.Smart.tkn[2].TokenID = TokenID then
+    begin
+      i := bc2.Smart.tkn[2].FromBlock;
+      Dec(ASkip);
+    end;
+  end;
+
+  while (i > 0) and (i > StartBlock) and (Length(Result) < ARows) do
+  begin
+    oneBlock1 := GetOneChainBlock(i);
+    if bc2.Smart.tkn[1].TokenID = TokenID then
+    begin
+      hashHex := '';
+      for j := 1 to CHashLength do
+        hashHex := hashHex + IntToHex(bc2.Hash[j],2);
+
+      if not GetOneChainDynBlock(bc2.Smart.tkn[2].TokenID,tb) then break;
+      transaction.DateTime := bc2.Smart.TimeEvent;
+      transaction.BlockNum := i;
+      transaction.Amount := bc2.Smart.Delta/Power(10,tICO.FloatSize);
+      transaction.Hash := hashHex.ToLower;
+      transaction.Address := tb.Token;
+      transaction.Incom := False;
+      Result := Result + [transaction];
+      i := bc2.Smart.tkn[1].FromBlock;
+    end;
+
+    if bc2.Smart.tkn[2].TokenID = TokenID then
+    begin
+      hashHex := '';
+      for j := 1 to CHashLength do
+      hashHex := hashHex + IntToHex(bc2.Hash[j],2);
+
+      if not GetOneChainDynBlock(bc2.Smart.tkn[1].TokenID,tb) then break;
+      transaction.DateTime := bc2.Smart.TimeEvent;
+      transaction.BlockNum := i;
+      transaction.Amount := bc2.Smart.Delta/Power(10,tICO.FloatSize);
+      transaction.Hash := hashHex.ToLower;
+      transaction.Address := tb.Token;
+      transaction.Incom := True;
+      Result := Result + [transaction];
+      i := bc2.Smart.tkn[2].FromBlock;
+    end;
+  end;
+  ARows := Length(Result);
 end;
 
 function TBlockchain.GetDynBlocks(ADynID: Integer; AFrom: Int64;
@@ -593,25 +669,46 @@ begin
   end;
 end;
 
-function TBlockchain.GetTokenTransfersHistory(ATicker: String;
-  ATETAddress: String): String;
+function TBlockchain.GetSmartTransactions(ATicker: String; ASkip: Integer;
+  var ARows: Integer): TArray<TExplorerTransactionInfo>;
 var
-  smID,amount,i: Integer;
   ChainFileWorker: TChainFileWorker;
   Bytes: TBytesBlocks;
-  bc4Arr: array[0..SizeOf(TCbc4)-1] of Byte;
-  bc4: TCbc4 absolute bc4Arr;
+  i,j,dynID,count: Integer;
+  hashHex: String;
+  TCbc4Arr: array[0..SizeOf(TCbc4)-1] of Byte;
+  bc4: TCbc4 absolute TCbc4Arr;
+  tcb: TCTokensBase;
+  tICO: TTokenICODat;
 begin
-  smID := SmartTickerToID(ATicker);
-  if not FSmartcontracts.TryGetValue(SmartNameByID(smID),ChainFileWorker) then exit;
+  if not FSmartcontracts.TryGetValue(SmartNameByTicker(ATicker),ChainFileWorker)
+    then raise ESmartNotExistsError.Create('');
 
-  amount := 20;
-  Bytes := ChainFileWorker.ReadBlocks(amount);
-  for i := 0 to amount-1 do
+  count := ARows;
+  Bytes := ChainFileWorker.ReadBlocks(ASkip,ARows);
+  ARows := Min(Min(ARows,count),50);
+
+  SetLength(Result,ARows);
+  for i := 0 to ARows-1 do
   begin
-    Move(Bytes[i*SizeOf(bc4)],bc4Arr[0],SizeOf(bc4));
+    Move(Bytes[i*SizeOf(bc4)],TCbc4Arr[0],SizeOf(bc4));
 
+    Result[i].DateTime := bc4.Smart.TimeEvent;
+    dynID := SmartIDByTicker(ATicker);
+    Result[i].BlockNum := ASkip + i;
 
+    if GetOneSmartDynBlock(dynID,bc4.Smart.tkn[1].TokenID,tcb) then
+      Result[i].TransFrom := tcb.Token;
+    if GetOneSmartDynBlock(dynID,bc4.Smart.tkn[2].TokenID,tcb) then
+      Result[i].TransTo := tcb.Token;
+
+    hashHex := '';
+    for j := 1 to CHashLength do
+      hashHex := hashHex + IntToHex(bc4.Hash[j],2);
+    Result[i].Hash := hashHex.ToLower;
+
+    if TryGetOneICOBlock(ATicker,tICO) then
+      Result[i].Amount := bc4.Smart.Delta/Power(10,tICO.FloatSize);
   end;
 end;
 

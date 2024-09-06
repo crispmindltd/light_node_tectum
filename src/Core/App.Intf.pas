@@ -48,6 +48,8 @@ type
     procedure SetChainBlocks(APos: Int64; ABytes: TBytesBlocks; AAmount: Integer);
     function GetChainTransations(ASkip: Integer; var ARows: Integer): TArray<TExplorerTransactionInfo>;
     function GetChainLastTransactions(var Amount: Integer): TArray<TExplorerTransactionInfo>;
+    function GetChainUserTransactions(AUserID: Integer; ASkip: Integer;
+      var ARows: Integer): TArray<THistoryTransactionInfo>;
     function GetChainLastUserTransactions(AUserID: Integer;
       var Amount: Integer): TArray<THistoryTransactionInfo>;
 
@@ -66,6 +68,8 @@ type
     function GetOneSmartBlock(ASmartID: Integer; AFrom: Int64): TCbc4;
     procedure SetSmartBlocks(ASmartID: Integer; APos: Int64; ABytes: TBytesBlocks;
       AAmount: Integer);
+    function GetSmartTransactions(ATicker: String; ASkip: Integer;
+      var ARows: Integer): TArray<TExplorerTransactionInfo>;
     function GetSmartLastTransactions(ATicker: String;
       var Amount: Integer): TArray<TExplorerTransactionInfo>;
     function GetSmartLastUserTransactions(AUserID: Integer; ATicker: String;
@@ -99,8 +103,6 @@ type
     function DoRecoverKeys(ASeed: String; out PubKey: String;
       out PrKey: String): String;
 
-    function DoGetCoinsTransfersHistory(ASessionKey: String;
-      ALastAmount: Integer): String;
     function DoNewToken(AReqID,ASessionKey,AFullName,AShortName,ATicker: String;
       AAmount: Int64; ADecimals: Integer): String;
     function GetNewTokenFee(AAmount: Int64; ADecimals: Integer): Integer;

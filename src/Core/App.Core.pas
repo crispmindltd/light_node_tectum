@@ -72,6 +72,8 @@ type
     procedure SetChainBlocks(APos: Int64; ABytes: TBytesBlocks; AAmount: Integer);
     function GetChainTransations(ASkip: Integer; var ARows: Integer): TArray<TExplorerTransactionInfo>;
     function GetChainLastTransactions(var Amount: Integer): TArray<TExplorerTransactionInfo>;
+    function GetChainUserTransactions(AUserID: Integer; ASkip: Integer;
+      var ARows: Integer): TArray<THistoryTransactionInfo>;
     function GetChainLastUserTransactions(AUserID: Integer;
       var Amount: Integer): TArray<THistoryTransactionInfo>;
 
@@ -89,6 +91,8 @@ type
     function GetOneSmartBlock(ASmartID: Integer; AFrom: Int64): TCbc4;
     procedure SetSmartBlocks(ASmartID: Integer; APos: Int64;
       ABytes: TBytesBlocks; AAmount: Integer);
+    function GetSmartTransactions(ATicker: String; ASkip: Integer;
+      var ARows: Integer): TArray<TExplorerTransactionInfo>;
     function GetSmartLastTransactions(ATicker: String;
       var Amount: Integer): TArray<TExplorerTransactionInfo>;
     function GetSmartLastUserTransactions(AUserID: Integer; ATicker: String;
@@ -121,8 +125,6 @@ type
     function DoCoinsTransfer(AReqID,ASessionKey,ATo: String; AAmount: Extended): String;
     function GetLocalTETBalance: Extended; overload;
     function GetLocalTETBalance(ATETAddress: String): Extended; overload;
-    function DoGetCoinsTransfersHistory(ASessionKey: String;
-      ALastAmount: Integer): String;
     function DoNewToken(AReqID,ASessionKey,AFullName,AShortName,ATicker: String;
       AAmount: Int64; ADecimals: Integer): String;
     function GetNewTokenFee(AAmount: Int64; ADecimals: Integer): Integer;
@@ -229,27 +231,6 @@ begin
     case splt[3].ToInteger of
       93: raise EAuthError.Create('');
       816: raise EAuthError.Create('');
-      else raise EUnknownError.Create(splt[3]);
-    end;
-  end;
-end;
-
-function TAppCore.DoGetCoinsTransfersHistory(ASessionKey: String;
-  ALastAmount: Integer): String;
-var
-  splt: TArray<String>;
-begin
-  if not(ASessionKey.StartsWith('ipa') and (Length(ASessionKey) = 34)) then
-    raise EValidError.Create('incorrect session key');
-  if ALastAmount <= 0 then
-    raise EValidError.Create('invalid amount value');
-
-  Result := FNodeClient.DoRequest('*',Format('GetOReport * %s 1 %d',[ASessionKey,ALastAmount]));
-  if Result.StartsWith('URKError') then
-  begin;
-    splt := Result.Split([' ']);
-    case splt[3].ToInteger of
-      20: raise EKeyExpiredError.Create('');
       else raise EUnknownError.Create(splt[3]);
     end;
   end;
@@ -796,6 +777,21 @@ begin
   Result := FBlockchain.GetLastSmartUserTransactions(AUserID,ATicker,Amount);
 end;
 
+function TAppCore.GetSmartTransactions(ATicker: String; ASkip: Integer;
+  var ARows: Integer): TArray<TExplorerTransactionInfo>;
+begin
+  if not CheckTickerName(ATicker) then
+    raise EValidError.Create('invalid ticker');
+  if ASkip < 0 then
+    raise EValidError.Create('invalid "skip" value');
+  if ARows <= 0 then
+    raise EValidError.Create('invalid "rows" value');
+  if ARows > 50 then
+    raise EValidError.Create('"rows" value can''t be more than 50');
+
+  Result := FBlockchain.GetSmartTransactions(ATicker,ASkip,ARows);
+end;
+
 function TAppCore.GetChainLastTransactions(var Amount: Integer): TArray<TExplorerTransactionInfo>;
 begin
   Result := FBlockchain.GetLastChainTransactions(Amount);
@@ -818,6 +814,21 @@ begin
     raise EValidError.Create('"rows" value can''t be more than 50');
 
   Result := FBlockchain.GetChainTransactions(ASkip,ARows);
+end;
+
+function TAppCore.GetChainUserTransactions(AUserID, ASkip: Integer;
+  var ARows: Integer): TArray<THistoryTransactionInfo>;
+begin
+  if AUserID < 0 then
+    raise EValidError.Create('invalid "user id" value');
+  if ASkip < 0 then
+    raise EValidError.Create('invalid "skip" value');
+  if ARows <= 0 then
+    raise EValidError.Create('invalid "rows" value');
+  if ARows > 50 then
+    raise EValidError.Create('"rows" value can''t be more than 50');
+
+  Result := FBlockchain.GetChainUserTransactions(AUserID,ASkip,ARows);
 end;
 
 function TAppCore.GetSessionKey: String;
