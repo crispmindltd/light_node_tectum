@@ -52,7 +52,7 @@ constructor TChainFileWorker.Create(AFolder,AFileName: String;
 begin
   FIsSystemChain := AIsSystemChain;
   FFileName := AFileName;
-  FFileFolder := TPath.Combine(TDirectory.GetCurrentDirectory,AFolder);
+  FFileFolder := TPath.Combine(ExtractFilePath(ParamStr(0)),AFolder);
   if not DirectoryExists(FFileFolder) then TDirectory.CreateDirectory(FFileFolder);
   FFullFilePath := TPath.Combine(FFileFolder,AFileName);
   if not FileExists(FFullFilePath) then TFile.WriteAllBytes(FFullFilePath,[]);

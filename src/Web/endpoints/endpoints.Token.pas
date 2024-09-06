@@ -7,6 +7,7 @@ uses
   App.Intf,
   Blockchain.BaseTypes,
   Classes,
+  DateUtils,
   endpoints.Base,
   JSON,
   IdCustomHTTPServer,
@@ -19,7 +20,7 @@ uses
 type
   TTokenEndpoints = class(TEndpointsBase)
   private
-    function GetTokensList: TEndpointResponse;
+    function GetTokensList(AParams: TStrings): TEndpointResponse;
     function DoNewToken(AReqID: string; ABody: string): TEndpointResponse;
   public
     constructor Create;
@@ -142,8 +143,8 @@ begin
       begin
         JSONArray.AddElement(TJSONObject.Create);
         JSONNestedObject := JSONArray.Items[pred(JSONArray.Count)] as TJSONObject;
-        JSONNestedObject.AddPair('date', FormatDateTime('dd.mm.yyyy hh:mm:ss',
-          FloatToDateTime(TETTransfersInfo[i].DateTime)));
+        JSONNestedObject.AddPair('date', TJSONNumber.Create(
+          DateTimeToUnix(TETTransfersInfo[i].DateTime)));
         JSONNestedObject.AddPair('block',
           TJSONNumber.Create(TETTransfersInfo[i].BlockNum));
         JSONNestedObject.AddPair('address_from', TETTransfersInfo[i].TransFrom);
@@ -204,8 +205,8 @@ begin
       begin
         JSONArray.AddElement(TJSONObject.Create);
         JSONNestedObject := JSONArray.Items[pred(JSONArray.Count)] as TJSONObject;
-        JSONNestedObject.AddPair('date', FormatDateTime('dd.mm.yyyy hh:mm:ss',
-          FloatToDateTime(TETTransfersInfo[i].DateTime)));
+        JSONNestedObject.AddPair('date', TJSONNumber.Create(
+          DateTimeToUnix(TETTransfersInfo[i].DateTime)));
         JSONNestedObject.AddPair('block',
           TJSONNumber.Create(TETTransfersInfo[i].BlockNum));
         JSONNestedObject.AddPair('address', TETTransfersInfo[i].Address);
@@ -394,40 +395,60 @@ begin
   end;
 end;
 
-function TTokenEndpoints.GetTokensList: TEndpointResponse;
+function TTokenEndpoints.GetTokensList(AParams: TStrings): TEndpointResponse;
 var
   JSON, JSONNestedObject: TJSONObject;
   JSONArray: TJSONArray;
-  ICOs: TArray<TTokenICODat>;
-  i: Integer;
+  TokensICOs: TArray<TTokenICODat>;
+  Params: TStringList;
+  SmartKey: TCSmartKey;
+  i,Rows,Skip: Integer;
 begin
-  ICOs := AppCore.GetTokensICOs;
-
-  JSON := TJSONObject.Create;
+  Params := TStringList.Create(dupIgnore, True, False);
   try
-    JSONArray := TJSONArray.Create;
-    for i := 0 to Length(ICOs) - 1 do
-    begin
-      JSONArray.AddElement(TJSONObject.Create);
-      JSONNestedObject := JSONArray.Items[pred(JSONArray.Count)] as TJSONObject;
-      JSONNestedObject.AddPair('id', TJSONNumber.Create(ICOs[i].ICOID));
-      JSONNestedObject.AddPair('owner_id', TJSONNumber.Create(ICOs[i].OwnerID));
-      JSONNestedObject.AddPair('name', ICOs[i].ShortName);
-      JSONNestedObject.AddPair('date', FormatDateTime('dd.mm.yyyy hh:mm:ss',
-        FloatToDateTime(ICOs[i].RegDate)));
-      JSONNestedObject.AddPair('ticker', Trim(ICOs[i].Abreviature));
-      JSONNestedObject.AddPair('amount',
-        TJSONNumber.Create(ICOs[i].TockenCount));
-      JSONNestedObject.AddPair('decimals',
-        TJSONNumber.Create(ICOs[i].FloatSize));
-      JSONNestedObject.AddPair('info', ICOs[i].FullName);
-    end;
-    JSON.AddPair('tokens', JSONArray);
+    Params.AddStrings(AParams);
+    if Params.Values['rows'].IsEmpty then
+      Rows := 20
+    else if not TryStrToInt(Params.Values['rows'], Rows) then
+      raise EValidError.Create('request parameters error');
+    if Params.Values['skip'].IsEmpty then
+      Skip := 0
+    else if not TryStrToInt(Params.Values['skip'], Skip) then
+      raise EValidError.Create('request parameters error');
 
-    Result.Code := HTTP_SUCCESS;
-    Result.Response := JSON.ToString;
+    TokensICOs := AppCore.GetTokensICOs(Skip, Rows);
+    JSON := TJSONObject.Create;
+    try
+      JSONArray := TJSONArray.Create;
+      for i := 0 to Rows - 1 do
+      begin
+        if not AppCore.TryGetTokenBase(Trim(TokensICOs[i].Abreviature),SmartKey) then
+          continue;
+
+        JSONArray.AddElement(TJSONObject.Create);
+        JSONNestedObject := JSONArray.Items[pred(JSONArray.Count)] as TJSONObject;
+        JSONNestedObject.AddPair('id', TJSONNumber.Create(SmartKey.SmartID));
+        JSONNestedObject.AddPair('owner_id', TJSONNumber.Create(TokensICOs[i].OwnerID));
+        JSONNestedObject.AddPair('name', TokensICOs[i].ShortName);
+        JSONNestedObject.AddPair('date', TJSONNumber.Create(
+          DateTimeToUnix(TokensICOs[i].RegDate)));
+        JSONNestedObject.AddPair('ticker', Trim(TokensICOs[i].Abreviature));
+        JSONNestedObject.AddPair('amount',
+          TJSONNumber.Create(TokensICOs[i].TockenCount));
+        JSONNestedObject.AddPair('decimals',
+          TJSONNumber.Create(TokensICOs[i].FloatSize));
+        JSONNestedObject.AddPair('info', TokensICOs[i].FullName);
+        JSONNestedObject.AddPair('address',SmartKey.key1);
+      end;
+      JSON.AddPair('tokens', JSONArray);
+
+      Result.Code := HTTP_SUCCESS;
+      Result.Response := JSON.ToString;
+    finally
+      JSON.Free;
+    end;
   finally
-    JSON.Free;
+    Params.Free;
   end;
 end;
 
@@ -602,7 +623,7 @@ begin
   try
     case AComType of
       hcGET:
-        Result := GetTokensList;
+        Result := GetTokensList(AParams);
       hcPOST:
         Result := DoNewToken(AReqID, ABody);
     else
@@ -653,8 +674,8 @@ begin
         JSONArray.AddElement(TJSONObject.Create);
         JSONNestedObject := JSONArray.Items[pred(JSONArray.Count)
           ] as TJSONObject;
-        JSONNestedObject.AddPair('date', FormatDateTime('dd.mm.yyyy hh:mm:ss',
-          FloatToDateTime(TETTransfersInfo[i].DateTime)));
+        JSONNestedObject.AddPair('date', TJSONNumber.Create(
+          DateTimeToUnix(TETTransfersInfo[i].DateTime)));
         JSONNestedObject.AddPair('block',
           TJSONNumber.Create(TETTransfersInfo[i].BlockNum));
         JSONNestedObject.AddPair('address_from', TETTransfersInfo[i].TransFrom);
