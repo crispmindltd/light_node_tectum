@@ -3,6 +3,7 @@ unit Blockchain.ICODat;
 interface
 
 uses
+  App.Constants,
   Blockchain.BaseTypes,
   Blockchain.Intf,
   System.SyncObjs,
@@ -34,7 +35,7 @@ implementation
 
 constructor TBlockchainICODat.Create(AFileName: String);
 begin
-  inherited Create('dbc',AFileName);
+  inherited Create(ConstStr.DBCPath, AFileName);
 
 end;
 

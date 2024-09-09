@@ -3,6 +3,7 @@ unit Blockchain.Smartcontracts;
 interface
 
 uses
+  App.Constants,
   Blockchain.BaseTypes,
   Blockchain.Intf,
   Math,
@@ -31,7 +32,7 @@ implementation
 
 constructor TBlockchainSmart.Create(AFileName: String);
 begin
-  inherited Create('smartc',AFileName);
+  inherited Create(ConstStr.SmartCPath, AFileName);
 
 end;
 

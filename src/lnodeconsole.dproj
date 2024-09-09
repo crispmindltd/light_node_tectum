@@ -243,6 +243,7 @@
         <DCCReference Include="Web\endpoints\endpoints.Chain.pas"/>
         <DCCReference Include="Web\endpoints\endpoints.Account.pas"/>
         <DCCReference Include="Crypto\SeedPhrase\WordsPool.pas"/>
+        <DCCReference Include="Core\App.Constants.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

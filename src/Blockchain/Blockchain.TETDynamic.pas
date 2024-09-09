@@ -3,6 +3,7 @@ unit Blockchain.TETDynamic;
 interface
 
 uses
+  App.Constants,
   Blockchain.BaseTypes,
   Blockchain.Intf,
   Math;
@@ -36,7 +37,7 @@ implementation
 
 constructor TBlockchainTETDynamic.Create(AFileName: String);
 begin
-  inherited Create('dbc',AFileName);
+  inherited Create(ConstStr.DBCPath, AFileName);
 
 end;
 

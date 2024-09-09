@@ -3,6 +3,7 @@ unit App.Settings;
 interface
 
 uses
+  App.Constants,
   Classes,
   IniFiles,
   IOUtils,
@@ -87,7 +88,7 @@ end;
 
 function TSettingsFile.GetFullPath: String;
 begin
-  Result := TPath.Combine(FPath,'settings.ini');
+  Result := TPath.Combine(FPath, ConstStr.SettingsFileName);
 end;
 
 procedure TSettingsFile.Init;

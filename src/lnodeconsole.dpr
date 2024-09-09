@@ -39,7 +39,8 @@ uses
   endpoints.Base in 'Web\endpoints\endpoints.Base.pas',
   endpoints.Chain in 'Web\endpoints\endpoints.Chain.pas',
   endpoints.Account in 'Web\endpoints\endpoints.Account.pas',
-  WordsPool in 'Crypto\SeedPhrase\WordsPool.pas';
+  WordsPool in 'Crypto\SeedPhrase\WordsPool.pas',
+  App.Constants in 'Core\App.Constants.pas';
 
 var
   LPidFileName: String;
