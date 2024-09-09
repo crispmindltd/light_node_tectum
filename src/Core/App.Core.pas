@@ -3,6 +3,7 @@ unit App.Core;
 interface
 
 uses
+  App.Constants,
   App.Exceptions,
   App.Intf,
   App.Logs,
@@ -16,7 +17,6 @@ uses
   ClpIECPublicKeyParameters,
   ClpCryptoLibTypes,
   Crypto,
-  FMX.Dialogs,
   IOUtils,
   Math,
   Net.Client,
@@ -47,6 +47,7 @@ type
     function CheckShortName(const AShortName: String): Boolean;
     function Remove0x(AAddress: String): String;
     function SignTransaction(const AToSign: String; const APrivateKey: String): String;
+    function IsURKError(const ATest:string):Boolean;
   public
     constructor Create;
     destructor Destroy; override;
@@ -159,6 +160,11 @@ implementation
 
 { TAppCore }
 
+function TAppCore.IsURKError(const ATest:string):Boolean;
+begin
+  Result := ATest.StartsWith(ConstStr.URKError);
+end;
+
 function TAppCore.CheckShortName(const AShortName: String): Boolean;
 const
   Acceptable = 'QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm0123456789-., ';
@@ -227,7 +233,7 @@ begin
     raise EValidError.Create('incorrect password');
 
   Result := FNodeClient.DoRequest(AReqID,Format('CheckPW * %s %s ipa',[ALogin,APassword]));
-  if Result.StartsWith('URKError') then
+  if IsURKError(Result) then
   begin;
     splt := Result.Split([' ']);
     case splt[3].ToInteger of
@@ -343,7 +349,7 @@ begin
 
   Result := FNodeCLient.DoRequest(AReqID,Format('GetSmrtAmount %s IPAZ0vO7lO32 %s %s',
     [AReqID,AAddressTET,ASmartAddress]));
-  if Result.StartsWith('URKError') then
+  if IsURKError(Result) then
   begin;
     splt := Result.Split([' ']);
     case splt[3].ToInteger of
@@ -398,7 +404,7 @@ begin
   dateTime := FormatDateTime('dd.mm.yyyy hh:mm:ss',Now);
   Result := FNodeCLient.DoRequest(AReqID,Format('AddNewIcoToken %s <%s> <0> <%s> <%s> <%s> <%d> <%d> <6> <2> <%s> <%s> <3>',
     [AReqID,ASessionKey,AFullName,AShortName,ATicker.ToUpper,AAmount,ADecimals,dateTime,dateTime]));
-  if Result.StartsWith('URKError') then
+  if IsURKError(Result) then
   begin;
     splt := Result.Split([' ']);
     case splt[3].ToInteger of
@@ -455,7 +461,7 @@ begin
 
   Result := FNodeClient.DoRequest(AReqID,Format('RegLight * %s %s 1 %s %s',
     [Login,Password,Password,PubKey]));
-  if Result.StartsWith('URKError') then
+  if IsURKError(Result) then
   begin;
     splt := Result.Split([' ']);
     case splt[3].ToInteger of
@@ -534,7 +540,7 @@ begin
   end;
 
   Result := res;
-  if Result.StartsWith('URKError') then
+  if IsURKError(Result) then
   begin;
     splt := Result.Split([' ']);
     case splt[3].ToInteger of
@@ -590,7 +596,7 @@ begin
 
   Result := FNodeClient.DoRequest(AReqID,Format('TokenTransfer * %s * %s %s %s',
     [ASessionKey,ATo,AmountStr,AmountStr]));
-  if Result.StartsWith('URKError') then
+  if IsURKError(Result) then
   begin;
     splt := Result.Split([' ']);
     case splt[3].ToInteger of
@@ -700,7 +706,7 @@ begin
     raise EValidError.Create('invalid account ID');
 
   Result := FNodeClient.DoRequest(AReqID,Format('GetUPubliKey * IPAZovO7l32 %d',[AID]));
-  if Result.StartsWith('URKError') then
+  if IsURKError(Result) then
   begin;
     splt := Result.Split([' ']);
     case splt[3].ToInteger of
@@ -720,7 +726,7 @@ begin
     raise EValidError.Create('incorrect session key');
 
   Result := FNodeClient.DoRequest(AReqID,'GetMyPubliKey * ' + ASessionKey);
-  if Result.StartsWith('URKError') then
+  if IsURKError(Result) then
   begin;
     splt := Result.Split([' ']);
     case splt[3].ToInteger of
@@ -907,7 +913,6 @@ begin
     on E:Exception do
     begin
       errStr := 'Error starting node: ' + E.Message;
-      ShowMessage(errStr);
       Logs.DoLog(errStr, ERROR);
       raise;
     end;

@@ -6,6 +6,7 @@ uses
   App.Exceptions,
   App.Intf,
   App.Logs,
+  App.Constants,
   Blockchain.Intf,
   Classes,
   Math,
@@ -42,7 +43,7 @@ implementation
 
 constructor TChainBlocksUpdater.Create(AAddress: String; APort: Word);
 begin
-  inherited Create('DBC',AAddress,APort);
+  inherited Create(ConstStr.DBCPath, AAddress,APort);
 
 end;
 

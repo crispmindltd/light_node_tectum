@@ -3,6 +3,7 @@ unit Blockchain.SmartKey;
 interface
 
 uses
+  App.Constants,
   Blockchain.BaseTypes,
   Blockchain.Intf,
   Math,
@@ -33,7 +34,7 @@ implementation
 
 constructor TBlockchainSmartKey.Create(AFileName: String);
 begin
-  inherited Create('SmartC',AFileName,True);
+  inherited Create(ConstStr.SmartCPath, AFileName,True);
 
 end;
 

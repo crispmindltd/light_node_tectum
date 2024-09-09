@@ -3,6 +3,7 @@ unit Blockchain.Token.chn;
 interface
 
 uses
+  App.Constants,
   Blockchain.BaseTypes,
   Blockchain.Intf,
   Math,
@@ -32,7 +33,7 @@ implementation
 
 constructor TBlockchainTokenCHN.Create(AFileName: String);
 begin
-  inherited Create('DBC',AFileName,True);
+  inherited Create(ConstStr.DBCPath, AFileName,True);
 
 end;
 

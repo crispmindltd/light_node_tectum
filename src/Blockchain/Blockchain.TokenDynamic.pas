@@ -3,6 +3,7 @@ unit Blockchain.TokenDynamic;
 interface
 
 uses
+  App.Constants,
   Blockchain.BaseTypes,
   Blockchain.Intf,
   Math;
@@ -33,7 +34,7 @@ implementation
 
 constructor TBlockchainTokenDynamic.Create(AFileName: String);
 begin
-  inherited Create('SmartC',AFileName);
+  inherited Create(ConstStr.SmartCPath, AFileName);
 
 end;
 

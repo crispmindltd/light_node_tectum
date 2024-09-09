@@ -3,6 +3,7 @@ unit Sync.Smartcontratcs;
 interface
 
 uses
+  App.Constants,
   App.Exceptions,
   App.Intf,
   App.Logs,
@@ -41,7 +42,7 @@ implementation
 
 constructor TSmartBlocksUpdater.Create(AAddress: String; APort: Word);
 begin
-  inherited Create('SmartC',AAddress,APort);
+  inherited Create(ConstStr.SmartCPath, AAddress,APort);
 
 end;
 
