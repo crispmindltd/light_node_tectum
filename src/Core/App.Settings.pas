@@ -10,7 +10,7 @@ uses
   SysUtils;
 
 const
-  NODE_VERSION = 'v0.9.1 - beta';
+  NODE_VERSION = 'v0.9.2 - beta';
 
 type
   TSettingsFile = class
@@ -52,7 +52,7 @@ end;
 
 constructor TSettingsFile.Create;
 begin
-  FPath := TDirectory.GetCurrentDirectory;
+  FPath := ExtractFilePath(ParamStr(0));
 
   FIni := TIniFile.Create(GetFullPath);
   if not FileExists(GetFullPath) then  //initialize the .ini file if it doesn’t already exist

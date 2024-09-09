@@ -47,6 +47,7 @@ type
         out AID: Integer; var tb:TCTokensBase): Boolean;
       function TryGetOneICOBlock(AFrom: Int64; var ICOBlock: TTokenICODat): Boolean; overload;
       function TryGetOneICOBlock(ATicker: String; var ICOBlock: TTokenICODat): Boolean; overload;
+      function TryGetSmartKey(ATicker: String; var sk: TCSmartKey): Boolean;
 
       function GetChainBlockSize: Integer;
       function GetChainBlocksCount: Integer;
@@ -108,7 +109,7 @@ type
         out AAmount: Integer): TBytesBlocks;
       procedure SetICOBlocks(APos: Int64; ABytes: TBytesBlocks;
         AAmount: Integer);
-      function GetICOsInfo: TArray<TTokenICODat>;
+      function GetICOsInfo(ASkip: Integer; var ARows: Integer): TArray<TTokenICODat>;
 
      procedure UpdateLists;
   end;
@@ -370,13 +371,23 @@ begin
   Result := FTokenICO.GetBlockSize;
 end;
 
-function TBlockchain.GetICOsInfo: TArray<TTokenICODat>;
+function TBlockchain.GetICOsInfo(ASkip: Integer; var ARows: Integer): TArray<TTokenICODat>;
 var
-  i: Integer;
+  Blocks: TBytesBlocks;
+  ICOBytesArr: array[0..SizeOf(TTokenICODat)-1] of Byte;
+  TokenICO: TTokenICODat absolute ICOBytesArr;
+  i,count: Integer;
 begin
-  SetLength(Result,FTokenICO.GetBlocksCount-2);
-  for i := 0 to Length(Result)-1 do
-    TBlockchainICODat(FTokenICO).TryGetTokenICO(i+2,Result[i]);
+  count := ARows;
+  Blocks := FTokenICO.ReadBlocks(ASkip + 2,ARows); // skip TET and TEC
+  ARows := Min(Min(ARows,count),50);
+
+  SetLength(Result,ARows);
+  for i := 0 to ARows-1 do
+  begin
+    Move(Blocks[i * SizeOf(TTokenICODat)], ICOBytesArr[0], SizeOf(TTokenICODat));
+    Result[i] := TokenICO;
+  end;
 end;
 
 function TBlockchain.GetLastChainTransactions(
@@ -536,7 +547,7 @@ var
 begin
   Result := [];
   try
-    if not TBlockchainSmartKey(FSmartKey).TryGetSmartKey(ATicker,sk) then exit;
+    if not TryGetSmartKey(ATicker,sk) then exit;
     if not TryGetCTokenBase(sk.SmartID,AUserID,TokenID,tcb) then exit;
     bc4 := GetOneSmartBlock(sk.SmartID,tcb.LastBlock);
     if not TryGetOneICOBlock(ATicker,tICO) then exit;
@@ -1027,6 +1038,12 @@ function TBlockchain.TryGetOneICOBlock(ATicker: String;
   var ICOBlock: TTokenICODat): Boolean;
 begin
   Result := TBlockchainICODat(FTokenICO).TryGetTokenICO(ATicker,ICOBlock);
+end;
+
+function TBlockchain.TryGetSmartKey(ATicker: String;
+  var sk: TCSmartKey): Boolean;
+begin
+  Result := TBlockchainSmartKey(FSmartKey).TryGetSmartKey(ATicker,sk);
 end;
 
 function TBlockchain.TryGetTETAddressByOwnerID(const AOwnerID: Int64;
