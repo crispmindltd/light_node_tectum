@@ -70,6 +70,14 @@ type
 
 implementation
 
+function StrToExtended(AStrValue:string):Extended;
+begin
+  if FormatSettings.DecimalSeparator = '.' then
+    Result := AStrValue.Replace(',', '.').ToExtended
+  else
+    Result := AStrValue.ToExtended;
+end;
+
 { TTokenEndpoints }
 
 function TTokenEndpoints.DoCoinTransfer(AReqID: string; AEvent: TEvent;
@@ -333,7 +341,7 @@ begin
     SplittedResponse := Response.Split([' ']);
     JSON := TJSONObject.Create;
     try
-      JSON.AddPair('balance', TJSONNumber.Create(SplittedResponse[2].ToExtended));
+      JSON.AddPair('balance', TJSONNumber.Create(StrToExtended(SplittedResponse[2])));
       Result.Code := HTTP_SUCCESS;
       Result.Response := JSON.ToString;
     finally
@@ -380,8 +388,8 @@ begin
       Params.Values['address_tet'], Params.Values['ticker']);
     JSON := TJSONObject.Create;
     try
-      JSON.AddPair('balance', TJSONNumber.Create(Response.Split([' '])
-        [2].ToExtended));
+      JSON.AddPair('balance', TJSONNumber.Create(StrToExtended(
+        Response.Split([' '])[2])));
       Result.Code := HTTP_SUCCESS;
       Result.Response := JSON.ToString;
     finally
