@@ -8,7 +8,7 @@ uses
   SysUtils;
 
 const
-  MAX_BLOCKS_REQUEST = 600;   //blocks amount per request
+  MAX_BLOCKS_REQUEST = 300;   //blocks amount per request
   BLOCK_SIZE_MAX = 316;       //bytes
   SMART_BLOCK_SIZE_DEFAULT = 256;
   DYNAMIC_BLOCK_SIZE_DEFAULT = 72;

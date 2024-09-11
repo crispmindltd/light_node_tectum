@@ -61,6 +61,7 @@ begin
     FIni.WriteString('connections','listen_to',DEFAULT_TCP_LISTEN_TO);
     FIni.WriteString('connections', 'nodes',Format('[%s]',[DEFAULT_NODE_ADDRESS]));
     FIni.WriteString('http','port',DEFAULT_HTTP_PORT.ToString);
+    FIni.UpdateFile;
   end;
 end;
 
