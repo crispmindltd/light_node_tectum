@@ -507,7 +507,7 @@ begin
 
   if (AAmount <= 0) or (AAmount > 999999999999999999) then
     raise EValidError.Create('invalid amount value');
-  AmountStr := FormatFloat('#################0.########', AAmount);
+  AmountStr := FormatFloat('0.########', AAmount);
   if (Length(AmountStr.Replace(',','')) > 18) or
      (Length(Copy(AmountStr,AmountStr.IndexOf(',')+2,10)) > 8) then
     raise EValidError.Create('incorrect amount');
@@ -589,7 +589,7 @@ begin
   if (AAmount <= 0) or (AAmount > 999999999999999999) then
     raise EValidError.Create('incorrect amount');
 
-  AmountStr := FormatFloat('#################0.########', AAmount);
+  AmountStr := FormatFloat('0.########', AAmount);
   if (Length(AmountStr.Replace(',','')) > 18) or
      (Length(Copy(AmountStr,AmountStr.IndexOf(',')+2,10)) > 8) then
     raise EValidError.Create('incorrect amount');

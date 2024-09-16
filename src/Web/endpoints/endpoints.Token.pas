@@ -342,7 +342,9 @@ begin
     SplittedResponse := Response.Split([' ']);
     JSON := TJSONObject.Create;
     try
-      JSON.AddPair('balance', TJSONNumber.Create(StrToExtended(SplittedResponse[2])));
+      const BalanceStr = SplittedResponse[2];
+      const BalanceFloat = StrToExtended(BalanceStr);
+      JSON.AddPair('balance', FormatFloat('0.########', BalanceFloat));
       Result.Code := HTTP_SUCCESS;
       Result.Response := JSON.ToString;
     finally
@@ -389,8 +391,9 @@ begin
       Params.Values['address_tet'], Params.Values['ticker']);
     JSON := TJSONObject.Create;
     try
-      JSON.AddPair('balance', TJSONNumber.Create(StrToExtended(
-        Response.Split([' '])[2])));
+      const BalanceStr = Response.Split([' '])[2];
+      const BalanceFloat = StrToExtended(BalanceStr);
+      JSON.AddPair('balance', FormatFloat('0.########', BalanceFloat));
       Result.Code := HTTP_SUCCESS;
       Result.Response := JSON.ToString;
     finally
@@ -514,8 +517,7 @@ begin
     Response := AppCore.GetLocalTETBalance(Params.Values['tet_address']);
     JSON := TJSONObject.Create;
     try
-      JSON.AddPair('tet_balance', FormatFloat('#################0.########',
-        Response));
+      JSON.AddPair('tet_balance', FormatFloat('0.########', Response));
       Result.Code := HTTP_SUCCESS;
       Result.Response := JSON.ToString;
     finally

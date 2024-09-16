@@ -899,7 +899,7 @@ begin
     begin
       valueLabel := rect.FindStyleResource('TokenAmountLabelStyle') as TLabel;
       if FBalances.TryGetValue(item.Text,value) then
-        valueLabel.Text := FormatFloat('#################0.########',value);
+        valueLabel.Text := FormatFloat('0.########',value);
     end;
   finally
     item.EndUpdate;
@@ -1118,7 +1118,7 @@ begin
   CleanScrollBox(ExplorerVertScrollBox);
   ExplorerVertScrollBox.BeginUpdate;
   try
-    format := '#################0.';
+    format := '0.';
     for i := 0 to tICO.FloatSize-1 do
       format := format + '0';
     for i := 0 to amount-1 do
@@ -1145,7 +1145,7 @@ var
 begin
   if FBalances.TryGetValue(AName,value) then
     BalanceTokenValueLabel.Text :=
-      Format('%s %s',[FormatFloat('#################0.########',value), AName]);
+      Format('%s %s',[FormatFloat('0.########',value), AName]);
 
   AddressTokenLabel.Text := AppCore.GetSmartAddressByTicker(AName);
 end;
@@ -1157,7 +1157,7 @@ begin
   try
     FBalances.AddOrSetValue('TET',AppCore.GetLocalTETBalance);
     FBalances.TryGetValue('TET',val);
-    BalanceTETValueLabel.Text := FormatFloat('#################0.########',val) + ' TET';
+    BalanceTETValueLabel.Text := FormatFloat('0.########',val) + ' TET';
   except
     on E:ENoInfoForThisAccountError do
       BalanceTETValueLabel.Text := '<ERROR: DATA NOT FOUND>';
@@ -1191,7 +1191,7 @@ begin
                                                        transArray[i].BlockNum,
                                                        transArray[i].Address,
                                                        transArray[i].Hash,
-                                                       FormatFloat('#################0.00000000',transArray[i].Amount),
+                                                       FormatFloat('0.00000000',transArray[i].Amount),
                                                        transArray[i].Incom);
       newTransFrame.OnClick := onTETHistoryFrameClick;
       newTransFrame.Parent := HistoryTETVertScrollBox;
@@ -1225,7 +1225,7 @@ begin
   CleanScrollBox(HistoryTokenVertScrollBox);
   HistoryTokenVertScrollBox.BeginUpdate;
   try
-    format := '#################0.';
+    format := '0.';
     for i := 0 to tICO.FloatSize-1 do
       format := format + '0';
     for i := 0 to amount-1 do
