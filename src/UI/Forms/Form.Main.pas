@@ -319,6 +319,7 @@ type
     FBalances: TDictionary<String,Extended>;
     chosenToken,chosenTicker: String;
 
+    function DecimalsCount(const AValue:string):Integer;
     procedure RefreshTETBalance;
     procedure RefreshTETHistory;
     procedure AlignTETHeaders;
@@ -511,17 +512,28 @@ procedure TMainForm.AmountTokenEditChangeTracking(Sender: TObject);
 var
   isNumber: Boolean;
   val,balance: Extended;
+  tICO:TTokenICODat;
 begin
-  FBalances.TryGetValue(TokenNameEdit.Text,balance);
-  isNumber := TryStrToFloat(AmountTokenEdit.Text,val);
+  const isGetTokenSuccess = AppCore.TryGetTokenICO(TokenNameEdit.Text, tICO);
+  FBalances.TryGetValue(TokenNameEdit.Text, balance);
+  isNumber := TryStrToFloat(AmountTokenEdit.Text, val);
 
-  SendTokenButton.Enabled := (Length(RecepientAddressEdit.Text) >= 10) and
-    isNumber and (val > 0) and (val <= balance);
+  const Decimals = DecimalsCount(AmountTokenEdit.Text);
+
+  SendTokenButton.Enabled := isGetTokenSuccess and (Length(RecepientAddressEdit.Text) >= 10) and
+    isNumber and (val > 0) and (val <= balance) and (Decimals <= tICO.FloatSize);
+
   with TransferTokenStatusLabel do
   begin
     if isNumber and (val > balance) then
     begin
       Text := 'Insufficient funds';
+      TextSettings.FontColor := ERROR_TEXT_COLOR;
+      Opacity := 1;
+    end
+    else if (Decimals > tICO.FloatSize) then
+    begin
+      Text := 'Too much digits';
       TextSettings.FontColor := ERROR_TEXT_COLOR;
       Opacity := 1;
     end else
@@ -681,6 +693,21 @@ begin
   CreateTokenEditChangeTracking(Self);
 end;
 
+function TMainForm.DecimalsCount(const AValue: string): Integer;
+begin
+  const TrimmedValue = AValue //
+    .Trim //
+    .Replace('.', FormatSettings.DecimalSeparator) //
+    .Replace(',', FormatSettings.DecimalSeparator);
+  const DecimalPos = Pos(FormatSettings.DecimalSeparator, TrimmedValue);
+  if DecimalPos = 0 then
+  begin
+    Result := 0;
+    Exit;
+  end;
+  Result := Length(TrimmedValue) - DecimalPos;
+end;
+
 procedure TMainForm.ExplorerVertScrollBoxPaint(Sender: TObject; Canvas: TCanvas;
   const ARect: TRectF);
 begin
@@ -777,6 +804,10 @@ begin
   chosenToken := '';
   chosenTicker := '';
   AddTicker('Tectum');
+
+  const Digitals = '0123456789' + FormatSettings.DecimalSeparator;
+  AmountTETEdit.FilterChar := Digitals;
+  AmountTokenEdit.FilterChar := Digitals;
 end;
 
 procedure TMainForm.FormDestroy(Sender: TObject);
@@ -1099,7 +1130,7 @@ var
   newTransFrame: TExplorerTransactionFrame;
   amount: Integer;
   i: Integer;
-  format: String;
+  format: string;
   tICO: TTokenICODat;
 begin
   if chosenTicker.IsEmpty then exit;
@@ -1118,9 +1149,7 @@ begin
   CleanScrollBox(ExplorerVertScrollBox);
   ExplorerVertScrollBox.BeginUpdate;
   try
-    format := '0.';
-    for i := 0 to tICO.FloatSize-1 do
-      format := format + '0';
+    format := '0.' + string.Create('0', tICO.FloatSize);
     for i := 0 to amount-1 do
     begin
       newTransFrame := TExplorerTransactionFrame.Create(ExplorerVertScrollBox,
@@ -1225,9 +1254,7 @@ begin
   CleanScrollBox(HistoryTokenVertScrollBox);
   HistoryTokenVertScrollBox.BeginUpdate;
   try
-    format := '0.';
-    for i := 0 to tICO.FloatSize-1 do
-      format := format + '0';
+    format := '0.' + string.Create('0', tICO.FloatSize);
     for i := 0 to amount-1 do
     begin
       newTransFrame := THistoryTransactionFrame.Create(HistoryTokenVertScrollBox,
@@ -1363,11 +1390,14 @@ var
   isNumber: Boolean;
   val,balance: Extended;
 begin
-  FBalances.TryGetValue('TET',balance);
-  isNumber := TryStrToFloat(AmountTETEdit.Text,val);
+  FBalances.TryGetValue('TET', balance);
+  isNumber := TryStrToFloat(AmountTETEdit.Text, val);
+
+  const Decimals = DecimalsCount(AmountTETEdit.Text);
 
   SendTETButton.Enabled := (Length(SendTETToEdit.Text) >= 10) and
-    isNumber and (val > 0) and (val <= balance);
+    isNumber and (val > 0) and (val <= balance) and (Decimals <= 8);
+
   with TransferTETStatusLabel do
   begin
     if isNumber and (val > balance) then
@@ -1375,7 +1405,14 @@ begin
       Text := 'Insufficient funds';
       TextSettings.FontColor := ERROR_TEXT_COLOR;
       Opacity := 1;
-    end else
+    end
+    else if Decimals > 8 then
+    begin
+      Text := 'Too much digits';
+      TextSettings.FontColor := ERROR_TEXT_COLOR;
+      Opacity := 1;
+    end
+     else
       Opacity := 0;
   end;
 end;

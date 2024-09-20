@@ -26,6 +26,7 @@ type
     procedure WriteOneBlock(APos: Int64; ABytes: TOneBlockBytes); override;
 
     function TryGetSmartKey(ATicker: String; var sk: TCSmartKey): Boolean;
+    function TryGetSmartKeyByAddress(const AAddress: String; var sk: TCSmartKey): Boolean;
   end;
 
 implementation
@@ -123,6 +124,30 @@ begin
       Seek(FFile,i);
       Read(FFile,sk);
       if sk.Abreviature = ATicker then Exit(True);
+    end;
+  finally
+    CloseFile(FFile);
+    FLock.Leave;
+  end;
+end;
+
+function TBlockchainSmartKey.TryGetSmartKeyByAddress(const AAddress: String;
+  var sk: TCSmartKey): Boolean;
+var
+  i: Integer;
+begin
+  Result := False;
+  FLock.Enter;
+  AssignFile(FFile, FFullFilePath);
+  Reset(FFile);
+  try
+    for i := 0 to FileSize(FFile)-1 do
+    begin
+      Seek(FFile,i);
+      Read(FFile,sk);
+      Result := SameText(sk.key1, AAddress);
+      if Result then
+        Exit;
     end;
   finally
     CloseFile(FFile);
