@@ -79,6 +79,21 @@ begin
     Result := AStrValue.ToExtended;
 end;
 
+function DecimalsCount(const AValue: string): Integer;
+begin
+  const TrimmedValue = AValue //
+    .Trim //
+    .Replace('.', FormatSettings.DecimalSeparator) //
+    .Replace(',', FormatSettings.DecimalSeparator);
+  const DecimalPos = Pos(FormatSettings.DecimalSeparator, TrimmedValue);
+  if DecimalPos = 0 then
+  begin
+    Result := 0;
+    Exit;
+  end;
+  Result := Length(TrimmedValue) - DecimalPos;
+end;
+
 { TTokenEndpoints }
 
 function TTokenEndpoints.DoCoinTransfer(AReqID: string; AEvent: TEvent;
@@ -99,6 +114,12 @@ begin
              JSON.TryGetValue('to', TransTo) and
              JSON.TryGetValue('amount', Amount)) then
         raise EValidError.Create('request parameters error');
+
+      const TETsDecimals = 8;
+      const AmountStr = JSON.GetValue<string>('amount', '');
+      if not AmountStr.IsEmpty and (DecimalsCount(AmountStr) > TETsDecimals) then
+        raise EValidError.Create('too much decimals');
+
     finally
       JSON.Free;
     end;
@@ -715,7 +736,9 @@ var
   JSON: TJSONObject;
   Response: string;
   TransFrom, TransTo, SmartAddress, PrKey, PubKey: string;
-  TokensNumber: Extended;
+  TokensAmount: Extended;
+  CSmartKey: TCSmartKey;
+  TokenICODat: TTokenICODat;
 begin
   Result.ReqID := AReqID;
   try
@@ -724,17 +747,32 @@ begin
 
     JSON := TJSONObject.ParseJSONValue(ABody, False, True) as TJSONObject;
     try
-      if not(JSON.TryGetValue('from', TransFrom) and JSON.TryGetValue('to',
-        TransTo) and JSON.TryGetValue('smart_address', SmartAddress) and
-        JSON.TryGetValue('amount', TokensNumber) and JSON.TryGetValue('private_key',
-        PrKey) and JSON.TryGetValue('public_key', PubKey)) then
+      if not (//
+        JSON.TryGetValue('from', TransFrom)//
+        and JSON.TryGetValue('to', TransTo)//
+        and JSON.TryGetValue('smart_address', SmartAddress)//
+        and JSON.TryGetValue('amount', TokensAmount)//
+        and JSON.TryGetValue('private_key', PrKey)//
+        and JSON.TryGetValue('public_key', PubKey)//
+        ) then
         raise EValidError.Create('request parameters error');
+
+      if not(
+        AppCore.TryGetTokenBaseByAddress(SmartAddress, CSmartKey)//
+        and AppCore.TryGetTokenICO(CSmartKey.Abreviature, TokenICODat)//
+        ) then
+        raise EValidError.Create('incorrect smart_address');
+
+      const AmountStr = JSON.GetValue<string>('amount', '');
+      if not AmountStr.IsEmpty and (DecimalsCount(AmountStr) > TokenICODat.FloatSize) then
+        raise EValidError.Create('too much decimals');
+
     finally
       JSON.Free;
     end;
 
     Response := AppCore.DoTokenTransfer(AReqID, TransFrom, TransTo, SmartAddress,
-      TokensNumber, PrKey, PubKey);
+      TokensAmount, PrKey, PubKey);
     JSON := TJSONObject.Create;
     try
       JSON.AddPair('hash', Response.Split([' '])[3].ToLower);

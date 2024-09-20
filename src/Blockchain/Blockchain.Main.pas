@@ -49,6 +49,7 @@ type
       function TryGetOneICOBlock(AFrom: Int64; var ICOBlock: TTokenICODat): Boolean; overload;
       function TryGetOneICOBlock(ATicker: String; var ICOBlock: TTokenICODat): Boolean; overload;
       function TryGetSmartKey(ATicker: String; var sk: TCSmartKey): Boolean;
+      function TryGetSmartKeyByAddress(const AAddress: String; var sk: TCSmartKey): Boolean;
 
       function GetChainBlockSize: Integer;
       function GetChainBlocksCount: Integer;
@@ -1044,7 +1045,12 @@ end;
 function TBlockchain.TryGetSmartKey(ATicker: String;
   var sk: TCSmartKey): Boolean;
 begin
-  Result := TBlockchainSmartKey(FSmartKey).TryGetSmartKey(ATicker,sk);
+  Result := TBlockchainSmartKey(FSmartKey).TryGetSmartKey(ATicker, sk);
+end;
+
+function TBlockchain.TryGetSmartKeyByAddress(const AAddress: String; var sk: TCSmartKey): Boolean;
+begin
+  Result := TBlockchainSmartKey(FSmartKey).TryGetSmartKeyByAddress(AAddress, sk);
 end;
 
 function TBlockchain.TryGetTETAddressByOwnerID(const AOwnerID: Int64;

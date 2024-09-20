@@ -149,6 +149,7 @@ type
     function TryGetTokenICO(ATicker: String; var tICO: TTokenICODat): Boolean;
     function GetTokensICOs(ASkip: Integer; var ARows: Integer): TArray<TTokenICODat>;
     function TryGetTokenBase(ATicker: string; var sk: TCSmartKey): Boolean;
+    function TryGetTokenBaseByAddress(const AAddress: string; var sk: TCSmartKey): Boolean;
 
     property DownloadRemain: Int64 read GetDownloadRemain write SetDownloadRemain;
     property SessionKey: String read GetSessionKey write SetSessionKey;
@@ -1006,13 +1007,18 @@ end;
 
 function TAppCore.TryGetTokenBase(ATicker: string; var sk: TCSmartKey): Boolean;
 begin
-  Result := FBlockchain.TryGetSmartKey(ATicker,sk);
+  Result := FBlockchain.TryGetSmartKey(ATicker, sk);
+end;
+
+function TAppCore.TryGetTokenBaseByAddress(const AAddress: string; var sk: TCSmartKey): Boolean;
+begin
+  Result := FBlockchain.TryGetSmartKeyByAddress(AAddress, sk);
 end;
 
 function TAppCore.TryGetTokenICO(ATicker: String;
   var tICO: TTokenICODat): Boolean;
 begin
-  Result := FBlockchain.TryGetOneICOBlock(ATicker,tICO);
+  Result := FBlockchain.TryGetOneICOBlock(ATicker, tICO);
 end;
 
 //procedure TAppCore.StopSync(AChainName: String; AIsSystemChain: Boolean);
