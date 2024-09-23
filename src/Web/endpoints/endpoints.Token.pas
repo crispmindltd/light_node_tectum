@@ -79,19 +79,31 @@ begin
     Result := AStrValue.ToExtended;
 end;
 
+// calculates digits after decimal separator
 function DecimalsCount(const AValue: string): Integer;
 begin
-  const TrimmedValue = AValue //
+  var LValue:string := AValue //
     .Trim //
     .Replace('.', FormatSettings.DecimalSeparator) //
-    .Replace(',', FormatSettings.DecimalSeparator);
-  const DecimalPos = Pos(FormatSettings.DecimalSeparator, TrimmedValue);
-  if DecimalPos = 0 then
-  begin
-    Result := 0;
-    Exit;
+    .Replace(',', FormatSettings.DecimalSeparator) //
+    .ToUpper;
+
+  var Exponent:Integer := 0;
+  const ExponentPos = Pos('E', LValue);
+
+  if ExponentPos > 0 then begin
+    Exponent := StrToInt(Copy(LValue, ExponentPos + 1));
+    LValue := Copy(LValue, 1, ExponentPos - 1);
   end;
-  Result := Length(TrimmedValue) - DecimalPos;
+
+  const DecimalPos = Pos(FormatSettings.DecimalSeparator, LValue);
+
+  if DecimalPos = 0 then
+    Result := -Exponent
+  else
+    Result := Length(LValue) - DecimalPos - Exponent;
+
+  if Result < 0 then Result := 0;
 end;
 
 { TTokenEndpoints }

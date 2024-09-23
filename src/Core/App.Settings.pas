@@ -11,7 +11,7 @@ uses
   SysUtils;
 
 const
-  NODE_VERSION = 'v0.9.2 - beta';
+  NODE_VERSION = 'v0.9.3 - beta';
 
 type
   TSettingsFile = class
