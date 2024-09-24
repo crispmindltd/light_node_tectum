@@ -6,8 +6,7 @@ uses
   System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants,
   FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs,
   FMX.Controls.Presentation, FMX.StdCtrls, FMX.Memo.Types, FMX.ScrollBox,
-  FMX.Memo, Styles, FMX.Objects, Crypto, App.Intf, FMX.Effects{, ShellApi,
-  FMX.Platform.Win};
+  FMX.Memo, Styles, FMX.Objects, Crypto, App.Intf, FMX.Effects, OpenURL;
 
 type
   TEnterPrivateKeyForm = class(TForm)
@@ -74,7 +73,7 @@ end;
 procedure TEnterPrivateKeyForm.LinkLabelMouseDown(Sender: TObject;
   Button: TMouseButton; Shift: TShiftState; X, Y: Single);
 begin
-  //ShellExecute(FmxHandleToHWND(Handle), 'open', PChar(LinkLabel.Text), '', '', 0);
+  TOpenURL.Open(LinkLabel.Text);
 end;
 
 procedure TEnterPrivateKeyForm.LinkLabelMouseEnter(Sender: TObject);

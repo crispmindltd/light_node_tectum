@@ -349,6 +349,7 @@
             <Form>EnterPrivateKeyForm</Form>
         </DCCReference>
         <DCCReference Include="Core\App.Constants.pas"/>
+        <DCCReference Include="UI\OpenURL.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
