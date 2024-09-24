@@ -49,7 +49,8 @@ uses
   Frame.Explorer in 'UI\Forms\Frame.Explorer.pas' {ExplorerTransactionFrame: TFrame},
   Frame.History in 'UI\Forms\Frame.History.pas' {HistoryTransactionFrame: TFrame},
   Form.EnterKey in 'UI\Forms\Form.EnterKey.pas' {EnterPrivateKeyForm},
-  App.Constants in 'Core\App.Constants.pas';
+  App.Constants in 'Core\App.Constants.pas',
+  OpenURL in 'UI\OpenURL.pas';
 
 {$R *.res}
 
