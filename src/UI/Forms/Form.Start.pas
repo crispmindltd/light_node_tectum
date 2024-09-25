@@ -107,13 +107,14 @@ type
     procedure EmailEditKeyDown(Sender: TObject; var Key: Word;
       var KeyChar: WideChar; Shift: TShiftState);
   private
+    FTotalTETBlocksToDownload: Int64;
     phrase: String;
     procedure ShowLogInError(const AMessage: String);
     procedure HideLogInError;
     procedure ShowSignUpError(const AMessage: String);
     procedure OnDownloadingDone;
   public
-    procedure ShowProgressBar(const ADownloadRemainTotal:Int64);
+    procedure SetMaxProgressBarValue(const ATotalTETBlocksToDownload: Int64);
     procedure ShowProgress;
   end;
 
@@ -175,7 +176,7 @@ begin
   ind := EmailEdit.Text.IndexOf('@');
   LogInButton.Enabled := (ind >= 1) and
     (EmailEdit.Text.LastIndexOf('.') > ind) and (EmailEdit.Text.Length >= 5) and
-    (not PasswordEdit.Text.IsEmpty) and (AppCore.DownloadRemain = 0);
+    (not PasswordEdit.Text.IsEmpty) and (not DownloadProgressBar.Visible);
 end;
 
 procedure TStartForm.EmailEditKeyDown(Sender: TObject; var Key: Word;
@@ -203,6 +204,7 @@ procedure TStartForm.FloatAnimation3Finish(Sender: TObject);
 begin
   DownloadProgressBar.Visible := False;
   FloatAnimation3.Enabled := False;
+  OnDownloadingDone;
 end;
 
 procedure TStartForm.FormCreate(Sender: TObject);
@@ -260,7 +262,7 @@ var
   response: String;
 begin
   try
-    response := AppCore.DoAuth('*',EmailEdit.Text,PasswordEdit.Text);
+//    response := AppCore.DoAuth('*',EmailEdit.Text,PasswordEdit.Text);
     splt := response.Split([' ']);
     AppCore.SessionKey := splt[2];
     AppCore.UserID := splt[4].ToInt64;
@@ -291,7 +293,7 @@ var
   pubKey,prKey,login,pass,addr,sPath: String;
 begin
   try
-    response := AppCore.DoReg('*',phrase,pubKey,prKey,login,pass,addr,sPath);
+//    response := AppCore.DoReg('*',phrase,pubKey,prKey,login,pass,addr,sPath);
     NewLoginLabel.Text := 'Your Log In: ' + login;
     NewPassLabel.Text := 'Password: ' + pass;
     PathMemo.Text := sPath;
@@ -332,28 +334,29 @@ end;
 
 procedure TStartForm.ShowProgress;
 var
-  totalCount,remain: Int64;
+  CurrentTETChainBlocksCount: Int64;
 begin
-  totalCount := Round(DownloadProgressBar.Max);
-  remain := totalCount - AppCore.DownloadRemain;
-
+  CurrentTETChainBlocksCount := AppCore.GetTETChainBlocksCount;
   ProgressLabel.Text := Format('%d of %d blocks loaded',
-    [remain,totalCount]);
-  DownloadProgressBar.Value := remain;
+    [CurrentTETChainBlocksCount, FTotalTETBlocksToDownload]);
+  DownloadProgressBar.Value := CurrentTETChainBlocksCount;
 
-  if remain = totalCount then
-  begin
-    OnDownloadingDone;
+  if CurrentTETChainBlocksCount = FTotalTETBlocksToDownload then
     FloatAnimation3.Enabled := True;
-  end;
 end;
 
-procedure TStartForm.ShowProgressBar(const ADownloadRemainTotal: Int64);
+procedure TStartForm.SetMaxProgressBarValue(const ATotalTETBlocksToDownload: Int64);
+var
+  CurrentTETChainBlocksCount: Int64;
 begin
-  if ADownloadRemainTotal > 0 then
+  FTotalTETBlocksToDownload := ATotalTETBlocksToDownload;
+  CurrentTETChainBlocksCount := AppCore.GetTETChainBlocksCount;
+  if FTotalTETBlocksToDownload > CurrentTETChainBlocksCount then
   begin
-    DownloadProgressBar.Max := ADownloadRemainTotal;
-    ProgressLabel.Text := Format('%d of %d blocks loaded',[0,ADownloadRemainTotal]);
+    DownloadProgressBar.Max := ATotalTETBlocksToDownload;
+    ProgressLabel.Text := Format('%d of %d blocks loaded',
+      [CurrentTETChainBlocksCount, FTotalTETBlocksToDownload]);
+    DownloadProgressBar.Value := CurrentTETChainBlocksCount;
     DownloadProgressBar.Visible := True;
   end else
     OnDownloadingDone;

@@ -28,12 +28,9 @@ uses
   Blockchain.Intf in 'Blockchain\Blockchain.Intf.pas',
   Blockchain.Token.chn in 'Blockchain\Blockchain.Token.chn.pas',
   Blockchain.BaseTypes in 'Blockchain\Blockchain.BaseTypes.pas',
-  Blockchain.Smartcontracts in 'Blockchain\Blockchain.Smartcontracts.pas',
-  Sync.Chain in 'Sync\Sync.Chain.pas',
-  Sync.Smartcontratcs in 'Sync\Sync.Smartcontratcs.pas',
+  Sync.TETChain in 'Sync\Sync.TETChain.pas',
   Net.Data in 'Net\Net.Data.pas',
   Net.LightSocket in 'Net\Net.LightSocket.pas',
-  Blockchain.SmartKey in 'Blockchain\Blockchain.SmartKey.pas',
   endpoints.Account in 'Web\endpoints\endpoints.Account.pas',
   App.Exceptions in 'Core\App.Exceptions.pas',
   endpoints.Token in 'Web\endpoints\endpoints.Token.pas',
@@ -42,14 +39,15 @@ uses
   Form.Start in 'UI\Forms\Form.Start.pas' {StartForm},
   Styles in 'UI\Forms\Styles.pas' {StylesForm},
   WordsPool in 'Crypto\SeedPhrase\WordsPool.pas',
-  Blockchain.TETDynamic in 'Blockchain\Blockchain.TETDynamic.pas',
-  Blockchain.TokenDynamic in 'Blockchain\Blockchain.TokenDynamic.pas',
-  Blockchain.ICODat in 'Blockchain\Blockchain.ICODat.pas',
   Frame.Ticker in 'UI\Forms\Frame.Ticker.pas' {TickerFrame: TFrame},
   Frame.Explorer in 'UI\Forms\Frame.Explorer.pas' {ExplorerTransactionFrame: TFrame},
   Frame.History in 'UI\Forms\Frame.History.pas' {HistoryTransactionFrame: TFrame},
   Form.EnterKey in 'UI\Forms\Form.EnterKey.pas' {EnterPrivateKeyForm},
-  App.Constants in 'Core\App.Constants.pas';
+  App.Constants in 'Core\App.Constants.pas',
+  Blockchain.TETDynamic in 'Blockchain\Blockchain.TETDynamic.pas',
+  Blockchain.ICODat in 'Blockchain\Blockchain.ICODat.pas',
+  Sync.Tokens in 'Sync\Sync.Tokens.pas',
+  Blockchain.SmartKey in 'Blockchain\Blockchain.SmartKey.pas';
 
 {$R *.res}
 

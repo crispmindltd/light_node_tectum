@@ -13,6 +13,7 @@ uses
   Form.EnterKey,
   Form.Start,
   Math,
+  SyncObjs,
   SysUtils,
   Styles,
   UITypes;
@@ -23,6 +24,8 @@ type
 type
   TUICore = class(TInterfacedObject, IUI)
   private
+    FStartFormCreated: TEvent;
+
     procedure CreateForm(const InstanceClass: TComponentClass;
       var Reference; AsMainForm: Boolean = False);
     procedure SetMainForm(const Reference);
@@ -41,33 +44,24 @@ type
     procedure ShowMainForm;
     procedure ShowEnterPrivateKeyForm;
     procedure NullForm(var Form);
-    procedure AddNewChain(const AName: String; AIsSystemChain: Boolean);
-    procedure ShowTotalCountBlocksDownloadRemain;
+    procedure ShowTotalBlocksToDownload(const ATotalTETBlocksToDownload: Int64);
     procedure ShowDownloadProgress;
-    procedure NotifyNewChainBlocks;
+    procedure NotifyNewTETBlocks(const ANeedRefreshBalance: Boolean);
     procedure NotifyNewSmartBlocks;
   end;
 
 implementation
 
-procedure TUICore.AddNewChain(const AName: String; AIsSystemChain: Boolean);
-begin
-//  if Assigned(MainForm) then
-//    MainForm.AddChain(AName, AIsSystemChain);
-//  if Assigned(ExplorerForm) then
-//  begin
-//    if ExplorerForm.CurrencyIDComboBox.Items.IndexOf(AName) = -1 then
-//      ExplorerForm.CurrencyIDComboBox.Items.Add(AName);
-//  end;
-end;
-
 { TUI }
 
 constructor TUICore.Create;
 begin
+  FStartFormCreated := TEvent.Create;
+  FStartFormCreated.ResetEvent;
   Application.Initialize;
   CreateAndShowForm(TStartForm, StartForm, True);
   CreateForm(TStylesForm, StylesForm);
+  FStartFormCreated.SetEvent;
 end;
 
 procedure TUICore.CreateAndShowForm(const InstanceClass: TComponentClass;
@@ -89,6 +83,7 @@ end;
 
 destructor TUICore.Destroy;
 begin
+  FStartFormCreated.Free;
 
   inherited;
 end;
@@ -152,13 +147,14 @@ begin
   CreateAndShowForm(TMainForm, MainForm, True);
 end;
 
-procedure TUICore.ShowTotalCountBlocksDownloadRemain;
+procedure TUICore.ShowTotalBlocksToDownload(const ATotalTETBlocksToDownload: Int64);
 begin
+  FStartFormCreated.WaitFor(5000);
   if Assigned(StartForm) then
     TThread.Synchronize(nil,
     procedure
     begin
-      StartForm.ShowProgressBar(AppCore.DownloadRemain);
+      StartForm.SetMaxProgressBarValue(ATotalTETBlocksToDownload);
     end);
 end;
 
@@ -182,13 +178,13 @@ begin
 //  Result := MainForm.IsChainNeedSync(AName);
 end;
 
-procedure TUICore.NotifyNewChainBlocks;
+procedure TUICore.NotifyNewTETBlocks(const ANeedRefreshBalance: Boolean);
 begin
   if Assigned(MainForm) then
     TThread.Synchronize(nil,
     procedure
     begin
-      MainForm.NewChainBlocksEvent;
+      MainForm.NewTETBlocksEvent(ANeedRefreshBalance);
     end);
 end;
 

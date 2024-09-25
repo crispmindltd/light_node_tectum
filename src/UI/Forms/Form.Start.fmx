@@ -308,7 +308,7 @@ object StartForm: TStartForm
               Orientation = Horizontal
               Margins.Bottom = 30.000000000000000000
               Position.Y = 420.000000000000000000
-              Size.Width = 616.000000000000000000
+              Size.Width = 600.000000000000000000
               Size.Height = 20.000000000000000000
               Size.PlatformDefault = False
               StyleLookup = 'DownloadProgressBarStyle1'
@@ -318,7 +318,7 @@ object StartForm: TStartForm
                 StyledSettings = [Style]
                 Margins.Top = 10.000000000000000000
                 Position.Y = -33.000000000000000000
-                Size.Width = 616.000000000000000000
+                Size.Width = 600.000000000000000000
                 Size.Height = 20.000000000000000000
                 Size.PlatformDefault = False
                 TextSettings.Font.Family = 'Inter'
@@ -328,6 +328,7 @@ object StartForm: TStartForm
                 TabOrder = 66
               end
               object FloatAnimation3: TFloatAnimation
+                Delay = 0.500000000000000000
                 Duration = 0.300000011920929000
                 OnFinish = FloatAnimation3Finish
                 PropertyName = 'Opacity'
@@ -340,7 +341,7 @@ object StartForm: TStartForm
                 StyledSettings = [Style]
                 Margins.Top = -60.000000000000000000
                 Position.Y = -60.000000000000000000
-                Size.Width = 616.000000000000000000
+                Size.Width = 600.000000000000000000
                 Size.Height = 17.000000000000000000
                 Size.PlatformDefault = False
                 TextSettings.Font.Family = 'Inter'

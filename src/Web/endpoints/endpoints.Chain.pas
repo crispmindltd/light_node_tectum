@@ -43,7 +43,7 @@ begin
 
     JSON := TJSONObject.Create;
     try
-      Response := AppCore.GetBlocksCount(AReqID);
+//      Response := AppCore.GetBlocksCount(AReqID);
       BlocksNumber := Response.Split([' '])[2].ToInt64;
       JSON.AddPair('blocksCount', TJSONNumber.Create(BlocksNumber));
       Result.Code := HTTP_SUCCESS;
@@ -68,8 +68,8 @@ begin
     if AComType <> hcGET then
       raise ENotSupportedError.Create('');
     try
-      JSON.AddPair('blocksCount',
-        TJSONNumber.Create(AppCore.GetChainBlocksCount));
+//      JSON.AddPair('blocksCount',
+//        TJSONNumber.Create(AppCore.GetChainBlocksCount));
       Result.Code := HTTP_SUCCESS;
       Result.response := JSON.ToString;
     finally

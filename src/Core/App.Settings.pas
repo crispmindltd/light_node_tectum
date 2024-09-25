@@ -11,7 +11,7 @@ uses
   SysUtils;
 
 const
-  NODE_VERSION = 'v0.9.2 - beta';
+  NodeVersion = 'v0.9.2 - beta';
 
 type
   TSettingsFile = class
@@ -58,9 +58,9 @@ begin
   FIni := TIniFile.Create(GetFullPath);
   if not FileExists(GetFullPath) then  //initialize the .ini file if it doesn’t already exist
   begin
-    FIni.WriteString('connections','listen_to',DEFAULT_TCP_LISTEN_TO);
-    FIni.WriteString('connections', 'nodes',Format('[%s]',[DEFAULT_NODE_ADDRESS]));
-    FIni.WriteString('http','port',DEFAULT_HTTP_PORT.ToString);
+    FIni.WriteString('connections','listen_to',DefaultTCPListenTo);
+    FIni.WriteString('connections', 'nodes',Format('[%s]',[DefaultNodeAddress]));
+    FIni.WriteString('http','port',DefaultPortHTTP.ToString);
     FIni.UpdateFile;
   end;
 end;

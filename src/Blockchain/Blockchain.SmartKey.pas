@@ -6,37 +6,44 @@ uses
   App.Constants,
   Blockchain.BaseTypes,
   Blockchain.Intf,
+  Classes,
+  IOUtils,
   Math,
   SysUtils;
 
 type
   TBlockchainSmartKey = class(TChainFileWorker)
   private
-    FFile: file of TCSmartKey;
+    FFile: TFileStream;
   public
-    constructor Create(AFileName: String);
+    constructor Create;
     destructor Destory;
 
     function GetBlockSize: Integer; override;
-    function GetBlocksCount: Integer; override;
-    function ReadBlocks(AFrom: Int64; var AAmount: Integer): TBytesBlocks; override;
-    function ReadBlocks(var AAmount: Integer): TBytesBlocks; override;
-    function GetOneBlock(AFrom: Int64): TOneBlockBytes; override;
-    procedure WriteBlocks(APos: Int64; ABytes: TBytesBlocks; AAmount: Integer); override;
-    procedure WriteOneBlock(APos: Int64; ABytes: TOneBlockBytes); override;
+    function GetBlocksCount: Int64; override;
+    procedure WriteBlock(ASkip: Int64; ABlock: TCSmartKey);
+    procedure WriteBlocksAsBytes(ASkip: Int64; ABytes: TBytes); override;
+    procedure WriteBlocks(ASkip: Int64; ABlocks: TArray<TCSmartKey>);
+    function TryReadBlock(ASkip: Int64; out ABlock: TCSmartKey): Boolean;
+    function ReadBlocksAsBytes(ASkip: Int64;
+      ANumber: Integer = MaxBlocksNumber): TBytes; override;
+    function ReadBlocks(ASkip: Int64;
+      ANumber: Integer = MaxBlocksNumber): TArray<TCSmartKey>;
 
-    function TryGetSmartKey(ATicker: String; var sk: TCSmartKey): Boolean;
-    function TryGetSmartKeyByAddress(const AAddress: String; var sk: TCSmartKey): Boolean;
+//    function TryGetSmartKey(ATicker: String; var sk: TCSmartKey): Boolean;
+//    function TryGetSmartKeyByAddress(const AAddress: String; var sk: TCSmartKey): Boolean;
   end;
 
 implementation
 
 { TBlockchainSmartKey }
 
-constructor TBlockchainSmartKey.Create(AFileName: String);
+constructor TBlockchainSmartKey.Create;
 begin
-  inherited Create(ConstStr.SmartCPath, AFileName,True);
+  inherited Create(ConstStr.SmartCPath, ConstStr.SmartKeyFileName, True);
 
+  if not FileExists(FFullFilePath) then
+    TFile.WriteAllBytes(FFullFilePath, []);
 end;
 
 destructor TBlockchainSmartKey.Destory;
@@ -45,22 +52,14 @@ begin
   inherited;
 end;
 
-function TBlockchainSmartKey.GetBlocksCount: Integer;
+function TBlockchainSmartKey.GetBlocksCount: Int64;
 begin
   FLock.Enter;
+  FFile := TFileStream.Create(FullPath, fmOpenRead or fmShareDenyNone);
   try
-    try
-      AssignFile(FFile, FFullFilePath);
-      Reset(FFile);
-      try
-        Result := FileSize(FFile);
-      finally
-        CloseFile(FFile);
-      end;
-    except
-      Result := 0;
-    end;
+    Result := FFile.Size div GetBlockSize;
   finally
+    FFile.Free;
     FLock.Leave;
   end;
 end;
@@ -70,153 +69,99 @@ begin
   Result := SizeOf(TCSmartKey);
 end;
 
-function TBlockchainSmartKey.GetOneBlock(AFrom: Int64): TOneBlockBytes;
-var
-  TCSkey: TCSmartKey;
-begin
-  FLock.Enter;
-  AssignFile(FFile, FFullFilePath);
-  Reset(FFile);
-  try
-    Seek(FFile,AFrom);
-    Read(FFile,TCSkey);
-    Move(TCSkey, Result[0], GetBlockSize);
-  finally
-    CloseFile(FFile);
-    FLock.Leave;
-  end;
-end;
-
-function TBlockchainSmartKey.ReadBlocks(var AAmount: Integer): TBytesBlocks;
-var
-  i: Integer;
-  TCSkey: TCSmartKey;
-begin
-  FLock.Enter;
-  AssignFile(FFile, FFullFilePath);
-  Reset(FFile);
-  try
-    AAmount := Max(0,Min(FileSize(FFile),Min(MAX_BLOCKS_REQUEST,AAmount)));
-    Seek(FFile,FileSize(FFile)-AAmount);
-    for i := 0 to AAmount-1 do
-    begin
-      Read(FFile,TCSkey);
-      Move(TCSkey, Result[i * SizeOf(TCSmartKey)], SizeOf(TCSkey));
-    end;
-  finally
-    CloseFile(FFile);
-    FLock.Leave;
-  end;
-end;
-
-function TBlockchainSmartKey.TryGetSmartKey(ATicker: String;
-  var sk: TCSmartKey): Boolean;
+function TBlockchainSmartKey.ReadBlocks(ASkip: Int64;
+  ANumber: Integer): TArray<TCSmartKey>;
 var
   i: Integer;
 begin
-  Result := False;
   FLock.Enter;
-  AssignFile(FFile, FFullFilePath);
-  Reset(FFile);
+  FFile := TFileStream.Create(FullPath, fmOpenRead or fmShareDenyNone);
   try
-    for i := 0 to FileSize(FFile)-1 do
-    begin
-      Seek(FFile,i);
-      Read(FFile,sk);
-      if sk.Abreviature = ATicker then Exit(True);
-    end;
+    FFile.Seek(ASkip * GetBlockSize, soBeginning);
+    SetLength(Result, Min(ANumber, FFile.Size - FFile.Position));
+    for i := 0 to Length(Result) - 1 do
+      FFile.ReadData<TCSmartKey>(Result[i]);
   finally
-    CloseFile(FFile);
+    FFile.Free;
     FLock.Leave;
   end;
 end;
 
-function TBlockchainSmartKey.TryGetSmartKeyByAddress(const AAddress: String;
-  var sk: TCSmartKey): Boolean;
+function TBlockchainSmartKey.ReadBlocksAsBytes(ASkip: Int64;
+  ANumber: Integer): TBytes;
+begin
+  FLock.Enter;
+  FFile := TFileStream.Create(FullPath, fmOpenRead or fmShareDenyNone);
+  try
+    FFile.Seek(ASkip * GetBlockSize, soBeginning);
+    SetLength(Result, Min(ANumber * GetBlockSize, FFile.Size - FFile.Position));
+    FFile.Read(Result, Length(Result));
+  finally
+    FFile.Free;
+    FLock.Leave;
+  end;
+end;
+
+function TBlockchainSmartKey.TryReadBlock(ASkip: Int64;
+  out ABlock: TCSmartKey): Boolean;
+begin
+  FLock.Enter;
+  FFile := TFileStream.Create(FullPath, fmOpenRead or fmShareDenyNone);
+  try
+    Result := (ASkip >= 0) and (ASkip < GetBlocksCount);
+    if Result then
+    begin
+      FFile.Seek(ASkip * GetBlockSize, soBeginning);
+      FFile.ReadData<TCSmartKey>(ABlock);
+    end;
+  finally
+    FFile.Free;
+    FLock.Leave;
+  end;
+end;
+
+procedure TBlockchainSmartKey.WriteBlock(ASkip: Int64; ABlock: TCSmartKey);
+begin
+  FLock.Enter;
+  FFile := TFileStream.Create(FullPath, fmOpenWrite);
+  try
+    FFile.Seek(ASkip * GetBlockSize, soBeginning);
+    FFile.WriteData<TCSmartKey>(ABlock);
+  finally
+    FFile.Free;
+    FLock.Leave;
+  end;
+end;
+
+procedure TBlockchainSmartKey.WriteBlocks(ASkip: Int64;
+  ABlocks: TArray<TCSmartKey>);
 var
   i: Integer;
 begin
-  Result := False;
   FLock.Enter;
-  AssignFile(FFile, FFullFilePath);
-  Reset(FFile);
+  FFile := TFileStream.Create(FullPath, fmOpenWrite);
   try
-    for i := 0 to FileSize(FFile)-1 do
-    begin
-      Seek(FFile,i);
-      Read(FFile,sk);
-      Result := SameText(sk.key1, AAddress);
-      if Result then
-        Exit;
-    end;
+    FFile.Seek(ASkip * GetBlockSize, soBeginning);
+    for i := 0 to Length(ABlocks) - 1 do
+      FFile.WriteData<TCSmartKey>(ABlocks[i]);
   finally
-    CloseFile(FFile);
+    FFile.Free;
     FLock.Leave;
   end;
 end;
 
-function TBlockchainSmartKey.ReadBlocks(AFrom: Int64; var AAmount: Integer): TBytesBlocks;
-var
-  i: Integer;
-  TCSkey: TCSmartKey;
+procedure TBlockchainSmartKey.WriteBlocksAsBytes(ASkip: Int64; ABytes: TBytes);
 begin
-  FLock.Enter;
-  AssignFile(FFile, FFullFilePath);
-  Reset(FFile);
-  try
-    Seek(FFile,AFrom);
-    AAmount := Min(FileSize(FFile)-AFrom,MAX_BLOCKS_REQUEST);
-    AAmount := Max(0,AAmount);
-    for i := 0 to AAmount-1 do
-    begin
-      Read(FFile,TCSkey);
-      Move(TCSkey, Result[i * SizeOf(TCSmartKey)], SizeOf(TCSkey));
-    end;
-  finally
-    CloseFile(FFile);
-    FLock.Leave;
-  end;
-end;
+  if Length(ABytes) mod GetBlockSize <> 0 then
+    exit;
 
-procedure TBlockchainSmartKey.WriteBlocks(APos: Int64; ABytes: TBytesBlocks;
-  AAmount: Integer);
-var
-  i: Integer;
-  TCSkeyArr: array[0..SizeOf(TCSmartKey)-1] of Byte;
-  TCSkey: TCSmartKey absolute TCSkeyArr;
-begin
   FLock.Enter;
-  AssignFile(FFile, FFullFilePath);
-  Reset(FFile);
+  FFile := TFileStream.Create(FullPath, fmOpenWrite);
   try
-    Seek(FFile,APos);
-    AAmount := Max(AAmount,0);                  // <=0
-    for i := 0 to AAmount - 1 do
-    begin
-      Move(ABytes[i*SizeOf(TCSkey)],TCSkeyArr[0],SizeOf(TCSkey));
-      Write(FFile,TCSkey);
-    end;
+    FFile.Seek(ASkip * GetBlockSize, soBeginning);
+    FFile.Write(ABytes, Length(ABytes));
   finally
-    CloseFile(FFile);
-    FLock.Leave;
-  end;
-end;
-
-procedure TBlockchainSmartKey.WriteOneBlock(APos: Int64;
-  ABytes: TOneBlockBytes);
-var
-  TCSkeyArr: array[0..SizeOf(TCSmartKey)-1] of Byte;
-  TCSkey: TCSmartKey absolute TCSkeyArr;
-begin
-  FLock.Enter;
-  AssignFile(FFile, FFullFilePath);
-  Reset(FFile);
-  try
-    Seek(FFile,APos);
-    Move(ABytes[0],TCSkeyArr[0],SizeOf(TCSkey));
-    Write(FFile,TCSkey);
-  finally
-    CloseFile(FFile);
+    FFile.Free;
     FLock.Leave;
   end;
 end;

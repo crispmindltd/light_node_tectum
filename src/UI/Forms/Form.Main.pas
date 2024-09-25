@@ -342,7 +342,7 @@ type
     procedure onTokenHistoryFrameClick(Sender: TObject);
     procedure onExplorerFrameClick(Sender: TObject);
   public
-    procedure NewChainBlocksEvent;
+    procedure NewTETBlocksEvent(ANeedRefreshBalance: Boolean);
     procedure NewSmartBlocksEvent;
     procedure onKeysSaved;
     procedure onKeysSavingError;
@@ -514,14 +514,14 @@ var
   val,balance: Extended;
   tICO:TTokenICODat;
 begin
-  const isGetTokenSuccess = AppCore.TryGetTokenICO(TokenNameEdit.Text, tICO);
+//  const isGetTokenSuccess = AppCore.TryGetTokenICO(TokenNameEdit.Text, tICO);
   FBalances.TryGetValue(TokenNameEdit.Text, balance);
   isNumber := TryStrToFloat(AmountTokenEdit.Text, val);
 
   const Decimals = DecimalsCount(AmountTokenEdit.Text);
 
-  SendTokenButton.Enabled := isGetTokenSuccess and (Length(RecepientAddressEdit.Text) >= 10) and
-    isNumber and (val > 0) and (val <= balance) and (Decimals <= tICO.FloatSize);
+//  SendTokenButton.Enabled := isGetTokenSuccess and (Length(RecepientAddressEdit.Text) >= 10) and
+//    isNumber and (val > 0) and (val <= balance) and (Decimals <= tICO.FloatSize);
 
   with TransferTokenStatusLabel do
   begin
@@ -621,10 +621,10 @@ var
   response: string;
 begin
   try
-    response := AppCore.DoNewToken('*',AppCore.SessionKey,
-      CreateTokenInformationMemo.Text, CreateTokenShortNameEdit.Text,
-      CreateTokenSymbolEdit.Text, CreateTokenAmountEdit.Text.ToInt64,
-      DecimalsEdit.Text.ToInteger);
+//    response := AppCore.DoNewToken('*',AppCore.SessionKey,
+//      CreateTokenInformationMemo.Text, CreateTokenShortNameEdit.Text,
+//      CreateTokenSymbolEdit.Text, CreateTokenAmountEdit.Text.ToInt64,
+//      DecimalsEdit.Text.ToInteger);
 
     CreateTokenShortNameEdit.Text := '';
     CreateTokenSymbolEdit.Text := '';
@@ -679,12 +679,12 @@ begin
     (Length(CreateTokenInformationMemo.Text) >= 10) and
     (TokenCreatingStatusLabel.Opacity = 0);
 
-  if CreateTokenButton.Enabled and TryStrToInt64(CreateTokenAmountEdit.Text,l) and
-    TryStrToInt(DecimalsEdit.Text,k) then
-    TokenCreationFeeLabel.Text := Format('Creation token fee: %d TET',
-      [AppCore.GetNewTokenFee(l,k)])
-  else
-    TokenCreationFeeLabel.Text := 'Creation token fee: 0 TET';
+//  if CreateTokenButton.Enabled and TryStrToInt64(CreateTokenAmountEdit.Text,l) and
+//    TryStrToInt(DecimalsEdit.Text,k) then
+//    TokenCreationFeeLabel.Text := Format('Creation token fee: %d TET',
+//      [AppCore.GetNewTokenFee(l,k)])
+//  else
+//    TokenCreationFeeLabel.Text := 'Creation token fee: 0 TET';
 end;
 
 procedure TMainForm.CreateTokenSymbolEditChangeTracking(Sender: TObject);
@@ -728,15 +728,15 @@ begin
   RefreshHeaderBalance(TokenNameEdit.Text);
   MainRectangleMouseDown(nil,TMouseButton.mbLeft,[],0,0);
 
-  if AppCore.TryGetTokenICO(TokenNameEdit.Text,tICO) then
-  begin
-    TokenShortNameEdit.Text := tICO.ShortName;
-    TokenInfoMemo.Text := tICO.FullName;
-  end else
-  begin
-    TokenShortNameEdit.Text := '';
-    TokenInfoMemo.Text := '';
-  end;
+//  if AppCore.TryGetTokenICO(TokenNameEdit.Text,tICO) then
+//  begin
+//    TokenShortNameEdit.Text := tICO.ShortName;
+//    TokenInfoMemo.Text := tICO.FullName;
+//  end else
+//  begin
+//    TokenShortNameEdit.Text := '';
+//    TokenInfoMemo.Text := '';
+//  end;
 end;
 
 procedure TMainForm.FloatAnimation1Finish(Sender: TObject);
@@ -944,11 +944,14 @@ begin
   SearchTokenEdit.Text := '';
 end;
 
-procedure TMainForm.NewChainBlocksEvent;
+procedure TMainForm.NewTETBlocksEvent(ANeedRefreshBalance: Boolean);
 begin
-  RefreshTETBalance;
-  RefreshTETHistory;
   RefreshExplorer;
+  if ANeedRefreshBalance then
+  begin
+    RefreshTETBalance;
+    RefreshTETHistory;
+  end;
 end;
 
 procedure TMainForm.NewSmartBlocksEvent;
@@ -967,8 +970,8 @@ begin
     ticker := 'TET'
   else
     ticker := chosenTicker;
-  if not AppCore.TryGetTokenICO(ticker,tICO) then
-    exit;
+//  if not AppCore.TryGetTokenICO(ticker,tICO) then
+//    exit;
 
   with (Sender as TExplorerTransactionFrame) do
   begin
@@ -1025,8 +1028,8 @@ var
   ticker: String;
   tICO: TTokenICODat;
 begin
-  if not AppCore.TryGetTokenICO('TET',tICO) then
-    exit;
+//  if not AppCore.TryGetTokenICO('TET',tICO) then
+//    exit;
 
   with (Sender as THistoryTransactionFrame) do
   begin
@@ -1073,8 +1076,8 @@ var
   ticker: String;
   tICO: TTokenICODat;
 begin
-  if not AppCore.TryGetTokenICO(TokenNameEdit.Text,tICO) then
-    exit;
+//  if not AppCore.TryGetTokenICO(TokenNameEdit.Text,tICO) then
+//    exit;
 
   with (Sender as THistoryTransactionFrame) do
   begin
@@ -1138,12 +1141,12 @@ begin
   amount := 20;
   if chosenTicker = 'Tectum' then
   begin
-    transArray := AppCore.GetChainLastTransactions(amount);
-    if not AppCore.TryGetTokenICO('TET',tICO) then exit;
+//    transArray := AppCore.GetChainLastTransactions(amount);
+//    if not AppCore.TryGetTokenICO('TET',tICO) then exit;
   end else
   begin
-    transArray := AppCore.GetSmartLastTransactions(chosenTicker,amount);
-    if not AppCore.TryGetTokenICO(chosenTicker,tICO) then exit;
+//    transArray := AppCore.GetSmartLastTransactions(chosenTicker,amount);
+//    if not AppCore.TryGetTokenICO(chosenTicker,tICO) then exit;
   end;
 
   CleanScrollBox(ExplorerVertScrollBox);
@@ -1176,7 +1179,7 @@ begin
     BalanceTokenValueLabel.Text :=
       Format('%s %s',[FormatFloat('0.########',value), AName]);
 
-  AddressTokenLabel.Text := AppCore.GetSmartAddressByTicker(AName);
+//  AddressTokenLabel.Text := AppCore.GetSmartAddressByTicker(AName);
 end;
 
 procedure TMainForm.RefreshTETBalance;
@@ -1184,7 +1187,7 @@ var
   val: Extended;
 begin
   try
-    FBalances.AddOrSetValue('TET',AppCore.GetLocalTETBalance);
+//    FBalances.AddOrSetValue('TET',AppCore.GetLocalTETBalance);
     FBalances.TryGetValue('TET',val);
     BalanceTETValueLabel.Text := FormatFloat('0.########',val) + ' TET';
   except
@@ -1203,7 +1206,7 @@ var
   amount: Integer;
 begin
   amount := 20;
-  transArray := AppCore.GetChainLastUserTransactions(AppCore.UserID,amount);
+//  transArray := AppCore.GetChainLastUserTransactions(AppCore.UserID,amount);
 
   NoTETHistoryLabel.Visible := amount = 0;
   HistoryTETHeaderLayout.Visible := not NoTETHistoryLabel.Visible;
@@ -1240,11 +1243,11 @@ var
   format: String;
   tICO: TTokenICODat;
 begin
-  if not AppCore.TryGetTokenICO(TokenNameEdit.Text,tICO) then
-    exit;
+//  if not AppCore.TryGetTokenICO(TokenNameEdit.Text,tICO) then
+//    exit;
 
   amount := 20;
-  transArray := AppCore.GetSmartLastUserTransactions(AppCore.UserID,TokenNameEdit.Text,amount);
+//  transArray := AppCore.GetSmartLastUserTransactions(AppCore.UserID,TokenNameEdit.Text,amount);
 
   NoTokenHistoryLabel.Visible := amount = 0;
   HistoryTokenHeaderLayout.Visible := not NoTokenHistoryLabel.Visible;
@@ -1279,11 +1282,11 @@ var
   balance: String;
   i: Integer;
 begin
-  for balance in AppCore.GetLocalTokensBalances do
-  begin
-    splt := balance.Split([':']);
-    AddOrRefreshBalance(splt[0],splt[1].ToExtended);
-  end;
+//  for balance in AppCore.GetLocalTokensBalances do
+//  begin
+//    splt := balance.Split([':']);
+//    AddOrRefreshBalance(splt[0],splt[1].ToExtended);
+//  end;
   TokensListBox.Sort(CustomSortCompare);
 
   if TokensListBox.Count > 0 then
@@ -1422,8 +1425,8 @@ var
   response: string;
 begin
   try
-    response := AppCore.DoCoinsTransfer('*',AppCore.SessionKey,SendTETToEdit.Text,
-      AmountTETEdit.Text.ToExtended);
+//    response := AppCore.DoCoinsTransfer('*',AppCore.SessionKey,SendTETToEdit.Text,
+//      AmountTETEdit.Text.ToExtended);
     SendTETToEdit.Text := '';
     AmountTETEdit.Text := '';
     ShowTETTransferStatus('Transaction successful');
@@ -1450,8 +1453,8 @@ var
 begin
   try
     AppCore.TryExtractPrivateKeyFromFile(prKey,pubKey);
-    response := AppCore.DoTokenTransfer('*',AppCore.TETAddress,RecepientAddressEdit.Text,
-      AddressTokenLabel.Text, AmountTokenEdit.Text.ToExtended,prKey,pubKey);
+//    response := AppCore.DoTokenTransfer('*',AppCore.TETAddress,RecepientAddressEdit.Text,
+//      AddressTokenLabel.Text, AmountTokenEdit.Text.ToExtended,prKey,pubKey);
 
     RecepientAddressEdit.Text := '';
     AmountTokenEdit.Text := '';

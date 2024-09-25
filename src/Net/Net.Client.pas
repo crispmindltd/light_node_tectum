@@ -13,8 +13,8 @@ uses
   Net.Socket,
   Net.Data,
   Sync.Base,
-  Sync.Chain,
-  Sync.Smartcontratcs,
+  Sync.TETChain,
+  Sync.Tokens,
   SyncObjs,
   SysUtils;
 
@@ -23,22 +23,22 @@ type
 
   TNodeClient = class
   const
-    WAIT_FOR_SHUTTING_DOWN = 10000;
+    ShuttingDownTimeout = 10000;
   strict private
     FStatus: TServerStatus;
   private
-    FChainBlocksUpdater: TChainBlocksUpdater;
-    FSmartBlocksUpdater: TSmartBlocksUpdater;
-    FChainSyncDone: TEvent;
-    FSmartSyncDone: TEvent;
+    FTETChainBlocksUpdater: TTETChainBlocksUpdater;
+    FTokensChainsBlocksUpdater: TTokensChainsBlocksUpdater;
+    FTETChainSyncDone: TEvent;
+    FTokensSyncDone: TEvent;
     FRemoteServer: TCustomSocket;
 
-    procedure StartChainSync(AAddress: String);
-    procedure onChainUpdaterTerminate(Sender: TObject);
-    procedure KillChainUpdater;
-    procedure StartSmartSync(AAddress: String);
-    procedure onSmartUpdaterTerminate(Sender: TObject);
-    procedure KillSmartUpdater;
+    procedure StartTETChainSync(AAddress: String);
+    procedure onTETChainUpdaterTerminate(Sender: TObject);
+    procedure KillTETChainUpdater;
+    procedure StartTokensChainsSync(AAddress: String);
+    procedure onTokensChainsUpdaterTerminate(Sender: TObject);
+    procedure KillTokensChainsUpdater;
   public
     constructor Create;
     destructor Destroy; override;
@@ -55,30 +55,32 @@ implementation
 
 { TNodeClient }
 
-procedure TNodeClient.StartChainSync(AAddress: String);
+procedure TNodeClient.StartTETChainSync(AAddress: String);
 var
   splt: TArray<string>;
 begin
-  if Assigned(FChainBlocksUpdater) then exit;
+  if Assigned(FTETChainBlocksUpdater) then exit;
 
   splt := AAddress.Split([' ',':']);
-  FChainBlocksUpdater := TChainBlocksUpdater.Create(splt[0],splt[1].ToInteger);
-  FChainBlocksUpdater.SyncDoneEvent := FChainSyncDone;
-  FChainBlocksUpdater.OnTerminate := onChainUpdaterTerminate;
-  FChainBlocksUpdater.Resume;
+  FTETChainBlocksUpdater := TTETChainBlocksUpdater.Create(splt[0],
+    splt[1].ToInteger);
+  FTETChainBlocksUpdater.SyncDoneEvent := FTETChainSyncDone;
+  FTETChainBlocksUpdater.OnTerminate := onTETChainUpdaterTerminate;
+  FTETChainBlocksUpdater.Resume;
 end;
 
-procedure TNodeClient.StartSmartSync(AAddress: String);
+procedure TNodeClient.StartTokensChainsSync(AAddress: String);
 var
   splt: TArray<string>;
 begin
-  if Assigned(FSmartBlocksUpdater) then exit;
+  if Assigned(FTokensChainsBlocksUpdater) then exit;
 
   splt := AAddress.Split([' ',':']);
-  FSmartBlocksUpdater := TSmartBlocksUpdater.Create(splt[0],splt[1].ToInteger);
-  FSmartBlocksUpdater.SyncDoneEvent := FSmartSyncDone;
-  FSmartBlocksUpdater.OnTerminate := onSmartUpdaterTerminate;
-  FSmartBlocksUpdater.Resume;
+  FTokensChainsBlocksUpdater := TTokensChainsBlocksUpdater.Create(splt[0],
+    splt[1].ToInteger);
+  FTokensChainsBlocksUpdater.SyncDoneEvent := FTokensSyncDone;
+  FTokensChainsBlocksUpdater.OnTerminate := onTokensChainsUpdaterTerminate;
+  FTokensChainsBlocksUpdater.Resume;
 end;
 
 constructor TNodeClient.Create;
@@ -87,8 +89,8 @@ begin
 
   FRemoteServer := TCustomSocket.Create;
   FStatus := ssStoped;
-  FChainSyncDone := TEvent.Create;
-  FSmartSyncDone := TEvent.Create;
+  FTETChainSyncDone := TEvent.Create;
+  FTokensSyncDone := TEvent.Create;
 end;
 
 //procedure TNodeClient.BeginSync(const AChainName: String; AIsSystemChain: Boolean);
@@ -106,8 +108,8 @@ destructor TNodeClient.Destroy;
 begin
   Stop;
   FRemoteServer.Free;
-  FChainSyncDone.Free;
-  FSmartSyncDone.Free;
+  FTETChainSyncDone.Free;
+  FTokensSyncDone.Free;
 
   inherited;
 end;
@@ -167,54 +169,54 @@ begin
   end;
 end;
 
-procedure TNodeClient.KillChainUpdater;
+procedure TNodeClient.KillTETChainUpdater;
 begin
-  if Assigned(FChainBlocksUpdater) then
-    FChainBlocksUpdater.Terminate;
+  if Assigned(FTETChainBlocksUpdater) then
+    FTETChainBlocksUpdater.Terminate;
 end;
 
-procedure TNodeClient.KillSmartUpdater;
+procedure TNodeClient.KillTokensChainsUpdater;
 begin
-  if Assigned(FSmartBlocksUpdater) then
-    FSmartBlocksUpdater.Terminate;
+  if Assigned(FTokensChainsBlocksUpdater) then
+    FTokensChainsBlocksUpdater.Terminate;
 end;
 
-procedure TNodeClient.onChainUpdaterTerminate(Sender: TObject);
+procedure TNodeClient.onTETChainUpdaterTerminate(Sender: TObject);
 var
-  chUpdater: TChainBlocksUpdater;
+  chUpdater: TTETChainBlocksUpdater;
   anotherAddr: String;
 begin
-  chUpdater := Sender as TChainBlocksUpdater;
+  chUpdater := Sender as TTETChainBlocksUpdater;
   if chUpdater.IsError and (FStatus = ssStarted) then
   begin
     anotherAddr := Nodes.GetAnotherNodeToConnect(chUpdater.Address);
-    FChainBlocksUpdater := nil;
-    StartChainSync(anotherAddr);
+    FTETChainBlocksUpdater := nil;
+    StartTETChainSync(anotherAddr);
   end else
-    FChainBlocksUpdater := nil;
+    FTETChainBlocksUpdater := nil;
 end;
 
-procedure TNodeClient.onSmartUpdaterTerminate(Sender: TObject);
+procedure TNodeClient.onTokensChainsUpdaterTerminate(Sender: TObject);
 var
-  smUpdater: TSmartBlocksUpdater;
+  smUpdater: TTokensChainsBlocksUpdater;
   anotherAddr: String;
 begin
-  smUpdater := Sender as TSmartBlocksUpdater;
+  smUpdater := Sender as TTokensChainsBlocksUpdater;
   if smUpdater.IsError and (FStatus = ssStarted) then
   begin
     anotherAddr := Nodes.GetAnotherNodeToConnect(smUpdater.Address);
-    FSmartBlocksUpdater := nil;
-    StartSmartSync(anotherAddr);
+    FTokensChainsBlocksUpdater := nil;
+    StartTokensChainsSync(anotherAddr);
   end else
-    FSmartBlocksUpdater := nil;
+    FTokensChainsBlocksUpdater := nil;
 end;
 
 procedure TNodeClient.Start;
 begin
   if FStatus <> ssStoped then exit;
 
-  StartChainSync(Nodes.GetNodeToConnect);
-  StartSmartSync(Nodes.GetNodeToConnect);
+  StartTETChainSync(Nodes.GetNodeToConnect);
+  StartTokensChainsSync(Nodes.GetNodeToConnect);
   FStatus := ssStarted;
 end;
 
@@ -223,10 +225,10 @@ begin
   if FStatus <> ssStarted then exit;
 
   FStatus := ssShuttingDown;
-  KillChainUpdater;
-  KillSmartUpdater;
-  FChainSyncDone.WaitFor(WAIT_FOR_SHUTTING_DOWN);
-  FSmartSyncDone.WaitFor(WAIT_FOR_SHUTTING_DOWN);
+  KillTETChainUpdater;
+  KillTokensChainsUpdater;
+  FTETChainSyncDone.WaitFor(ShuttingDownTimeout);
+  FTokensSyncDone.WaitFor(ShuttingDownTimeout);
   FStatus := ssStoped;
 end;
 

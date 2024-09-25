@@ -6,6 +6,7 @@ uses
   App.Exceptions,
   App.Intf,
   App.Logs,
+  Blockchain.BaseTypes,
   Classes,
   Math,
   Net.Socket,
@@ -15,15 +16,15 @@ uses
 type
   TSyncChain = class(TThread)
     const
-      REQUEST_LONG_DELAY = 4000;
-      REQUEST_SHORT_DELAY = 100;
-      RECEIVE_TIMEOUT = 10000;
+      RequestLongDelay = 4000;
+      RequestShortDelay = 100;
+      RECEIVE_TIMEOUT = 10000000;
       RECONNECT_ATTEMPTS = 3;
     private
       FIsError: Boolean;
-
       function GetNodeAddress: String;
     protected
+      FBytesRequest: array[0..8] of Byte;
       FSocket: TSocket;
       FName: String;
       FAddress: String;
@@ -36,7 +37,7 @@ type
       function Connect: Boolean;
       procedure Disconnect;
       function Reconnect: Boolean;
-      procedure GetResponse(var Bytes: array of Byte; Count: Integer);
+      procedure GetResponse(var ABytes: array of Byte);
       procedure BreakableSleep(ADelay: Integer);
       function DoTryReconnect: Boolean;
       procedure DoCantReconnect;
@@ -140,16 +141,15 @@ begin
   Result := Format('%s:%d',[FSocket.Endpoint.Address.Address,FSocket.Endpoint.Port]);
 end;
 
-procedure TSyncChain.GetResponse(var Bytes: array of Byte; Count: Integer);
+procedure TSyncChain.GetResponse(var ABytes: array of Byte);
 var
   StartTime: Cardinal;
-  toReceiveTotal,toReceiveNow,receivedTotal: Integer;
-  rec: array of Byte;
+  ToReceiveTotal,ReceivedNow,ReceivedTotal: Int64;
 begin
   StartTime := GetTickCount;
-  toReceiveTotal := Count;
-  receivedTotal := 0;
-  while Count > 0 do
+  ReceivedTotal := 0;
+  ToReceiveTotal := Length(ABytes);
+  while ToReceiveTotal > 0 do
   begin
     while FSocket.ReceiveLength = 0 do
     begin
@@ -159,12 +159,10 @@ begin
       Sleep(50);
     end;
 
-    toReceiveNow := Min(Count,FSocket.ReceiveLength);
-    SetLength(rec,toReceiveNow);
-    FSocket.Receive(rec,0,toReceiveNow,[TSocketFlag.WAITALL]);
-    Dec(Count,toReceiveNow);
-    Move(rec[0],Bytes[receivedTotal],toReceiveNow);
-    Inc(receivedTotal,toReceiveNow);
+    ReceivedNow := Min(ToReceiveTotal,FSocket.ReceiveLength);
+    FSocket.Receive(ABytes,ReceivedTotal,ReceivedNow,[TSocketFlag.WAITALL]);
+    Dec(ToReceiveTotal,ReceivedNow);
+    Inc(ReceivedTotal,ReceivedNow);
   end;
 end;
 
