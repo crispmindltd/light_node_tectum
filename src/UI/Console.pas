@@ -5,7 +5,14 @@ interface
 uses
   System.SysUtils,
   System.SyncObjs,
-  App.Intf;
+  App.Intf,
+{$IF Defined(MSWINDOWS)}
+  Winapi.Windows;
+{$ELSE}
+  Posix.Unistd,
+  Posix.StdLib,
+  Posix.Signal;
+{$ENDIF}
 
 type
   TConsoleCore = class(TInterfacedObject, IUI)
@@ -31,6 +38,35 @@ type
 
 implementation
 
+var
+  ExitFlag: Boolean = False;
+
+{$IF Defined(MSWINDOWS)}
+function CtrlHandler(CtrlType: DWORD): BOOL; stdcall;
+begin
+  case CtrlType of
+    CTRL_C_EVENT, //
+      CTRL_BREAK_EVENT, //
+      CTRL_CLOSE_EVENT: begin
+        ExitFlag := True;
+        Result := True;
+      end;
+  else
+    Result := False;
+  end;
+end;
+{$ELSE}
+procedure SignalHandler(Sig: Integer); cdecl;
+begin
+  case Sig of
+    SIGINT, SIGTERM:
+    begin
+      ExitFlag := True;
+    end;
+  end;
+end;
+{$ENDIF}
+
 { TConsoleCore }
 
 procedure TConsoleCore.AddNewChain(const AName: String; AIsSystemChain: Boolean);
@@ -41,6 +77,12 @@ end;
 constructor TConsoleCore.Create;
 begin
   CS := TCriticalSection.Create;
+{$IF Defined(MSWINDOWS)}
+  SetConsoleCtrlHandler(@CtrlHandler, True);
+{$ELSE}
+  signal(SIGINT, @SignalHandler);
+  signal(SIGTERM, @SignalHandler);
+{$ENDIF}
 end;
 
 destructor TConsoleCore.Destroy;
@@ -82,8 +124,11 @@ end;
 procedure TConsoleCore.Run;
 begin
    DoMessage(Format('Tectum Light Node version %s. Copyright (c) 2024 CrispMind.',[AppCore.GetVersion]));
-   DoMessage('Lite node is running. Press Enter to stop.');
-   Readln;
+   DoMessage('Lite node is running. Press Ctrl-C to stop.');
+   while not ExitFlag do begin
+     Sleep(100);
+   end;
+   DoMessage('Terminating node ...');
 end;
 
 procedure TConsoleCore.ShowDownloadProgress;
@@ -112,4 +157,3 @@ begin
 end;
 
 end.
-
