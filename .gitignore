@@ -197,6 +197,7 @@ orleans.codegen.cs
 *.identcache
 *.dsk
 *.bak
+__recovery/
 
 # RIA/Silverlight projects
 Generated_Code/

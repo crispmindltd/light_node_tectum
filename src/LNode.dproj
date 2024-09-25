@@ -4,8 +4,8 @@
         <ProjectVersion>20.1</ProjectVersion>
         <FrameworkType>FMX</FrameworkType>
         <Base>True</Base>
-        <Config Condition="'$(Config)'==''">Debug</Config>
-        <Platform Condition="'$(Platform)'==''">Win32</Platform>
+        <Config Condition="'$(Config)'==''">Release</Config>
+        <Platform Condition="'$(Platform)'==''">Win64</Platform>
         <TargetedPlatforms>32915</TargetedPlatforms>
         <AppType>Application</AppType>
         <MainSource>LNode.dpr</MainSource>
@@ -304,9 +304,12 @@
         <DCCReference Include="Blockchain\Blockchain.Intf.pas"/>
         <DCCReference Include="Blockchain\Blockchain.Token.chn.pas"/>
         <DCCReference Include="Blockchain\Blockchain.BaseTypes.pas"/>
-        <DCCReference Include="Sync\Sync.TETChain.pas"/>
+        <DCCReference Include="Blockchain\Blockchain.Smartcontracts.pas"/>
+        <DCCReference Include="Sync\Sync.Chain.pas"/>
+        <DCCReference Include="Sync\Sync.Smartcontratcs.pas"/>
         <DCCReference Include="Net\Net.Data.pas"/>
         <DCCReference Include="Net\Net.LightSocket.pas"/>
+        <DCCReference Include="Blockchain\Blockchain.SmartKey.pas"/>
         <DCCReference Include="Web\endpoints\endpoints.Account.pas"/>
         <DCCReference Include="Core\App.Exceptions.pas"/>
         <DCCReference Include="Web\endpoints\endpoints.Token.pas"/>
@@ -324,6 +327,9 @@
             <FormType>fmx</FormType>
         </DCCReference>
         <DCCReference Include="Crypto\SeedPhrase\WordsPool.pas"/>
+        <DCCReference Include="Blockchain\Blockchain.TETDynamic.pas"/>
+        <DCCReference Include="Blockchain\Blockchain.TokenDynamic.pas"/>
+        <DCCReference Include="Blockchain\Blockchain.ICODat.pas"/>
         <DCCReference Include="UI\Forms\Frame.Ticker.pas">
             <Form>TickerFrame</Form>
             <FormType>fmx</FormType>
@@ -343,10 +349,7 @@
             <Form>EnterPrivateKeyForm</Form>
         </DCCReference>
         <DCCReference Include="Core\App.Constants.pas"/>
-        <DCCReference Include="Blockchain\Blockchain.TETDynamic.pas"/>
-        <DCCReference Include="Blockchain\Blockchain.ICODat.pas"/>
-        <DCCReference Include="Sync\Sync.Tokens.pas"/>
-        <DCCReference Include="Blockchain\Blockchain.SmartKey.pas"/>
+        <DCCReference Include="UI\OpenURL.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
@@ -726,12 +729,6 @@
                 <DeployFile LocalName="Win32\Debug\Retranslator.exe" Configuration="Debug" Class="ProjectOutput"/>
                 <DeployFile LocalName="Win32\Debug\RetranslatorLinux.exe" Configuration="Debug" Class="ProjectOutput"/>
                 <DeployFile LocalName="Win32\Debug\exe\LNode.exe" Configuration="Debug" Class="ProjectOutput">
-                    <Platform Name="Win32">
-                        <RemoteName>LNode.exe</RemoteName>
-                        <Overwrite>true</Overwrite>
-                    </Platform>
-                </DeployFile>
-                <DeployFile LocalName="Win32\Release\LNode.exe" Configuration="Release" Class="ProjectOutput">
                     <Platform Name="Win32">
                         <RemoteName>LNode.exe</RemoteName>
                         <Overwrite>true</Overwrite>
