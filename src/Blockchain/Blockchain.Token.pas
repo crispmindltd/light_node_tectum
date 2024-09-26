@@ -1,4 +1,4 @@
-unit Blockchain.Token.chn;
+unit Blockchain.Token;
 
 interface
 
@@ -12,44 +12,42 @@ uses
   SysUtils;
 
 type
-  TBlockchainTokenCHN = class(TChainFileWorker)
+  TBlockchainToken = class(TChainFileWorker)
   private
     FFile: TFileStream;
   public
-    constructor Create;
+    constructor Create(ATokenID: Integer);
     destructor Destory;
 
     function GetBlockSize: Integer; override;
     function GetBlocksCount: Int64; override;
-    procedure WriteBlock(ASkip: Int64; ABlock: Tbc2);
+    procedure WriteBlock(ASkip: Int64; ABlock: TCbc4);
     procedure WriteBlocksAsBytes(ASkip: Int64; ABytes: TBytes); override;
-    procedure WriteBlocks(ASkip: Int64; ABlocks: TArray<Tbc2>);
-    function TryReadBlock(ASkip: Int64; out ABlock: Tbc2): Boolean;
+    procedure WriteBlocks(ASkip: Int64; ABlocks: TArray<TCbc4>);
+    function TryReadBlock(ASkip: Int64; out ABlock: TCbc4): Boolean;
     function ReadBlocksAsBytes(ASkip: Int64;
       ANumber: Integer = MaxBlocksNumber): TBytes; override;
     function ReadBlocks(ASkip: Int64;
-      ANumber: Integer = MaxBlocksNumber): TArray<Tbc2>;
+      ANumber: Integer = MaxBlocksNumber): TArray<TCbc4>;
   end;
 
 implementation
 
-{ TBlockchainTokenCHN }
+{ TBlockchainToken }
 
-constructor TBlockchainTokenCHN.Create;
+constructor TBlockchainToken.Create(ATokenID: Integer);
 begin
-  inherited Create(ConstStr.DBCPath, ConstStr.TokenCHNFileName, True);
+  inherited Create(ConstStr.SmartCPath, ATokenID.ToString + '.chn');
 
-  if not FileExists(FFullFilePath) then
-    TFile.WriteAllBytes(FFullFilePath, []);
 end;
 
-destructor TBlockchainTokenCHN.Destory;
+destructor TBlockchainToken.Destory;
 begin
 
   inherited;
 end;
 
-function TBlockchainTokenCHN.GetBlocksCount: Int64;
+function TBlockchainToken.GetBlocksCount: Int64;
 begin
   FLock.Enter;
   FFile := TFileStream.Create(FullPath, fmOpenRead or fmShareDenyNone);
@@ -61,35 +59,39 @@ begin
   end;
 end;
 
-function TBlockchainTokenCHN.GetBlockSize: Integer;
+function TBlockchainToken.GetBlockSize: Integer;
 begin
-  Result := SizeOf(Tbc2);
+  Result := SizeOf(TCbc4);
 end;
 
-function TBlockchainTokenCHN.ReadBlocks(ASkip: Int64; ANumber: Integer)
-  : TArray<Tbc2>;
+function TBlockchainToken.ReadBlocks(ASkip: Int64; ANumber: Integer): TArray<TCbc4>;
 var
   i: Integer;
 begin
+  Result := [];
   FLock.Enter;
   FFile := TFileStream.Create(FullPath, fmOpenRead or fmShareDenyNone);
   try
+    if ASkip * GetBlockSize > FFile.Size - GetBlockSize then
+      exit;
     FFile.Seek(ASkip * GetBlockSize, soBeginning);
-    SetLength(Result, Min(ANumber, FFile.Size - FFile.Position));
+    SetLength(Result, Min(ANumber, (FFile.Size - FFile.Position) div GetBlockSize));
     for i := 0 to Length(Result) - 1 do
-      FFile.ReadData<Tbc2>(Result[i]);
+      FFile.ReadData<TCbc4>(Result[i]);
   finally
     FFile.Free;
     FLock.Leave;
   end;
 end;
 
-function TBlockchainTokenCHN.ReadBlocksAsBytes(ASkip: Int64;
-  ANumber: Integer): TBytes;
+function TBlockchainToken.ReadBlocksAsBytes(ASkip: Int64; ANumber: Integer): TBytes;
 begin
+  Result := [];
   FLock.Enter;
   FFile := TFileStream.Create(FullPath, fmOpenRead or fmShareDenyNone);
   try
+    if ASkip * GetBlockSize > FFile.Size - GetBlockSize then
+      exit;
     FFile.Seek(ASkip * GetBlockSize, soBeginning);
     SetLength(Result, Min(ANumber * GetBlockSize, FFile.Size - FFile.Position));
     FFile.Read(Result, Length(Result));
@@ -99,8 +101,7 @@ begin
   end;
 end;
 
-function TBlockchainTokenCHN.TryReadBlock(ASkip: Int64;
-  out ABlock: Tbc2): Boolean;
+function TBlockchainToken.TryReadBlock(ASkip: Int64; out ABlock: TCbc4): Boolean;
 begin
   FLock.Enter;
   FFile := TFileStream.Create(FullPath, fmOpenRead or fmShareDenyNone);
@@ -109,7 +110,7 @@ begin
     if Result then
     begin
       FFile.Seek(ASkip * GetBlockSize, soBeginning);
-      FFile.ReadData<Tbc2>(ABlock);
+      FFile.ReadData<TCbc4>(ABlock);
     end;
   finally
     FFile.Free;
@@ -117,41 +118,50 @@ begin
   end;
 end;
 
-procedure TBlockchainTokenCHN.WriteBlock(ASkip: Int64; ABlock: Tbc2);
+procedure TBlockchainToken.WriteBlock(ASkip: Int64; ABlock: TCbc4);
 begin
   FLock.Enter;
+  if not FileExists(FFullFilePath) then
+    TFile.WriteAllBytes(FFullFilePath, []);
+
   FFile := TFileStream.Create(FullPath, fmOpenWrite);
   try
     FFile.Seek(ASkip * GetBlockSize, soBeginning);
-    FFile.WriteData<Tbc2>(ABlock);
+    FFile.WriteData<TCbc4>(ABlock);
   finally
     FFile.Free;
     FLock.Leave;
   end;
 end;
 
-procedure TBlockchainTokenCHN.WriteBlocks(ASkip: Int64; ABlocks: TArray<Tbc2>);
+procedure TBlockchainToken.WriteBlocks(ASkip: Int64; ABlocks: TArray<TCbc4>);
 var
   i: Integer;
 begin
   FLock.Enter;
+  if not FileExists(FFullFilePath) then
+    TFile.WriteAllBytes(FFullFilePath, []);
+
   FFile := TFileStream.Create(FullPath, fmOpenWrite);
   try
     FFile.Seek(ASkip * GetBlockSize, soBeginning);
     for i := 0 to Length(ABlocks) - 1 do
-      FFile.WriteData<Tbc2>(ABlocks[i]);
+      FFile.WriteData<TCbc4>(ABlocks[i]);
   finally
     FFile.Free;
     FLock.Leave;
   end;
 end;
 
-procedure TBlockchainTokenCHN.WriteBlocksAsBytes(ASkip: Int64; ABytes: TBytes);
+procedure TBlockchainToken.WriteBlocksAsBytes(ASkip: Int64; ABytes: TBytes);
 begin
   if Length(ABytes) mod GetBlockSize <> 0 then
     exit;
 
   FLock.Enter;
+  if not FileExists(FFullFilePath) then
+    TFile.WriteAllBytes(FFullFilePath, []);
+
   FFile := TFileStream.Create(FullPath, fmOpenWrite);
   try
     FFile.Seek(ASkip * GetBlockSize, soBeginning);

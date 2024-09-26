@@ -81,6 +81,7 @@ type
     //IcoDat blocks sync methods
     function GetTokenICOBlocksCount: Int64;
     function GetTokenICOBlockSize: Integer;
+    function TryGetTokenICO(ATokenID: Integer; var ATokenICO: TTokenICODat): Boolean;
     function GetTokenICOBlocks(ASkip: Int64): TBytes;
     procedure SetTokenICOBlocks(ASkip: Int64; ABytes: TBytes);
 
@@ -90,8 +91,8 @@ type
     function GetSmartKeyBlocks(ASkip: Int64): TBytes;
     procedure SetSmartKeyBlocks(ASkip: Int64; ABytes: TBytes);
 
-    //Smartcontracts sync methods
-//    function GetSmartBlocksCount(ASmartID: Integer): Integer;
+    //Tokens chains methods
+    function GetTokenChainBlocksCount(ATokenID: Integer): Int64;
 //    function GetSmartBlockSize(ASmartID: Integer): Integer;
 //    function GetSmartBlocks(ASmartID: Integer; AFrom: Int64;
 //      out AAmount: Integer): TBytesBlocks; overload;
@@ -152,7 +153,6 @@ type
     function TryExtractPrivateKeyFromFile(out PrKey: string;
       out PubKey: string): Boolean;
 
-//    function TryGetTokenICO(ATicker: string; var tICO: TTokenICODat): Boolean;
 //    function GetTokensICOs(ASkip: Integer; var ARows: Integer): TArray<TTokenICODat>;
 //    function TryGetTokenBase(ATicker: string; var sk: TCSmartKey): Boolean;
 //    function TryGetTokenBaseByAddress(const AAddress: string; var sk: TCSmartKey): Boolean;
@@ -620,6 +620,12 @@ begin
   end;
 end;
 
+function TAppCore.TryGetTokenICO(ATokenID: Integer;
+  var ATokenICO: TTokenICODat): Boolean;
+begin
+  Result := FBlockchain.TryGetICOBlock(ATokenID, ATokenICO);
+end;
+
 //function TAppCore.DoCoinsTransfer(AReqID, ASessionKey, ATo: string;
 //  AAmount: Extended): string;
 //var
@@ -845,13 +851,10 @@ end;
 //  Result := FBlockchain.GetSmartBlocks(ASmartName,AFrom,AAmount);
 //end;
 
-//function TAppCore.GetSmartBlocksCount(ASmartID: Integer): Integer;
-//begin
-//  if ASmartID = -1 then
-//    Result := FBlockchain.GetSmartsAmount
-//  else
-//    Result := FBlockchain.GetSmartBlocksCount(ASmartID);
-//end;
+function TAppCore.GetTokenChainBlocksCount(ATokenID: Integer): Int64;
+begin
+  Result := FBlockchain.GetTokenChainBlocksCount(ATokenID);
+end;
 
 //function TAppCore.GetSmartBlockSize(ASmartID: Integer): Integer;
 //begin
@@ -1112,12 +1115,6 @@ end;
 //function TAppCore.TryGetTokenBaseByAddress(const AAddress: string; var sk: TCSmartKey): Boolean;
 //begin
 //  Result := FBlockchain.TryGetSmartKeyByAddress(AAddress, sk);
-//end;
-
-//function TAppCore.TryGetTokenICO(ATicker: string;
-//  var tICO: TTokenICODat): Boolean;
-//begin
-//  Result := FBlockchain.TryGetOneICOBlock(ATicker, tICO);
 //end;
 
 //procedure TAppCore.UpdateLists;

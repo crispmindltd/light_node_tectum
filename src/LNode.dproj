@@ -302,7 +302,7 @@
         <DCCReference Include="Web\endpoints\endpoints.Base.pas"/>
         <DCCReference Include="Blockchain\Blockchain.Main.pas"/>
         <DCCReference Include="Blockchain\Blockchain.Intf.pas"/>
-        <DCCReference Include="Blockchain\Blockchain.Token.chn.pas"/>
+        <DCCReference Include="Blockchain\Blockchain.TET.pas"/>
         <DCCReference Include="Blockchain\Blockchain.BaseTypes.pas"/>
         <DCCReference Include="Net\Net.Data.pas"/>
         <DCCReference Include="Net\Net.LightSocket.pas"/>
@@ -347,7 +347,10 @@
         <DCCReference Include="Core\App.Constants.pas"/>
         <DCCReference Include="UI\OpenURL.pas"/>
         <DCCReference Include="Sync\Sync.TETChain.pas"/>
-        <DCCReference Include="Sync\Sync.Tokens.pas"/>
+        <DCCReference Include="Sync\Sync.Tokens.pas">
+            <Form>$R *.res</Form>
+        </DCCReference>
+        <DCCReference Include="Blockchain\Blockchain.Token.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

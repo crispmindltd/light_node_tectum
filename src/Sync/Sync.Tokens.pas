@@ -7,6 +7,7 @@ uses
   App.Exceptions,
   App.Intf,
   App.Logs,
+  Blockchain.BaseTypes,
   Blockchain.Intf,
   Classes,
   Math,
@@ -21,13 +22,10 @@ type
     private
       procedure DoRequests;
       procedure DoSmartKeyRequest;
-      procedure ReceiveSmartKeyBlocks(const ABlocksCountNow: Integer);
-//      function DoSmartRequest(ASmartID: Integer): Boolean;
-//      function ReceiveSmartBlocks(const ASmartID: Integer;
-//        const ABlocksCountNow: Integer): Boolean;
-//      function DoDynamicRequest(ADynID: Integer): Boolean;
-//      function ReceiveDynamicBlocks(const ADynID: Integer;
-//        const ABlocksCountNow: Integer): Boolean;
+      procedure ReceiveSmartKeyBlocks(const ABlocksCountNow: Int64);
+      procedure DoTokenBlocksRequest(ATokenID: Integer);
+      procedure ReceiveTokenBlocks(ATokenID: Integer;
+        const ABlocksCountNow: Int64);
     protected
       procedure Execute; override;
     public
@@ -71,7 +69,7 @@ begin
 end;
 
 procedure TTokensChainsBlocksUpdater.ReceiveSmartKeyBlocks(
-  const ABlocksCountNow: Integer);
+  const ABlocksCountNow: Int64);
 var
   IncomCountBytes: array[0..3] of Byte;
   IncomCount: Integer absolute IncomCountBytes;
@@ -90,40 +88,13 @@ begin
   AppCore.SetSmartKeyBlocks(ABlocksCountNow,BytesToReceive);
 end;
 
-//function TSmartBlocksUpdater.ReceiveDynamicBlocks(const ADynID,
-//  ABlocksCountNow: Integer): Boolean;
+procedure TTokensChainsBlocksUpdater.ReceiveTokenBlocks(ATokenID: Integer;
+  const ABlocksCountNow: Int64);
 //var
 //  incomCountBytes: array[0..3] of Byte;
 //  incomCount: Integer absolute incomCountBytes;
 //  inBytes: TBytesBlocks;
-//begin
-//  GetResponse(incomCountBytes,4);
-//  if Terminated then
-//    exit(False);
-//  Result := incomCount > -1;
-//  if incomCount <= 0 then
-//  begin
-//    FNeedDelay := True;
-//    exit;
-//  end;
-//
-//  FNeedDelay := False;
-//  GetResponse(inBytes,incomCount * AppCore.GetDynBlockSize(ADynID));
-//  if Terminated then
-//    exit;
-//
-//  Logs.DoLog(Format('<SmartC>[%d]: dynID=%d, blocksReceived=%d',
-//    [SMART_DYN_SYNC_COMMAND_CODE,ADynID,incomCount]),INCOM,TLogFolder.sync);
-//  AppCore.SetDynBlocks(ADynID,ABlocksCountNow,inBytes,incomCount);
-//end;
-
-//function TSmartBlocksUpdater.ReceiveSmartBlocks(const ASmartID: Integer;
-//  const ABlocksCountNow: Integer): Boolean;
-//var
-//  incomCountBytes: array[0..3] of Byte;
-//  incomCount: Integer absolute incomCountBytes;
-//  inBytes: TBytesBlocks;
-//begin
+begin
 //  GetResponse(incomCountBytes,4);
 //  if Terminated then
 //    exit(False);
@@ -142,49 +113,28 @@ end;
 //  Logs.DoLog(Format('<SmartC>[%d]: smartID=%d, blocksReceived=%d',
 //    [SMART_SYNC_COMMAND_CODE,ASmartID,incomCount]),INCOM,TLogFolder.sync);
 //  AppCore.SetSmartBlocks(ASmartID,ABlocksCountNow,inBytes,incomCount);
-//end;
+end;
 
-//function TSmartBlocksUpdater.DoSmartRequest(ASmartID: Integer): Boolean;
-//var
-//  smIDBytes:array[0..3] of Byte;
-//  smartID: Integer absolute smIDBytes;
-//  bCountBytes:array[0..3] of Byte;
-//  blocksCount: Integer absolute bCountBytes;
-//begin
-//  FBytesRequest[0] := SMART_SYNC_COMMAND_CODE;
-//  smartID := ASmartID;
-//  Move(smIDBytes[0],FBytesRequest[1],4);   //add smart ID into request
-//  blocksCount := AppCore.GetSmartBlocksCount(smartID);
-//  Move(bCountBytes[0],FBytesRequest[5],4); //add smart blocks count into request
-//
-//  FSocket.Send(FBytesRequest,0,9);
-//  Logs.DoLog(Format('<SmartC>[%d]: smartID=%d, blockNum=%d',
-//    [SMART_SYNC_COMMAND_CODE,smartID,blocksCount]),OUTGO,TLogFolder.sync);
-//  Result := ReceiveSmartBlocks(smartID,blocksCount);
-//end;
+procedure TTokensChainsBlocksUpdater.DoTokenBlocksRequest(ATokenID: Integer);
+var
+  TokenIDBytes: array[0..3] of Byte;
+  TokenID: Integer absolute TokenIDBytes;
+  TokenBlocksCountBytes: array[0..7] of Byte;
+  TokenBlocksCount: Int64 absolute TokenBlocksCountBytes;
+begin
+  FBytesRequest[0] := TOKEN_SYNC_COMMAND_CODE;
+  TokenID := ATokenID;
+  Move(TokenIDBytes[0],FBytesRequest[1],4);
+  TokenBlocksCount := AppCore.GetTokenChainBlocksCount(ATokenID);
+  Move(TokenBlocksCountBytes[0],FBytesRequest[5],8);
 
-//function TSmartBlocksUpdater.DoDynamicRequest(ADynID: Integer): Boolean;
-//var
-//  dynIDBytes:array[0..3] of Byte;
-//  dynID: Integer absolute dynIDBytes;
-//  bCountBytes:array[0..3] of Byte;
-//  blocksCount: Integer absolute bCountBytes;
-//begin
-//  FBytesRequest[0] := SMART_DYN_SYNC_COMMAND_CODE;
-//  dynID := ADynID;
-//  Move(dynIDBytes[0],FBytesRequest[1],4);   //add dynamic block ID into request
-//  blocksCount := AppCore.GetDynBlocksCount(dynID);
-//  Move(bCountBytes[0],FBytesRequest[5],4); //add dynamic blocks count into request
-//
-//  FSocket.Send(FBytesRequest,0,9);
-//  Logs.DoLog(Format('<SmartC>[%d]: dynID=%d, blockNum=%d',
-//    [SMART_DYN_SYNC_COMMAND_CODE,dynID,blocksCount]),OUTGO,TLogFolder.sync);
-//  Result := ReceiveDynamicBlocks(dynID,blocksCount);
-//end;
+  FSocket.Send(FBytesRequest,0,13);
+  ReceiveTokenBlocks(ATokenID,TokenBlocksCount);
+end;
 
 procedure TTokensChainsBlocksUpdater.DoRequests;
 var
-//  smartKey: TCSmartKey;
+  ICODat: TTokenICODat;
   i: Integer;
 begin
   if FNeedDelay then
@@ -199,17 +149,13 @@ begin
     if Terminated then
       exit;
 
-//    for i := 0 to AppCore.GetSmartBlocksCount(-1)-1 do
-//    begin
-//      if Terminated then
-//        exit;
-//
-//      smartKey := AppCore.GetOneSmartKeyBlock(i);
-//      DoDynamicRequest(smartKey.SmartID);
-//      if Terminated then
-//        exit;
+    for i := 0 to AppCore.GetTokenICOBlocksCount - 1 do
+    begin
+      if Terminated then
+        exit;
+
 //      DoSmartRequest(smartKey.SmartID);
-//    end;
+    end;
   except
     on E:EReceiveTimeout do
       if not DoTryReconnect then raise;

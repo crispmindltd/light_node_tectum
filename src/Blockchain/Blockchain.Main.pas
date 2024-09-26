@@ -12,8 +12,8 @@ uses
   Blockchain.SmartKey,
   Blockchain.TETDynamic,
 //  Blockchain.TokenDynamic,
-  Blockchain.Token.chn,
-//  Blockchain.Tokens,
+  Blockchain.TET,
+  Blockchain.Token,
   Classes,
   Generics.Collections,
   IOUtils,
@@ -23,12 +23,11 @@ uses
 type
   TBlockchain = class
   private
-    FTETChain: TBlockchainTokenCHN;
+    FTETChain: TBlockchainTET;
     FTETDynamic: TBlockchainTETDynamic;
     FTokenICO: TBlockchainICODat;
     FSmartKey: TBlockchainSmartKey;
-
-//      FSmartcontracts: TDictionary<String,TChainFileWorker>;
+    FTokensChains: TDictionary<Integer,TBlockchainToken>;
 //      FDynamicBlocks: TDictionary<String,TChainFileWorker>;
 
 //      function SmartNameByID(AID: Integer): String;
@@ -71,13 +70,15 @@ type
     procedure SetTokenICOBlocks(ASkip: Int64; ABytes: TBytes);
 //      function GetICOsInfo(ASkip: Integer; var ARows: Integer): TArray<TTokenICODat>;
     function TryGetICOBlock(ASkip: Int64; var ICOBlock: TTokenICODat): Boolean; overload;
-//    function TryGetICOBlock(ATicker: string; var ICOBlock: TTokenICODat): Boolean; overload;
+    function TryGetICOBlock(ATokenID: Integer; var ICOBlock: TTokenICODat): Boolean; overload;
 
     function GetSmartKeyBlocksCount: Int64;
     function GetSmartKeyBlockSize: Integer;
     function GetSmartKeyBlocks(ASkip: Int64): TBytes;
     procedure SetSmartKeyBlocks(ASkip: Int64; ABytes: TBytes);
 
+    procedure UpdateTokensList;
+    function GetTokenChainBlocksCount(ATokenID: Integer): Int64;
 //      function GetSmartsAmount: Integer;
 //      function IsSmartExists(ANameAddressOrTicker: String): Boolean;
 //      function GetSmartTickerByID(ASmartID: Integer): String;
@@ -85,7 +86,6 @@ type
 //      function SmartTickerToID(ATicker: String): Integer;
 //      function SmartTickerToIDName(ATicker: String): String;
 //      function GetSmartBlockSize(ASmartID: Integer): Integer;
-//      function GetSmartBlocksCount(ASmartID: Integer): Integer;
 //      function GetSmartBlocks(ASmartID: Integer; AFrom: Int64;
 //        out AAmount: Integer): TBytesBlocks; overload;
 //      function GetSmartBlocks(ASmartID: Integer;
@@ -117,8 +117,6 @@ type
 //      procedure SetDynBlock(ADynID: Integer; APos: Int64; ABytes: TOneBlockBytes);
 //      procedure SetDynBlocks(ADynID: Integer; APos: Int64; ABytes: TBytesBlocks;
 //        AAmount: Integer);
-//
-//     procedure UpdateLists;
   end;
 
 implementation
@@ -134,37 +132,33 @@ end;
 { TBlockchain }
 
 constructor TBlockchain.Create;
-//var
-//  ChainFileWorker: TChainFileWorker;
 begin
-  FTETChain := TBlockchainTokenCHN.Create;
+  FTETChain := TBlockchainTET.Create;
   FTETDynamic := TBlockchainTETDynamic.Create;
   FTokenICO := TBlockchainICODat.Create;
   FSmartKey := TBlockchainSmartKey.Create;
-//  FSmartcontracts := TDictionary<String,TChainFileWorker>.Create;
-//  FSmartcontracts.Capacity := 100;
-//
+  FTokensChains := TDictionary<Integer,TBlockchainToken>.Create;
+  FTokensChains.Capacity := 100;
+
+  UpdateTokensList;
 //  FDynamicBlocks := TDictionary<String,TChainFileWorker>.Create;
 //  FDynamicBlocks.Capacity := 100;
 //  ChainFileWorker := TBlockchainTETDynamic.Create(ConstStr.Token64FileName);
 //  FDynamicBlocks.Add(ChainFileWorker.Name,ChainFileWorker);
-//
-//  UpdateLists;
 end;
 
 destructor TBlockchain.Destroy;
-//var
-//  ChainFileWorker: TChainFileWorker;
+var
+  TokenChainWorker: TBlockchainToken;
 begin
+  for TokenChainWorker in FTokensChains.Values do
+    TokenChainWorker.Free;
+  FTokensChains.Free;
   FSmartKey.Free;
   FTokenICO.Free;
   FTETDynamic.Free;
   FTETChain.Free;
 
-//  for ChainFileWorker in FSmartcontracts.Values do
-//    ChainFileWorker.Free;
-//  FSmartcontracts.Free;
-//
 //  for ChainFileWorker in FDynamicBlocks.Values do
 //    ChainFileWorker.Free;
 //  FDynamicBlocks.Free;
@@ -178,32 +172,6 @@ end;
 //    Result := Format('%d.tkn',[AID])
 //  else
 //    Result := ConstStr.Token64FileName;
-//end;
-//
-//procedure TBlockchain.UpdateLists;
-//var
-//  smartKey: TCSmartKey;
-//  fileName: String;
-//  i: Integer;
-//  ChainFileWorker: TChainFileWorker;
-//begin
-//  for i := FSmartcontracts.Count to GetSmartsAmount-1 do
-//  begin
-//    smartKey := GetOneSmartKeyBlock(i);
-//    fileName := SmartNameByID(smartKey.SmartID);
-//    if not FSmartcontracts.TryGetValue(fileName,ChainFileWorker) then
-//    begin
-//      ChainFileWorker := TBlockchainSmart.Create(fileName);
-//      FSmartcontracts.Add(fileName,ChainFileWorker);
-//    end;
-//
-//    fileName := DynamicNameByID(smartKey.SmartID);
-//    if not FDynamicBlocks.TryGetValue(filename,ChainFileWorker) then
-//    begin
-//      ChainFileWorker := TBlockchainTokenDynamic.Create(fileName);
-//      FDynamicBlocks.Add(fileName,ChainFileWorker);
-//    end;
-//  end;
 //end;
 //
 //function TBlockchain.GetChainBlocks(var AAmount: Integer): TBytesBlocks;
@@ -292,6 +260,16 @@ begin
 		end;
   end;
   ANumber := Length(Result);
+end;
+
+function TBlockchain.GetTokenChainBlocksCount(ATokenID: Integer): Int64;
+var
+  TokenChainWorker: TBlockchainToken;
+begin
+  if FTokensChains.TryGetValue(ATokenID,TokenChainWorker) then
+    Result := TokenChainWorker.GetBlocksCount
+  else
+    Result := 0;
 end;
 
 function TBlockchain.GetICOBlocks(ASkip: Int64): TBytes;
@@ -843,16 +821,6 @@ end;
 //  end;
 //end;
 //
-//function TBlockchain.GetSmartBlocksCount(ASmartID: Integer): Integer;
-//var
-//  ChainFileWorker: TChainFileWorker;
-//begin
-//  if FSmartcontracts.TryGetValue(SmartNameByID(ASmartID),ChainFileWorker) then
-//    Result := ChainFileWorker.GetBlocksCount
-//  else
-//    Result := 0;
-//end;
-//
 //function TBlockchain.GetSmartBlockSize(ASmartID: Integer): Integer;
 //var
 //  ChainFileWorker: TChainFileWorker;
@@ -922,10 +890,40 @@ begin
   Result := FTokenICO.TryReadBlock(ASkip,ICOBlock);
 end;
 
+function TBlockchain.TryGetICOBlock(ATokenID: Integer;
+  var ICOBlock: TTokenICODat): Boolean;
+begin
+  Result := FTokenICO.TryGetTokenICO(ATokenID, ICOBlock);
+end;
+
 function TBlockchain.TryGetTETDynamic(const ATETAddress: string;
   out ABlockID: Int64; var ATETDynamic: TTokenBase): Boolean;
 begin
   Result := FTETDynamic.TryGetByTETAddress(ATETAddress,ABlockID,ATETDynamic);
+end;
+
+procedure TBlockchain.UpdateTokensList;
+var
+  ICODat: TTokenICODat;
+  TokenChainWorker: TBlockchainToken;
+  i: Integer;
+begin
+  for i := FTokensChains.Count to FTokenICO.GetBlocksCount - 1 do
+  begin
+    if not TryGetICOBlock(i,ICODat) then
+      break;
+
+    if not FTokensChains.TryGetValue(ICODat.ICOID,TokenChainWorker) then
+    begin
+      TokenChainWorker := TBlockchainToken.Create(ICODat.ICOID);
+      FTokensChains.Add(ICODat.ICOID,TokenChainWorker);
+    end;
+//    if not FDynamicBlocks.TryGetValue(filename,ChainFileWorker) then
+//    begin
+//      ChainFileWorker := TBlockchainTokenDynamic.Create(fileName);
+//      FDynamicBlocks.Add(fileName,ChainFileWorker);
+//    end;
+  end;
 end;
 
 function TBlockchain.TryGetTETDynamic(const AUserID: Int64;

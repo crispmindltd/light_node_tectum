@@ -1,4 +1,4 @@
-unit Blockchain.ICODat;
+unit Blockchain.TET;
 
 interface
 
@@ -12,7 +12,7 @@ uses
   SysUtils;
 
 type
-  TBlockchainICODat = class(TChainFileWorker)
+  TBlockchainTET = class(TChainFileWorker)
   private
     FFile: TFileStream;
   public
@@ -21,38 +21,35 @@ type
 
     function GetBlockSize: Integer; override;
     function GetBlocksCount: Int64; override;
-    procedure WriteBlock(ASkip: Int64; ABlock: TTokenICODat);
+    procedure WriteBlock(ASkip: Int64; ABlock: Tbc2);
     procedure WriteBlocksAsBytes(ASkip: Int64; ABytes: TBytes); override;
-    procedure WriteBlocks(ASkip: Int64; ABlocks: TArray<TTokenICODat>);
-    function TryReadBlock(ASkip: Int64; out ABlock: TTokenICODat): Boolean;
+    procedure WriteBlocks(ASkip: Int64; ABlocks: TArray<Tbc2>);
+    function TryReadBlock(ASkip: Int64; out ABlock: Tbc2): Boolean;
     function ReadBlocksAsBytes(ASkip: Int64;
       ANumber: Integer = MaxBlocksNumber): TBytes; override;
     function ReadBlocks(ASkip: Int64;
-      ANumber: Integer = MaxBlocksNumber): TArray<TTokenICODat>;
-
-    function TryGetTokenICO(ATokenID: Integer; var ABlock: TTokenICODat): Boolean; overload;
-//    function TryGetTokenICO(ATicker: String; var ICOBlock: TTokenICODat): Boolean; overload;
+      ANumber: Integer = MaxBlocksNumber): TArray<Tbc2>;
   end;
 
 implementation
 
-{ TBlockchainICODat }
+{ TBlockchainTET }
 
-constructor TBlockchainICODat.Create;
+constructor TBlockchainTET.Create;
 begin
-  inherited Create(ConstStr.DBCPath, ConstStr.ICODatFileName, True);
+  inherited Create(ConstStr.DBCPath, ConstStr.TokenCHNFileName, True);
 
   if not FileExists(FFullFilePath) then
     TFile.WriteAllBytes(FFullFilePath, []);
 end;
 
-destructor TBlockchainICODat.Destory;
+destructor TBlockchainTET.Destory;
 begin
 
   inherited;
 end;
 
-function TBlockchainICODat.GetBlocksCount: Int64;
+function TBlockchainTET.GetBlocksCount: Int64;
 begin
   FLock.Enter;
   FFile := TFileStream.Create(FullPath, fmOpenRead or fmShareDenyNone);
@@ -64,13 +61,12 @@ begin
   end;
 end;
 
-function TBlockchainICODat.GetBlockSize: Integer;
+function TBlockchainTET.GetBlockSize: Integer;
 begin
-  Result := SizeOf(TTokenICODat);
+  Result := SizeOf(Tbc2);
 end;
 
-function TBlockchainICODat.ReadBlocks(ASkip: Int64;
-  ANumber: Integer): TArray<TTokenICODat>;
+function TBlockchainTET.ReadBlocks(ASkip: Int64; ANumber: Integer): TArray<Tbc2>;
 var
   i: Integer;
 begin
@@ -83,15 +79,14 @@ begin
     FFile.Seek(ASkip * GetBlockSize, soBeginning);
     SetLength(Result, Min(ANumber, (FFile.Size - FFile.Position) div GetBlockSize));
     for i := 0 to Length(Result) - 1 do
-      FFile.ReadData<TTokenICODat>(Result[i]);
+      FFile.ReadData<Tbc2>(Result[i]);
   finally
     FFile.Free;
     FLock.Leave;
   end;
 end;
 
-function TBlockchainICODat.ReadBlocksAsBytes(ASkip: Int64;
-  ANumber: Integer): TBytes;
+function TBlockchainTET.ReadBlocksAsBytes(ASkip: Int64; ANumber: Integer): TBytes;
 begin
   Result := [];
   FLock.Enter;
@@ -108,8 +103,7 @@ begin
   end;
 end;
 
-function TBlockchainICODat.TryReadBlock(ASkip: Int64;
-  out ABlock: TTokenICODat): Boolean;
+function TBlockchainTET.TryReadBlock(ASkip: Int64; out ABlock: Tbc2): Boolean;
 begin
   FLock.Enter;
   FFile := TFileStream.Create(FullPath, fmOpenRead or fmShareDenyNone);
@@ -118,7 +112,7 @@ begin
     if Result then
     begin
       FFile.Seek(ASkip * GetBlockSize, soBeginning);
-      FFile.ReadData<TTokenICODat>(ABlock);
+      FFile.ReadData<Tbc2>(ABlock);
     end;
   finally
     FFile.Free;
@@ -126,21 +120,20 @@ begin
   end;
 end;
 
-procedure TBlockchainICODat.WriteBlock(ASkip: Int64; ABlock: TTokenICODat);
+procedure TBlockchainTET.WriteBlock(ASkip: Int64; ABlock: Tbc2);
 begin
   FLock.Enter;
   FFile := TFileStream.Create(FullPath, fmOpenWrite);
   try
     FFile.Seek(ASkip * GetBlockSize, soBeginning);
-    FFile.WriteData<TTokenICODat>(ABlock);
+    FFile.WriteData<Tbc2>(ABlock);
   finally
     FFile.Free;
     FLock.Leave;
   end;
 end;
 
-procedure TBlockchainICODat.WriteBlocks(ASkip: Int64;
-  ABlocks: TArray<TTokenICODat>);
+procedure TBlockchainTET.WriteBlocks(ASkip: Int64; ABlocks: TArray<Tbc2>);
 var
   i: Integer;
 begin
@@ -149,14 +142,14 @@ begin
   try
     FFile.Seek(ASkip * GetBlockSize, soBeginning);
     for i := 0 to Length(ABlocks) - 1 do
-      FFile.WriteData<TTokenICODat>(ABlocks[i]);
+      FFile.WriteData<Tbc2>(ABlocks[i]);
   finally
     FFile.Free;
     FLock.Leave;
   end;
 end;
 
-procedure TBlockchainICODat.WriteBlocksAsBytes(ASkip: Int64; ABytes: TBytes);
+procedure TBlockchainTET.WriteBlocksAsBytes(ASkip: Int64; ABytes: TBytes);
 begin
   if Length(ABytes) mod GetBlockSize <> 0 then
     exit;
@@ -166,51 +159,6 @@ begin
   try
     FFile.Seek(ASkip * GetBlockSize, soBeginning);
     FFile.Write(ABytes, Length(ABytes));
-  finally
-    FFile.Free;
-    FLock.Leave;
-  end;
-end;
-
-//function TBlockchainICODat.TryGetTokenICO(ATicker: String;
-//  var ICOBlock: TTokenICODat): Boolean;
-//var
-//  i: Integer;
-//begin
-//  FLock.Enter;
-//  Result := False;
-//  AssignFile(FFile, FFullFilePath);
-//  Reset(FFile);
-//  try
-//    for i := 0 to FileSize(FFile)-1 do
-//    begin
-//      Seek(FFile,i);
-//      Read(FFile,ICOBlock);
-//      if (ICOBlock.Abreviature = ATicker) then
-//        Exit(True);
-//    end;
-//  finally
-//    CloseFile(FFile);
-//    FLock.Leave;
-//  end;
-//end;
-
-function TBlockchainICODat.TryGetTokenICO(ATokenID: Integer;
-  var ABlock: TTokenICODat): Boolean;
-var
-  i: Integer;
-begin
-  FLock.Enter;
-  Result := False;
-  FFile := TFileStream.Create(FullPath, fmOpenRead or fmShareDenyNone);
-  try
-    for i := 0 to GetBlocksCount - 1 do
-    begin
-      FFile.Seek(i * GetBlockSize, soBeginning);
-      FFile.ReadData<TTokenICODat>(ABlock);
-      if ABlock.ICOID = ATokenID then
-        exit(True);
-    end;
   finally
     FFile.Free;
     FLock.Leave;

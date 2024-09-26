@@ -57,6 +57,7 @@ type
     //IcoDat blocks sync methods
     function GetTokenICOBlocksCount: Int64;
     function GetTokenICOBlockSize: Integer;
+    function TryGetTokenICO(ATokenID: Integer; var ATokenICO: TTokenICODat): Boolean;
     function GetTokenICOBlocks(ASkip: Int64): TBytes;
     procedure SetTokenICOBlocks(ASkip: Int64; ABytes: TBytes);
 
@@ -66,8 +67,8 @@ type
     function GetSmartKeyBlocks(ASkip: Int64): TBytes;
     procedure SetSmartKeyBlocks(ASkip: Int64; ABytes: TBytes);
 
-    //Smartcontracts sync methods
-//    function GetSmartBlocksCount(ASmartID: Integer): Integer;
+    //Tokens methods
+    function GetTokenChainBlocksCount(ATokenID: Integer): Int64;
 //    function GetSmartBlockSize(ASmartID: Integer): Integer;
 //    function GetSmartBlocks(ASmartID: Integer; AFrom: Int64;
 //      out AAmount: Integer): TBytesBlocks; overload;
@@ -129,8 +130,7 @@ type
     function TrySaveKeysToFile(APrivateKey: string): Boolean;
     function TryExtractPrivateKeyFromFile(out PrKey: string;
       out PubKey: string): Boolean;
-//
-//    function TryGetTokenICO(ATicker: string; var tICO: TTokenICODat): Boolean;
+
 //    function GetTokensICOs(ASkip: Integer; var ARows: Integer): TArray<TTokenICODat>;
 //    function TryGetTokenBase(ATicker: string; var sk: TCSmartKey): Boolean;
 //    function TryGetTokenBaseByAddress(const AAddress: string; var sk: TCSmartKey): Boolean;

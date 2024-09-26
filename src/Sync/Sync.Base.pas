@@ -24,7 +24,7 @@ type
       FIsError: Boolean;
       function GetNodeAddress: String;
     protected
-      FBytesRequest: array[0..8] of Byte;
+      FBytesRequest: array[0..12] of Byte;
       FSocket: TSocket;
       FName: String;
       FAddress: String;
