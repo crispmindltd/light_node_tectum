@@ -28,20 +28,20 @@ type
     function GetVersion: String;
     procedure Run;
     procedure Stop;
-//    function GetDownloadRemain: Int64;
     function GetSessionKey: String;
     function GetTETAddress: String;
     function GetUserID: Int64;
-//    procedure SetDownloadRemain(const AIncValue: Int64);
+    function GetLoadingStatus: Boolean;
     procedure SetSessionKey(const ASessionKey: String);
     procedure SetUserID(const AID: Int64);
+    procedure SetLoadingStatus(const AIsDone: Boolean);
 //    procedure BeginSync(AChainName: String; AIsSystemChain: Boolean);
 //    procedure StopSync(AChainName: String; AIsSystemChain: Boolean);
 
-    //TET chain sync methods
+    //TET chain methods
     function GetTETChainBlockSize: Integer;
     function GetTETChainBlocksCount: Int64;
-//    function GetOneChainBlock(AFrom: Int64): TOneBlockBytes;
+//    function GetTETChainBlock(ASkip: Int64): Tbc2;
     function GetTETChainBlocks(ASkip: Int64): TBytes;
 //    function GetChainBlocks(var AAmount: Integer): TBytesBlocks; overload;
     procedure SetTETChainBlocks(ASkip: Int64; ABytes: TBytes);
@@ -49,8 +49,10 @@ type
 //    function GetChainLastTransactions(var Amount: Integer): TArray<TExplorerTransactionInfo>;
 //    function GetChainUserTransactions(AUserID: Integer; ASkip: Integer;
 //      var ARows: Integer): TArray<THistoryTransactionInfo>;
-//    function GetChainLastUserTransactions(AUserID: Integer;
-//      var Amount: Integer): TArray<THistoryTransactionInfo>;
+    function GetTETUserLastTransactions(AUserID: Int64;
+      var ANumber: Integer): TArray<THistoryTransactionInfo>;
+    function GetTETLocalBalance: Double; overload;
+    function GetTETLocalBalance(ATETAddress: String): Double; overload;
 
     //IcoDat blocks sync methods
     function GetTokenICOBlocksCount: Int64;
@@ -95,49 +97,48 @@ type
 //      AAmount: Integer);
 //    procedure SetDynBlock(ADynID: Integer; APos: Int64; ABytes: TOneBlockBytes);
 
-
-//
 //    procedure UpdateLists;
 //
 //    function GetBlocksCount(AReqID: String): String;
-//    function DoReg(AReqID: String; ASeed: String; out PubKey: String;
-//      out PrKey: String; out Login: String; out Password: String;
-//      out Address: String; out sPath: String): String;
-//    function DoAuth(AReqID,ALogin,APassword: String): String;
-//    function DoCoinsTransfer(AReqID,ASessionKey,ATo: String; AAmount: Extended): String;
-//    function GetLocalTETBalance: Extended; overload;
-//    function GetLocalTETBalance(ATETAddress: String): Extended; overload;
-//    function DoRecoverKeys(ASeed: String; out PubKey: String;
-//      out PrKey: String): String;
+    procedure DoReg(AReqID,ASeed: string; ACallBackProc: TGetStrProc); overload;
+    function DoReg(AReqID: string; ASeed: string; out APubKey: string;
+      out APrKey: string; out ALogin: string; out APassword: string;
+      out AAddress: string; out ASavingPath: string): string; overload;
+    procedure DoAuth(AReqID,ALogin,APassword: string;
+      ACallBackProc: TGetStrProc); overload;
+    function DoAuth(AReqID,ALogin,APassword: string): string; overload;
+//    function DoCoinsTransfer(AReqID,ASessionKey,ATo: string; AAmount: Extended): string;
+//    function DoRecoverKeys(ASeed: string; out PubKey: string;
+//      out PrKey: string): string;
 //
-//    function DoNewToken(AReqID,ASessionKey,AFullName,AShortName,ATicker: String;
-//      AAmount: Int64; ADecimals: Integer): String;
+//    function DoNewToken(AReqID,ASessionKey,AFullName,AShortName,ATicker: string;
+//      AAmount: Int64; ADecimals: Integer): string;
 //    function GetNewTokenFee(AAmount: Int64; ADecimals: Integer): Integer;
-//    function DoTokenTransfer(AReqID,AAddrTETFrom,AAddrTETTo,ASmartAddr: String;
-//      AAmount: Extended; APrKey,APubKey: String): String;
-//    function SendToConfirm(AReqID,AToSend: String): String;
-//    function GetLocalTokensBalances: TArray<String>;
+//    function DoTokenTransfer(AReqID,AAddrTETFrom,AAddrTETTo,ASmartAddr: string;
+//      AAmount: Extended; APrKey,APubKey: string): string;
+//    function SendToConfirm(AReqID,AToSend: string): string;
+//    function GetLocalTokensBalances: TArray<string>;
 //    function GetLocalTokenBalance(ATokenID: Integer; AOwnerID: Int64): Extended;
-//    function DoGetTokenBalanceWithSmartAddress(AReqID,AAddressTET,ASmartAddress: String): String;
-//    function DoGetTokenBalanceWithTicker(AReqID,AAddressTET,ATicker: String): String;
+//    function DoGetTokenBalanceWithSmartAddress(AReqID,AAddressTET,ASmartAddress: string): string;
+//    function DoGetTokenBalanceWithTicker(AReqID,AAddressTET,ATicker: string): string;
 //
-//    function GetSmartAddressByID(AID: Int64): String;
-//    function GetSmartAddressByTicker(ATicker: String): String;
-//    function GetPubKeyByID(AReqID: String; AID: Int64): String;
-//    function GetPubKeyBySessionKey(AReqID,ASessionKey: String): String;
-    function TrySaveKeysToFile(APrivateKey: String): Boolean;
-    function TryExtractPrivateKeyFromFile(out PrKey: String;
-      out PubKey: String): Boolean;
+//    function GetSmartAddressByID(AID: Int64): string;
+//    function GetSmartAddressByTicker(ATicker: string): string;
+//    function GetPubKeyByID(AReqID: string; AID: Int64): string;
+//    function GetPubKeyBySessionKey(AReqID,ASessionKey: string): string;
+    function TrySaveKeysToFile(APrivateKey: string): Boolean;
+    function TryExtractPrivateKeyFromFile(out PrKey: string;
+      out PubKey: string): Boolean;
 //
-//    function TryGetTokenICO(ATicker: String; var tICO: TTokenICODat): Boolean;
+//    function TryGetTokenICO(ATicker: string; var tICO: TTokenICODat): Boolean;
 //    function GetTokensICOs(ASkip: Integer; var ARows: Integer): TArray<TTokenICODat>;
 //    function TryGetTokenBase(ATicker: string; var sk: TCSmartKey): Boolean;
 //    function TryGetTokenBaseByAddress(const AAddress: string; var sk: TCSmartKey): Boolean;
 
-//    property DownloadRemain: Int64 read GetDownloadRemain write SetDownloadRemain;
-    property SessionKey: String read GetSessionKey write SetSessionKey;
-    property TETAddress: String read GetTETAddress;
+    property SessionKey: string read GetSessionKey write SetSessionKey;
+    property TETAddress: string read GetTETAddress;
     property UserID: Int64 read GetUserID write SetUserID;
+    property TETChainSyncDone: Boolean read GetLoadingStatus write SetLoadingStatus;
   end;
 
 var

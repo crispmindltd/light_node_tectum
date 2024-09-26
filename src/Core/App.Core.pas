@@ -40,32 +40,32 @@ type
     FNodeServer: TNodeServer;
     FNodeClient: TNodeClient;
     FHTTPServer: THTTPServer;
+    FStartLoadingDone: Boolean;
 
     function GenPass(x1:LongInt = 100000000; x2:LongInt = 999999999): String;
     function CheckTickerName(const ATicker: String): Boolean;
     function CheckShortName(const AShortName: String): Boolean;
     function Remove0x(AAddress: String): String;
     function SignTransaction(const AToSign: String; const APrivateKey: String): String;
-    function IsURKError(const ATest:string):Boolean;
+    function IsURKError(const ATest: string): Boolean;
   public
     constructor Create;
     destructor Destroy; override;
 
-    function GetVersion: String;
+    function GetVersion: string;
     procedure Run;
     procedure Stop;
-    function GetSessionKey: String;
-    function GetTETAddress: String;
+    function GetSessionKey: string;
+    function GetTETAddress: string;
     function GetUserID: Int64;
-    procedure SetSessionKey(const ASessionKey: String);
+    function GetLoadingStatus: Boolean;
+    procedure SetSessionKey(const ASessionKey: string);
     procedure SetUserID(const AID: Int64);
-//    procedure BeginSync(AChainName: String; AIsSystemChain: Boolean);
-//    procedure StopSync(AChainName: String; AIsSystemChain: Boolean);
+    procedure SetLoadingStatus(const AIsDone: Boolean);
 
-    //TET chain sync methods
+    //TET chain methods
     function GetTETChainBlockSize: Integer;
     function GetTETChainBlocksCount: Int64;
-//    function GetOneChainBlock(AFrom: Int64): TOneBlockBytes;
     function GetTETChainBlocks(ASkip: Int64): TBytes;
 //    function GetChainBlocks(var AAmount: Integer): TBytesBlocks; overload;
     procedure SetTETChainBlocks(ASkip: Int64; ABytes: TBytes);
@@ -73,8 +73,10 @@ type
 //    function GetChainLastTransactions(var Amount: Integer): TArray<TExplorerTransactionInfo>;
 //    function GetChainUserTransactions(AUserID: Integer; ASkip: Integer;
 //      var ARows: Integer): TArray<THistoryTransactionInfo>;
-//    function GetChainLastUserTransactions(AUserID: Integer;
-//      var Amount: Integer): TArray<THistoryTransactionInfo>;
+    function GetTETUserLastTransactions(AUserID: Int64;
+      var ANumber: Integer): TArray<THistoryTransactionInfo>;
+    function GetTETLocalBalance: Double; overload;
+    function GetTETLocalBalance(ATETAddress: string): Double; overload;
 
     //IcoDat blocks sync methods
     function GetTokenICOBlocksCount: Int64;
@@ -95,18 +97,18 @@ type
 //      out AAmount: Integer): TBytesBlocks; overload;
 //    function GetSmartBlocks(ASmartID: Integer;
 //      var AAmount: Integer): TBytesBlocks; overload;
-//    function GetSmartBlocks(ATicker: String;
+//    function GetSmartBlocks(ATicker: string;
 //      out AAmount: Integer): TBytesBlocks; overload;
-////    function GetSmartBlocks(ASmartName: String; var AAmount: Integer): TBytesBlocks; overload;
+////    function GetSmartBlocks(ASmartName: string; var AAmount: Integer): TBytesBlocks; overload;
 //    function GetOneSmartKeyBlock(AFrom: Int64): TCSmartKey;
 //    function GetOneSmartBlock(ASmartID: Integer; AFrom: Int64): TCbc4;
 //    procedure SetSmartBlocks(ASmartID: Integer; APos: Int64;
 //      ABytes: TBytesBlocks; AAmount: Integer);
-//    function GetSmartTransactions(ATicker: String; ASkip: Integer;
+//    function GetSmartTransactions(ATicker: string; ASkip: Integer;
 //      var ARows: Integer): TArray<TExplorerTransactionInfo>;
-//    function GetSmartLastTransactions(ATicker: String;
+//    function GetSmartLastTransactions(ATicker: string;
 //      var Amount: Integer): TArray<TExplorerTransactionInfo>;
-//    function GetSmartLastUserTransactions(AUserID: Integer; ATicker: String;
+//    function GetSmartLastUserTransactions(AUserID: Integer; ATicker: string;
 //      var Amount: Integer): TArray<THistoryTransactionInfo>;
 
     //Dynamic blocks sync methods
@@ -120,55 +122,57 @@ type
 
 //    procedure UpdateLists;
 
-//    function GetBlocksCount(AReqID: String): String;
-//    function DoReg(AReqID: String; ASeed: String; out PubKey: String;
-//      out PrKey: String; out Login: String; out Password: String;
-//      out Address: String; out sPath: String): String;
-//    function DoAuth(AReqID,ALogin,APassword: String): String;
-//    function DoRecoverKeys(ASeed: String; out PubKey: String;
-//      out PrKey: String): String;
-//    function DoCoinsTransfer(AReqID,ASessionKey,ATo: String; AAmount: Extended): String;
-//    function GetLocalTETBalance: Extended; overload;
-//    function GetLocalTETBalance(ATETAddress: String): Extended; overload;
-//    function DoNewToken(AReqID,ASessionKey,AFullName,AShortName,ATicker: String;
-//      AAmount: Int64; ADecimals: Integer): String;
+//    function GetBlocksCount(AReqID: string): string;
+    procedure DoReg(AReqID,ASeed: string; ACallBackProc: TGetStrProc); overload;
+    function DoReg(AReqID: string; ASeed: string; out APubKey: string;
+      out APrKey: string; out ALogin: string; out APassword: string;
+      out AAddress: string; out ASavingPath: string): string; overload;
+    procedure DoAuth(AReqID,ALogin,APassword: string;
+      ACallBackProc: TGetStrProc); overload;
+    function DoAuth(AReqID,ALogin,APassword: string): string; overload;
+//    function DoRecoverKeys(ASeed: string; out PubKey: string;
+//      out PrKey: string): string;
+//    function DoCoinsTransfer(AReqID,ASessionKey,ATo: string; AAmount: Extended): string;
+//    function DoNewToken(AReqID,ASessionKey,AFullName,AShortName,ATicker: string;
+//      AAmount: Int64; ADecimals: Integer): string;
 //    function GetNewTokenFee(AAmount: Int64; ADecimals: Integer): Integer;
-//    function DoTokenTransfer(AReqID,AAddrTETFrom,AAddrTETTo,ASmartAddr: String;
-//      AAmount: Extended; APrKey,APubKey: String): String;
-//    function SendToConfirm(AReqID,AToSend: String): String;
-//    function GetLocalTokensBalances: TArray<String>;
+//    function DoTokenTransfer(AReqID,AAddrTETFrom,AAddrTETTo,ASmartAddr: string;
+//      AAmount: Extended; APrKey,APubKey: string): string;
+//    function SendToConfirm(AReqID,AToSend: string): string;
+//    function GetLocalTokensBalances: TArray<string>;
 //    function GetLocalTokenBalance(ATokenID: Integer; AOwnerID: Int64): Extended;
-//    function DoGetTokenBalanceWithSmartAddress(AReqID,AAddressTET,ASmartAddress: String): String;
-//    function DoGetTokenBalanceWithTicker(AReqID,AAddressTET,ATicker: String): String;
+//    function DoGetTokenBalanceWithSmartAddress(AReqID,AAddressTET,ASmartAddress: string): string;
+//    function DoGetTokenBalanceWithTicker(AReqID,AAddressTET,ATicker: string): string;
 
-//    function GetSmartAddressByID(AID: Int64): String;
-//    function GetSmartAddressByTicker(ATicker: String): String;
-//    function GetPubKeyByID(AReqID: String; AID: Int64): String;
-//    function GetPubKeyBySessionKey(AReqID,ASessionKey: String): String;
-    function TrySaveKeysToFile(APrivateKey: String): Boolean;
-    function TryExtractPrivateKeyFromFile(out PrKey: String;
-      out PubKey: String): Boolean;
+//    function GetSmartAddressByID(AID: Int64): string;
+//    function GetSmartAddressByTicker(ATicker: string): string;
+//    function GetPubKeyByID(AReqID: string; AID: Int64): string;
+//    function GetPubKeyBySessionKey(AReqID,ASessionKey: string): string;
+    function TrySaveKeysToFile(APrivateKey: string): Boolean;
+    function TryExtractPrivateKeyFromFile(out PrKey: string;
+      out PubKey: string): Boolean;
 
-//    function TryGetTokenICO(ATicker: String; var tICO: TTokenICODat): Boolean;
+//    function TryGetTokenICO(ATicker: string; var tICO: TTokenICODat): Boolean;
 //    function GetTokensICOs(ASkip: Integer; var ARows: Integer): TArray<TTokenICODat>;
 //    function TryGetTokenBase(ATicker: string; var sk: TCSmartKey): Boolean;
 //    function TryGetTokenBaseByAddress(const AAddress: string; var sk: TCSmartKey): Boolean;
 
-    property SessionKey: String read GetSessionKey write SetSessionKey;
-    property TETAddress: String read GetTETAddress;
+    property SessionKey: string read GetSessionKey write SetSessionKey;
+    property TETAddress: string read GetTETAddress;
     property UserID: Int64 read GetUserID write SetUserID;
+    property TETChainSyncDone: Boolean read GetLoadingStatus write SetLoadingStatus;
   end;
 
 implementation
 
 { TAppCore }
 
-function TAppCore.IsURKError(const ATest:string):Boolean;
+function TAppCore.IsURKError(const ATest: string): Boolean;
 begin
   Result := ATest.StartsWith(ConstStr.URKError);
 end;
 
-function TAppCore.CheckShortName(const AShortName: String): Boolean;
+function TAppCore.CheckShortName(const AShortName: string): Boolean;
 const
   Acceptable = 'QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm0123456789-., ';
 var
@@ -181,12 +185,7 @@ begin
   Result := True;
 end;
 
-//procedure TAppCore.BeginSync(AChainName: String; AIsSystemChain: Boolean);
-//begin
-//  FNodeClient.BeginSync(AChainName,AIsSystemChain);
-//end;
-
-function TAppCore.CheckTickerName(const ATicker: String): Boolean;
+function TAppCore.CheckTickerName(const ATicker: string): Boolean;
 const
   Acceptable = 'QWERTYUIOPASDFGHJKLZXCVBNM1234567890';
 var
@@ -202,15 +201,16 @@ end;
 
 constructor TAppCore.Create;
 begin
+  FStartLoadingDone := False;
+  FSessionKey := '';
+  FTETAddress := '';
+  FUserID := -1;
+
   Logs := TLogs.Create;
   FSettings := TSettingsFile.Create;
   FNodeServer := TNodeServer.Create;
   FNodeClient := TNodeClient.Create;
   FHTTPServer := THTTPServer.Create;
-
-  FSessionKey := '';
-  FTETAddress := '';
-  FUserID := -1;
 end;
 
 destructor TAppCore.Destroy;
@@ -225,68 +225,153 @@ begin
   inherited;
 end;
 
-//function TAppCore.DoAuth(AReqID,ALogin,APassword: String): String;
-//var
-//  splt: TArray<String>;
-//begin
-//  if not (ALogin.Contains('@') and ALogin.Contains('.')) then
-//    raise EValidError.Create('incorrect login');
-//  if APassword.IsEmpty then
-//    raise EValidError.Create('incorrect password');
-//
-//  Result := FNodeClient.DoRequest(AReqID,Format('CheckPW * %s %s ipa',[ALogin,APassword]));
-//  if IsURKError(Result) then
-//  begin;
-//    splt := Result.Split([' ']);
-//    case splt[3].ToInteger of
-//      93: raise EAuthError.Create('');
-//      816: raise EAuthError.Create('');
-//      else raise EUnknownError.Create(splt[3]);
-//    end;
-//  end;
-//end;
+procedure TAppCore.DoAuth(AReqID, ALogin, APassword: string;
+  ACallBackProc: TGetStrProc);
+begin
+  if not (ALogin.Contains('@') and ALogin.Contains('.')) then
+    raise EValidError.Create('incorrect login');
+  if APassword.IsEmpty then
+    raise EValidError.Create('incorrect password');
 
-//function TAppCore.GetLocalTETBalance: Extended;
-//var
-//  oneBlock1: TOneBlockBytes;
-//  bc2: Tbc2 absolute oneBlock1;
-//  tICO: TTokenICODat;
-//  tb: TTokenBase;
-//  ID: Integer;
-//begin
-//  if not FBlockchain.TryGetTETTokenBase(FUserID,ID,tb) then
-//    raise EAddressNotExistsError.Create('');
-//
-//  oneBlock1 := GetOneChainBlock(tb.LastBlock);
-//  if not FBlockchain.TryGetOneICOBlock(tb.TokenDatID,tICO) then exit;
-//  if ID = bc2.Smart.tkn[1].TokenID then
-//		Result := bc2.Smart.tkn[1].Amount / Power(10,tICO.FloatSize)
-//	else if ID = bc2.Smart.tkn[2].TokenID then
-//		Result := bc2.Smart.tkn[2].Amount / Power(10,tICO.FloatSize)
-//	else
-//    raise EUnknownError.Create('');
-//end;
+  TThread.CreateAnonymousThread(
+    procedure
+    var
+      Response: string;
+    begin
+      Response := FNodeClient.DoRequest(AReqID,Format('CheckPW * %s %s ipa',
+        [ALogin,APassword]));
 
-//function TAppCore.GetLocalTETBalance(ATETAddress: String): Extended;
-//var
-//  oneBlock1: TOneBlockBytes;
-//  bc2: Tbc2 absolute oneBlock1;
-//  tICO: TTokenICODat;
-//  tb: TTokenBase;
-//  ID: Integer;
-//begin
-//  if not FBlockchain.TryGetTETTokenBase(ATETAddress,ID,tb) then
-//    raise EAddressNotExistsError.Create('');
-//
-//  oneBlock1 := GetOneChainBlock(tb.LastBlock);
-//  if not FBlockchain.TryGetOneICOBlock(tb.TokenDatID,tICO) then exit;
-//  if ID = bc2.Smart.tkn[1].TokenID then
-//		Result := bc2.Smart.tkn[1].Amount / Power(10,tICO.FloatSize)
-//	else if ID = bc2.Smart.tkn[2].TokenID then
-//		Result := bc2.Smart.tkn[2].Amount / Power(10,tICO.FloatSize)
-//	else
-//    raise ENoInfoForThisAccountError.Create('');
-//end;
+      TThread.Synchronize(nil,
+      procedure
+      begin
+        ACallBackProc(Response);
+      end);
+    end).Start;
+end;
+
+function TAppCore.DoAuth(AReqID, ALogin, APassword: string): string;
+var
+  splt: TArray<string>;
+begin
+  if not (ALogin.Contains('@') and ALogin.Contains('.')) then
+    raise EValidError.Create('incorrect login');
+  if APassword.IsEmpty then
+    raise EValidError.Create('incorrect password');
+
+  Result := FNodeClient.DoRequest(AReqID,Format('CheckPW * %s %s ipa',[ALogin,APassword]));
+  if IsURKError(Result) then
+  begin;
+    splt := Result.Split([' ']);
+    case splt[3].ToInteger of
+      93: raise EAuthError.Create('');
+      816: raise EAuthError.Create('');
+      else raise EUnknownError.Create(splt[3]);
+    end;
+  end;
+end;
+
+function TAppCore.DoReg(AReqID, ASeed: string; out APubKey, APrKey, ALogin,
+  APassword, AAddress, ASavingPath: string): string;
+var
+  Keys: IAsymmetricCipherKeyPair;
+  BytesArray: TCryptoLibByteArray;
+  splt: TArray<string>;
+begin
+  if (Length(ASeed.Split([' '])) <> 12) then
+    raise EValidError.Create('incorrect seed phrase');
+
+  GenECDSAKeysOnPhrase(ASeed,Keys);
+  SetLength(BytesArray,0);
+  BytesArray := (Keys.Public as IECPublicKeyParameters).Q.GetEncoded;
+  APubKey := BytesToHex(BytesArray).ToLower;
+
+  AAddress := '0x' + APubKey.Substring(Length(APubKey)-40,40).ToLower;
+  ALogin := AAddress + LOGIN_POSTFIX;
+  APassword := GenPass;
+
+  Result := FNodeClient.DoRequest(AReqID,Format('RegLight * %s %s 1 %s %s',
+    [ALogin,APassword,APassword,APubKey]));
+  if IsURKError(Result) then
+  begin;
+    splt := Result.Split([' ']);
+    case splt[3].ToInteger of
+      829: raise EAccAlreadyExistsError.Create('');
+      else raise EUnknownError.Create(splt[3]);
+    end;
+  end;
+
+  SetLength(BytesArray,0);
+  BytesArray := (Keys.Private as IECPrivateKeyParameters).D.ToByteArray;
+  APrKey := BytesToHex(BytesArray).ToLower;
+
+  ASavingPath := TPath.Combine(ExtractFilePath(ParamStr(0)),'keys');
+  if not DirectoryExists(ASavingPath) then TDirectory.CreateDirectory(ASavingPath);
+  ASavingPath := TPath.Combine(ASavingPath,'keys');
+  ASavingPath := Format('%s_%s.txt',[ASavingPath,Result.Split([' '])[2]]);
+  TFile.AppendAllText(ASavingPath,'public key:' + APubKey + sLineBreak);
+  TFile.AppendAllText(ASavingPath,'private key:' + APrKey + sLineBreak);
+  TFile.AppendAllText(ASavingPath,Format('seed phrase:"%s"',[ASeed]) +
+    sLineBreak, TEncoding.ANSI);
+  TFile.AppendAllText(ASavingPath,'login:' + ALogin + sLineBreak);
+  TFile.AppendAllText(ASavingPath,'password:' + APassword + sLineBreak);
+  TFile.AppendAllText(ASavingPath,'address:' + AAddress);
+end;
+
+procedure TAppCore.DoReg(AReqID, ASeed: string; ACallBackProc: TGetStrProc);
+var
+  Keys: IAsymmetricCipherKeyPair;
+  BytesArray: TCryptoLibByteArray;
+  PubKey,Address,Login,Password: string;
+begin
+  if (Length(ASeed.Split([' '])) <> 12) then
+    raise EValidError.Create('incorrect seed phrase');
+
+  GenECDSAKeysOnPhrase(ASeed,Keys);
+  SetLength(BytesArray,0);
+  BytesArray := (Keys.Public as IECPublicKeyParameters).Q.GetEncoded;
+  PubKey := BytesToHex(BytesArray).ToLower;
+
+  Address := '0x' + PubKey.Substring(Length(PubKey)-40,40).ToLower;
+  Login := Address + LOGIN_POSTFIX;
+  Password := GenPass;
+
+  TThread.CreateAnonymousThread(
+    procedure
+    var
+      Response,PrKey,SavingPath: string;
+    begin
+      Response := FNodeClient.DoRequest(AReqID,Format('RegLight * %s %s 1 %s %s',
+        [Login,Password,Password,PubKey]));
+      if not IsURKError(Response) then
+      begin
+        SetLength(BytesArray,0);
+        BytesArray := (Keys.Private as IECPrivateKeyParameters).D.ToByteArray;
+        PrKey := BytesToHex(BytesArray).ToLower;
+
+        SavingPath := TPath.Combine(ExtractFilePath(ParamStr(0)),'keys');
+        if not DirectoryExists(SavingPath) then
+          TDirectory.CreateDirectory(SavingPath);
+        SavingPath := TPath.Combine(SavingPath,'keys');
+        SavingPath := Format('%s_%s.txt',[SavingPath,Response.Split([' '])[2]]);
+        TFile.AppendAllText(SavingPath,'public key:' + PubKey + sLineBreak);
+        TFile.AppendAllText(SavingPath,'private key:' + PrKey + sLineBreak);
+        TFile.AppendAllText(SavingPath,Format('seed phrase:"%s"',[ASeed]) +
+          sLineBreak, TEncoding.ANSI);
+        TFile.AppendAllText(SavingPath,'login:' + Login + sLineBreak);
+        TFile.AppendAllText(SavingPath,'password:' + Password + sLineBreak);
+        TFile.AppendAllText(SavingPath,'address:' + Address);
+
+        Response := Format('%s %s %s %s %s "%s"',[PubKey, PrKey, Login, Password,
+          Address, SavingPath]);
+      end;
+
+      TThread.Synchronize(nil,
+      procedure
+      begin
+        ACallBackProc(Response);
+      end);
+    end).Start;
+end;
 
 //function TAppCore.GetLocalTokenBalance(ATokenID: Integer; AOwnerID: Int64): Extended;
 //var
@@ -308,10 +393,10 @@ end;
 //    raise ENoInfoForThisAccountError.Create('');
 //end;
 
-//function TAppCore.GetLocalTokensBalances: TArray<String>;
+//function TAppCore.GetLocalTokensBalances: TArray<string>;
 //var
 //  sk: TCSmartKey;
-//  bValue: String;
+//  bValue: string;
 //  i: Integer;
 //begin
 //  Result := [];
@@ -336,9 +421,9 @@ end;
 //end;
 
 //function TAppCore.DoGetTokenBalanceWithSmartAddress(AReqID, AAddressTET,
-//  ASmartAddress: String): String;
+//  ASmartAddress: string): string;
 //var
-//  splt: TArray<String>;
+//  splt: TArray<string>;
 //begin
 //  AAddressTET := Remove0x(AAddressTET);
 ////  if Length(AAddressTET) <> 40 then
@@ -362,9 +447,9 @@ end;
 //end;
 
 //function TAppCore.DoGetTokenBalanceWithTicker(AReqID,AAddressTET,
-//  ATicker: String): String;
+//  ATicker: string): string;
 //var
-//  smartAddr: String;
+//  smartAddr: string;
 //begin
 //  if (Length(ATicker) = 0) or not CheckTickerName(Trim(ATicker).ToUpper) then
 //    raise EValidError.Create('invalid ticker');
@@ -374,11 +459,11 @@ end;
 //  Result := DoGetTokenBalanceWithSmartAddress(AReqID,AAddressTET,smartAddr);
 //end;
 
-//function TAppCore.DoNewToken(AReqID, ASessionKey, AFullName, AShortName, ATicker: String;
-//  AAmount: Int64; ADecimals: Integer): String;
+//function TAppCore.DoNewToken(AReqID, ASessionKey, AFullName, AShortName, ATicker: string;
+//  AAmount: Int64; ADecimals: Integer): string;
 //var
-//  splt: TArray<String>;
-//  dateTime: String;
+//  splt: TArray<string>;
+//  dateTime: string;
 //begin
 //  if not(ASessionKey.StartsWith('ipa') and (Length(ASessionKey) = 34)) then
 //    raise EValidError.Create('incorrect session key');
@@ -418,8 +503,8 @@ end;
 //  end;
 //end;
 
-//function TAppCore.DoRecoverKeys(ASeed: String; out PubKey: String;
-//  out PrKey: String): String;
+//function TAppCore.DoRecoverKeys(ASeed: string; out PubKey: string;
+//  out PrKey: string): string;
 //var
 //  FKeys: IAsymmetricCipherKeyPair;
 //  arr: TCryptoLibByteArray;
@@ -441,58 +526,11 @@ end;
 //  PrKey := PrKey.ToLower;
 //end;
 
-//function TAppCore.DoReg(AReqID: String; ASeed: String; out PubKey: String;
-//  out PrKey: String; out Login: String; out Password: String;
-//  out Address: String; out sPath: String): String;
+//function TAppCore.DoTokenTransfer(AReqID,AAddrTETFrom,AAddrTETTo,ASmartAddr: string;
+//  AAmount: Extended; APrKey,APubKey: string): string;
 //var
-//  FKeys: IAsymmetricCipherKeyPair;
-//  arr: TCryptoLibByteArray;
-//  splt: TArray<String>;
-//begin
-//  if (Length(ASeed.Split([' '])) <> 12) then
-//    raise EValidError.Create('incorrect seed phrase');
-//
-//  GenECDSAKeysOnPhrase(ASeed,FKeys);
-//  SetLength(arr,0);
-//  arr := (FKeys.Public as IECPublicKeyParameters).Q.GetEncoded;
-//  PubKey := BytesToHex(arr).ToLower;
-//
-//  Address := '0x' + PubKey.Substring(Length(PubKey)-40,40).ToLower;
-//  Login := Address + LOGIN_POSTFIX;
-//  Password := GenPass;
-//
-//  Result := FNodeClient.DoRequest(AReqID,Format('RegLight * %s %s 1 %s %s',
-//    [Login,Password,Password,PubKey]));
-//  if IsURKError(Result) then
-//  begin;
-//    splt := Result.Split([' ']);
-//    case splt[3].ToInteger of
-//      829: raise EAccAlreadyExistsError.Create('');
-//      else raise EUnknownError.Create(splt[3]);
-//    end;
-//  end;
-//
-//  SetLength(arr,0);
-//  arr := (FKeys.Private as IECPrivateKeyParameters).D.ToByteArray;
-//  PrKey := BytesToHex(arr).ToLower;
-//
-//  sPath := TPath.Combine(ExtractFilePath(ParamStr(0)),'keys');
-//  if not DirectoryExists(sPath) then TDirectory.CreateDirectory(sPath);
-//  sPath := TPath.Combine(sPath,'keys');
-//  sPath := Format('%s_%s.txt',[sPath,Result.Split([' '])[2]]);
-//  TFile.AppendAllText(sPath,'public key:' + PubKey + #13#10);
-//  TFile.AppendAllText(sPath,'private key:' + PrKey + #13#10);
-//  TFile.AppendAllText(sPath,Format('seed phrase:"%s"',[ASeed]) + #13#10, TEncoding.ANSI);
-//  TFile.AppendAllText(sPath,'login:' + Login + #13#10);
-//  TFile.AppendAllText(sPath,'password:' + Password + #13#10);
-//  TFile.AppendAllText(sPath,'address:' + Address);
-//end;
-
-//function TAppCore.DoTokenTransfer(AReqID,AAddrTETFrom,AAddrTETTo,ASmartAddr: String;
-//  AAmount: Extended; APrKey,APubKey: String): String;
-//var
-//  AmountStr,sign,signLine,res: String;
-//  splt: TArray<String>;
+//  AmountStr,sign,signLine,res: string;
+//  splt: TArray<string>;
 //  requestDone: TEvent;
 //begin
 //  AAddrTETFrom := Remove0x(AAddrTETFrom);
@@ -556,11 +594,11 @@ end;
 //  end;
 //end;
 
-function TAppCore.TryExtractPrivateKeyFromFile(out PrKey: String;
-  out PubKey: String): Boolean;
+function TAppCore.TryExtractPrivateKeyFromFile(out PrKey: string;
+  out PubKey: string): Boolean;
 var
-  Path: String;
-  Lines: TArray<String>;
+  Path: string;
+  Lines: TArray<string>;
   i: Integer;
 begin
   Path := TPath.Combine(ExtractFilePath(ParamStr(0)), 'keys');
@@ -582,11 +620,11 @@ begin
   end;
 end;
 
-//function TAppCore.DoCoinsTransfer(AReqID, ASessionKey, ATo: String;
-//  AAmount: Extended): String;
+//function TAppCore.DoCoinsTransfer(AReqID, ASessionKey, ATo: string;
+//  AAmount: Extended): string;
 //var
-//  splt: TArray<String>;
-//  AmountStr: String;
+//  splt: TArray<string>;
+//  AmountStr: string;
 //begin
 //  if not(ASessionKey.StartsWith('ipa') and (Length(ASessionKey) = 34)) then
 //    raise EValidError.Create('incorrect session key');
@@ -612,7 +650,7 @@ end;
 //  end;
 //end;
 
-function TAppCore.GenPass(x1, x2: longint): String;
+function TAppCore.GenPass(x1, x2: longint): string;
 const
   p1 = 100000000;
 var
@@ -636,7 +674,7 @@ end;
 //  Result := FBlockchain.GetChainBlocks(AAmount);
 //end;
 
-//function TAppCore.GetBlocksCount(AReqID: String): String;
+//function TAppCore.GetBlocksCount(AReqID: string): string;
 //begin
 //  Result := FNodeClient.DoRequest(AReqID,'GetBlockCount1 * *');
 //end;
@@ -682,14 +720,62 @@ begin
   Result := FBlockchain.GetICOBlockSize;
 end;
 
+function TAppCore.GetTETLocalBalance(ATETAddress: string): Double;
+var
+  TETBlock: Tbc2;
+  ICODat: TTokenICODat;
+  TETDynamic: TTokenBase;
+  BlockID: Int64;
+begin
+  if not FBlockchain.TryGetTETDynamic(ATETAddress,BlockID,TETDynamic) then
+    raise EAddressNotExistsError.Create('');
+  TETBlock := FBlockchain.GetTETChainBlock(TETDynamic.LastBlock);
+  if not FBlockchain.TryGetICOBlock(TETDynamic.TokenDatID,ICODat) then
+    exit;
+
+  if BlockID = TETBlock.Smart.tkn[1].TokenID then
+		Result := TETBlock.Smart.tkn[1].Amount / Power(10,ICODat.FloatSize)
+	else if BlockID = TETBlock.Smart.tkn[2].TokenID then
+		Result := TETBlock.Smart.tkn[2].Amount / Power(10,ICODat.FloatSize)
+	else
+    raise EUnknownError.Create('');
+end;
+
+function TAppCore.GetTETUserLastTransactions(AUserID: Int64;
+  var ANumber: Integer): TArray<THistoryTransactionInfo>;
+begin
+  Result := FBlockchain.GetTETUserLastTransactions(AUserID,ANumber);
+end;
+
+function TAppCore.GetTETLocalBalance: Double;
+var
+  TETBlock: Tbc2;
+  ICODat: TTokenICODat;
+  TETDynamic: TTokenBase;
+  BlockID: Int64;
+begin
+  if not FBlockchain.TryGetTETDynamic(FUserID,BlockID,TETDynamic) then
+    raise EAddressNotExistsError.Create('');
+  TETBlock := FBlockchain.GetTETChainBlock(TETDynamic.LastBlock);
+  if not FBlockchain.TryGetICOBlock(TETDynamic.TokenDatID,ICODat) then
+    exit;
+
+  if BlockID = TETBlock.Smart.tkn[1].TokenID then
+		Result := TETBlock.Smart.tkn[1].Amount / Power(10,ICODat.FloatSize)
+	else if BlockID = TETBlock.Smart.tkn[2].TokenID then
+		Result := TETBlock.Smart.tkn[2].Amount / Power(10,ICODat.FloatSize)
+	else
+    raise EUnknownError.Create('');
+end;
+
+function TAppCore.GetLoadingStatus: Boolean;
+begin
+  Result := FStartLoadingDone;
+end;
+
 //function TAppCore.GetOneSmartKeyBlock(AFrom: Int64): TCSmartKey;
 //begin
 //  Result := FBlockchain.GetOneSmartKeyBlock(AFrom);
-//end;
-
-//function TAppCore.GetOneChainBlock(AFrom: Int64): TOneBlockBytes;
-//begin
-//  Result := FBlockchain.GetOneChainBlock(AFrom);
 //end;
 
 //function TAppCore.GetOneSmartBlock(ASmartID: Integer; AFrom: Int64): TCbc4;
@@ -697,9 +783,9 @@ end;
 //  Result := FBlockchain.GetOneSmartBlock(ASmartID,AFrom);
 //end;
 
-//function TAppCore.GetPubKeyByID(AReqID: String; AID: Int64): String;
+//function TAppCore.GetPubKeyByID(AReqID: string; AID: Int64): string;
 //var
-//  splt: TArray<String>;
+//  splt: TArray<string>;
 //begin
 //  if AID < 0 then
 //    raise EValidError.Create('invalid account ID');
@@ -717,9 +803,9 @@ end;
 //  end;
 //end;
 
-//function TAppCore.GetPubKeyBySessionKey(AReqID, ASessionKey: String): String;
+//function TAppCore.GetPubKeyBySessionKey(AReqID, ASessionKey: string): string;
 //var
-//  splt: TArray<String>;
+//  splt: TArray<string>;
 //begin
 //  if not(ASessionKey.StartsWith('ipa') and (Length(ASessionKey) = 34)) then
 //    raise EValidError.Create('incorrect session key');
@@ -748,12 +834,12 @@ end;
 //  Result := FBlockchain.GetSmartBlocks(ASmartID,AAmount);
 //end;
 
-//function TAppCore.GetSmartBlocks(ATicker: String; out AAmount: Integer): TBytesBlocks;
+//function TAppCore.GetSmartBlocks(ATicker: string; out AAmount: Integer): TBytesBlocks;
 //begin
 //  Result := FBlockchain.GetSmartBlocks(ATicker,AAmount);
 //end;
 
-//function TAppCore.GetSmartBlocks(ASmartName: String; AFrom: Int64;
+//function TAppCore.GetSmartBlocks(ASmartName: string; AFrom: Int64;
 //  out AAmount: Integer): TBytesBlocks;
 //begin
 //  Result := FBlockchain.GetSmartBlocks(ASmartName,AFrom,AAmount);
@@ -772,19 +858,19 @@ end;
 //  Result := FBlockchain.GetSmartBlockSize(ASmartID);
 //end;
 
-//function TAppCore.GetSmartLastTransactions(ATicker: String;
+//function TAppCore.GetSmartLastTransactions(ATicker: string;
 //  var Amount: Integer): TArray<TExplorerTransactionInfo>;
 //begin
 //  Result := FBlockchain.GetLastSmartTransactions(ATicker,Amount);
 //end;
 
 //function TAppCore.GetSmartLastUserTransactions(AUserID: Integer;
-//  ATicker: String; var Amount: Integer): TArray<THistoryTransactionInfo>;
+//  ATicker: string; var Amount: Integer): TArray<THistoryTransactionInfo>;
 //begin
 //  Result := FBlockchain.GetLastSmartUserTransactions(AUserID,ATicker,Amount);
 //end;
 
-//function TAppCore.GetSmartTransactions(ATicker: String; ASkip: Integer;
+//function TAppCore.GetSmartTransactions(ATicker: string; ASkip: Integer;
 //  var ARows: Integer): TArray<TExplorerTransactionInfo>;
 //begin
 //  if not CheckTickerName(ATicker) then
@@ -802,12 +888,6 @@ end;
 //function TAppCore.GetChainLastTransactions(var Amount: Integer): TArray<TExplorerTransactionInfo>;
 //begin
 //  Result := FBlockchain.GetLastChainTransactions(Amount);
-//end;
-
-//function TAppCore.GetChainLastUserTransactions(AUserID: Integer;
-//  var Amount: Integer): TArray<THistoryTransactionInfo>;
-//begin
-//  Result := FBlockchain.GetLastChainUserTransactions(AUserID,Amount);
 //end;
 
 //function TAppCore.GetChainTransations(ASkip: Integer;
@@ -838,7 +918,7 @@ end;
 //  Result := FBlockchain.GetChainUserTransactions(AUserID,ASkip,ARows);
 //end;
 
-function TAppCore.GetSessionKey: String;
+function TAppCore.GetSessionKey: string;
 begin
   Result := FSessionKey;
 end;
@@ -858,7 +938,7 @@ begin
   Result := FBlockchain.GetSmartKeyBlockSize;
 end;
 
-//function TAppCore.GetSmartAddressByID(AID: Int64): String;
+//function TAppCore.GetSmartAddressByID(AID: Int64): string;
 //begin
 //  if AID < 0 then
 //    raise EValidError.Create('invalid smart ID');
@@ -867,7 +947,7 @@ end;
 //  if Result = '' then raise ESmartNotExistsError.Create('');
 //end;
 
-//function TAppCore.GetSmartAddressByTicker(ATicker: String): String;
+//function TAppCore.GetSmartAddressByTicker(ATicker: string): string;
 //begin
 //  if (Length(ATicker) = 0) or not CheckTickerName(Trim(ATicker).ToUpper) then
 //    raise EValidError.Create('invalid ticker');
@@ -876,7 +956,7 @@ end;
 //  if Result = '' then raise ESmartNotExistsError.Create('');
 //end;
 
-function TAppCore.GetTETAddress: String;
+function TAppCore.GetTETAddress: string;
 begin
   Result := FTETAddress;
 end;
@@ -898,12 +978,12 @@ begin
   Result := FUserID;
 end;
 
-function TAppCore.GetVersion: String;
+function TAppCore.GetVersion: string;
 begin
-  Result := NodeVersion;
+  Result := NODE_VERSION;
 end;
 
-function TAppCore.Remove0x(AAddress: String): String;
+function TAppCore.Remove0x(AAddress: string): string;
 begin
   if (Length(AAddress) > 40) and AAddress.StartsWith('0x') then
     Result := AAddress.Substring(2,Length(AAddress))
@@ -913,8 +993,8 @@ end;
 
 procedure TAppCore.Run;
 var
-  splt: TArray<String>;
-  errStr: String;
+  splt: TArray<string>;
+  errStr: string;
 begin
   try
     FSettings.Init;
@@ -933,9 +1013,9 @@ begin
   end;
 end;
 
-function TAppCore.TrySaveKeysToFile(APrivateKey: String): Boolean;
+function TAppCore.TrySaveKeysToFile(APrivateKey: string): Boolean;
 var
-  Path, PubKey: String;
+  Path, PubKey: string;
 begin
   Result := RestorePublicKey(APrivateKey, PubKey);
   if not Result then
@@ -950,7 +1030,7 @@ begin
   TFile.AppendAllText(Path, 'private key:' + APrivateKey + sLineBreak);
 end;
 
-//function TAppCore.SendToConfirm(AReqID, AToSend: String): String;
+//function TAppCore.SendToConfirm(AReqID, AToSend: string): string;
 //begin
 //  Result := FNodeClient.DoRequest(AReqID,AToSend);
 //end;
@@ -965,6 +1045,11 @@ begin
   FBlockchain.SetTokenICOBlocks(ASkip,ABytes);
 end;
 
+procedure TAppCore.SetLoadingStatus(const AIsDone: Boolean);
+begin
+  FStartLoadingDone := AIsDone;
+end;
+
 //procedure TAppCore.SetDynBlocks(ADynID: Integer; APos: Int64;
 //  ABytes: TBytesBlocks; AAmount: Integer);
 //begin
@@ -976,7 +1061,7 @@ end;
 //  FBlockchain.SetDynBlock(ADynID,APos,ABytes);
 //end;
 
-procedure TAppCore.SetSessionKey(const ASessionKey: String);
+procedure TAppCore.SetSessionKey(const ASessionKey: string);
 begin
   FSessionKey := ASessionKey;
 end;
@@ -1003,7 +1088,7 @@ begin
 //    FTETAddress := '<address did not found>';
 end;
 
-function TAppCore.SignTransaction(const AToSign: String; const APrivateKey: String): String;
+function TAppCore.SignTransaction(const AToSign: string; const APrivateKey: string): string;
 var
   prKeyBytes: TBytes;
 begin
@@ -1029,15 +1114,10 @@ end;
 //  Result := FBlockchain.TryGetSmartKeyByAddress(AAddress, sk);
 //end;
 
-//function TAppCore.TryGetTokenICO(ATicker: String;
+//function TAppCore.TryGetTokenICO(ATicker: string;
 //  var tICO: TTokenICODat): Boolean;
 //begin
 //  Result := FBlockchain.TryGetOneICOBlock(ATicker, tICO);
-//end;
-
-//procedure TAppCore.StopSync(AChainName: String; AIsSystemChain: Boolean);
-//begin
-//  FNodeClient.StopSync(AChainName, AIsSystemChain);
 //end;
 
 //procedure TAppCore.UpdateLists;

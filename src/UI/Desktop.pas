@@ -83,7 +83,8 @@ end;
 
 destructor TUICore.Destroy;
 begin
-  FStartFormCreated.Free;
+  if Assigned(FStartFormCreated) then
+    FStartFormCreated.Free;
 
   inherited;
 end;
@@ -156,6 +157,7 @@ begin
     begin
       StartForm.SetMaxProgressBarValue(ATotalTETBlocksToDownload);
     end);
+  FreeAndNil(FStartFormCreated);
 end;
 
 procedure TUICore.DoMessage(const AMessage: String);

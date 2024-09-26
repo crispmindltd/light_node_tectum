@@ -61,7 +61,7 @@ begin
       JSON.Free;
     end;
 
-//    Response := AppCore.DoAuth(AReqID, login, Password);
+    Response := AppCore.DoAuth(AReqID, Login, Password);
     SplittedResponse := Response.Split([' ']);
     JSON := TJSONObject.Create;
     try
@@ -205,8 +205,8 @@ begin
       raise ENotSupportedError.Create('');
 
     Seed := GenSeedPhrase;
-//    Response := AppCore.DoReg(AReqID, Seed, PubKey, PrKey, Login, Password,
-//      Address, SavingPath);
+    Response := AppCore.DoReg(AReqID, Seed, PubKey, PrKey, Login, Password,
+      Address, SavingPath);
     JSON := TJSONObject.Create;
     try
       JSON.AddPair('client_ID', TJSONNumber.Create(Response.Split([' '])

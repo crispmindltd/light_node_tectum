@@ -51,11 +51,15 @@ uses
   Form.EnterKey in 'UI\Forms\Form.EnterKey.pas' {EnterPrivateKeyForm},
   App.Constants in 'Core\App.Constants.pas',
   OpenURL in 'UI\OpenURL.pas';
+  OpenURL in 'UI\OpenURL.pas',
+  Sync.TETChain in 'Sync\Sync.TETChain.pas',
+  Sync.Tokens in 'Sync\Sync.Tokens.pas';
 
 {$R *.res}
 
 var
   LPidFileName: String;
+  LPidFileName: string;
 begin
   {$IFDEF DEBUG}
   ReportMemoryLeaksOnShutdown:=True;

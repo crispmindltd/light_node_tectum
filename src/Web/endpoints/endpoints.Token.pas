@@ -192,7 +192,7 @@ begin
         JSONNestedObject.AddPair('address_to', TETTransfersInfo[i].TransTo);
         JSONNestedObject.AddPair('hash', TETTransfersInfo[i].Hash);
         JSONNestedObject.AddPair('amount',
-          TJSONNumber.Create(TETTransfersInfo[i].Amount));
+          TJSONNumber.Create(TETTransfersInfo[i].Value));
         JSONNestedObject.AddPair('fee', TJSONNumber.Create(0));
       end;
       JSON.AddPair('transactions', JSONArray);
@@ -255,7 +255,7 @@ begin
           TJSONBool.Create(TETTransfersInfo[i].Incom));
         JSONNestedObject.AddPair('hash', TETTransfersInfo[i].Hash);
         JSONNestedObject.AddPair('amount',
-          TJSONNumber.Create(TETTransfersInfo[i].Amount));
+          TJSONNumber.Create(TETTransfersInfo[i].Value));
         JSONNestedObject.AddPair('fee', TJSONNumber.Create(0));
       end;
       JSON.AddPair('transactions', JSONArray);
@@ -725,7 +725,7 @@ begin
         JSONNestedObject.AddPair('address_to', TETTransfersInfo[i].TransTo);
         JSONNestedObject.AddPair('hash', TETTransfersInfo[i].Hash);
         JSONNestedObject.AddPair('amount',
-          TJSONNumber.Create(TETTransfersInfo[i].Amount));
+          TJSONNumber.Create(TETTransfersInfo[i].Value));
         JSONNestedObject.AddPair('fee', TJSONNumber.Create(0));
       end;
       JSON.AddPair('transactions', JSONArray);

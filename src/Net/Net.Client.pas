@@ -128,7 +128,7 @@ begin
     begin
       Logs.DoLog('Server did not respond',ERROR,tcp);
       FRemoteServer.Disconnect;
-      raise;
+      Result := 'URKError * * 15'
     end;
   end;
 end;

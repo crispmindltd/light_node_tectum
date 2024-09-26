@@ -63,11 +63,10 @@ begin
   try
     try
       if not FCommands.TryGetValue(URI, EndpointFunc) then
-        raise ENotFoundError.Create('');
-//      else if AppCore.DownloadRemain > 0 then
-//        raise EDownloadingNotFinished.Create('');
+        raise ENotFoundError.Create('')
+      else if not AppCore.TETChainSyncDone then
+        raise EDownloadingNotFinished.Create('');
 
-      // get http request body
       if Assigned(ARequestInfo.PostStream) then
       begin
         if (ARequestInfo.PostStream is TMemoryStream) then

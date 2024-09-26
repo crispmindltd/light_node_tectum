@@ -89,6 +89,8 @@ type
     Num11Text: TText;
     Num12Text: TText;
     EyeSvg: TPath;
+    LogInIndicator: TAniIndicator;
+    RegIndicator: TAniIndicator;
     procedure FormCreate(Sender: TObject);
     procedure EyeLayoutMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single);
@@ -108,11 +110,14 @@ type
       var KeyChar: WideChar; Shift: TShiftState);
   private
     FTotalTETBlocksToDownload: Int64;
-    phrase: String;
-    procedure ShowLogInError(const AMessage: String);
+    FSeedPhrase: string;
+    procedure ShowLogInError(const AMessage: string);
     procedure HideLogInError;
-    procedure ShowSignUpError(const AMessage: String);
+    procedure ShowSignUpError(const AMessage: string);
     procedure OnDownloadingDone;
+
+    procedure RegCallBack(const AResponse: string);
+    procedure LogInCallBack(const AResponse: string);
   public
     procedure SetMaxProgressBarValue(const ATotalTETBlocksToDownload: Int64);
     procedure ShowProgress;
@@ -127,12 +132,12 @@ implementation
 
 procedure TStartForm.AuthTabControlChange(Sender: TObject);
 var
-  splt: TArray<String>;
+  splt: TArray<string>;
 begin
   if AuthTabControl.TabIndex = 1 then
   begin
-    phrase := GenSeedPhrase;
-    splt := phrase.Split([' ']);
+    FSeedPhrase := GenSeedPhrase;
+    splt := FSeedPhrase.Split([' ']);
 
     Word1Edit.Text := splt[0];
     Word2Edit.Text := splt[1];
@@ -257,28 +262,16 @@ begin
 end;
 
 procedure TStartForm.LogInButtonClick(Sender: TObject);
-var
-  splt: TArray<String>;
-  response: String;
 begin
+  LogInButton.Enabled := False;
+  LogInIndicator.Visible := True;
+  LogInIndicator.Enabled := True;
+
   try
-//    response := AppCore.DoAuth('*',EmailEdit.Text,PasswordEdit.Text);
-    splt := response.Split([' ']);
-    AppCore.SessionKey := splt[2];
-    AppCore.UserID := splt[4].ToInt64;
-    UI.ShowMainForm;
+    AppCore.DoAuth('*',EmailEdit.Text,PasswordEdit.Text,LogInCallBack);
   except
-    on E:ESocketError do
-      ShowLogInError('Server did not respond, try later');
     on E:EValidError do
       ShowLogInError(E.Message);
-    on E:EAuthError do
-      ShowLogInError(LOGIN_ERROR_TEXT);
-    on E:EUnknownError do
-    begin
-      Logs.DoLog('Unknown error during auth with code ' + E.Message,TLogType.ERROR,tcp);
-      ShowLogInError('Unknown error, try later');
-    end;
     on E:Exception do
     begin
       Logs.DoLog('Unknown error during auth with message: ' + E.Message,TLogType.ERROR,tcp);
@@ -287,24 +280,49 @@ begin
   end;
 end;
 
-procedure TStartForm.NextButtonClick(Sender: TObject);
+procedure TStartForm.LogInCallBack(const AResponse: string);
 var
-  response: String;
-  pubKey,prKey,login,pass,addr,sPath: String;
+  Splitted: TArray<string>;
 begin
+  LogInButton.Enabled := True;
+  LogInIndicator.Enabled := False;
+  LogInIndicator.Visible := False;
+
+  if not (AResponse.StartsWith('URKError')) then
+  begin
+    Splitted := AResponse.Split([' ']);
+    AppCore.SessionKey := Splitted[2];
+    AppCore.UserID := Splitted[4].ToInt64;
+    UI.ShowMainForm;
+  end else
+  begin
+    Splitted := AResponse.Split([' ']);
+    case Splitted[3].ToInteger of
+      15: ShowLogInError('Server did not respond, try later');
+      93: ShowLogInError(LOGIN_ERROR_TEXT);
+      816: ShowLogInError(LOGIN_ERROR_TEXT);
+      else
+        begin
+          Logs.DoLog('Unknown error during auth with code ' +
+            Splitted[3],TLogType.ERROR,tcp);
+          ShowLogInError('Unknown error, try later');
+        end;
+    end;
+  end;
+end;
+
+procedure TStartForm.NextButtonClick(Sender: TObject);
+begin
+  NextButton.Text := '';
+  NextButton.Enabled := False;
+  RegIndicator.Visible := True;
+  RegIndicator.Enabled := True;
   try
-//    response := AppCore.DoReg('*',phrase,pubKey,prKey,login,pass,addr,sPath);
-    NewLoginLabel.Text := 'Your Log In: ' + login;
-    NewPassLabel.Text := 'Password: ' + pass;
-    PathMemo.Text := sPath;
-    Tabs.Next;
+    AppCore.DoReg('*',FSeedPhrase,RegCallBack);
   except
-    on E:ESocketError do
-      ShowSignUpError('Server did not respond, try later');
     on E:EValidError do
       ShowSignUpError(E.Message);
-    on E:EAuthError do
-      ShowSignUpError(LOGIN_ERROR_TEXT);
+
     on E:EUnknownError do
     begin
       Logs.DoLog('Unknown error during auth with code ' + E.Message,TLogType.ERROR,tcp);
@@ -324,7 +342,39 @@ begin
   SignUpTabItem.Enabled := True;
 end;
 
-procedure TStartForm.ShowLogInError(const AMessage: String);
+procedure TStartForm.RegCallBack(const AResponse: string);
+var
+  Splitted: TArray<string>;
+begin
+  RegIndicator.Enabled := False;
+  RegIndicator.Visible := False;
+  NextButton.Enabled := True;
+  NextButton.Text := 'Next';
+
+  Splitted := AResponse.Split([' '],'"');
+  if not (AResponse.StartsWith('URKError')) then
+  begin
+    NewLoginLabel.Text := 'Your Log In: ' + Splitted[2];
+    NewPassLabel.Text := 'Password: ' + Splitted[3];
+    PathMemo.Text := Splitted[5].Trim(['"']);
+    Tabs.Next;
+  end else
+  begin
+    Splitted := AResponse.Split([' ']);
+    case Splitted[3].ToInteger of
+      15: ShowLogInError('Server did not respond, try later');
+      829: ShowLogInError('Account already exists, try again');
+      else
+        begin
+          Logs.DoLog('Unknown error during reg with code ' + Splitted[3],
+            TLogType.ERROR,tcp);
+          ShowSignUpError('Unknown error, try later');
+        end;
+    end;
+  end;
+end;
+
+procedure TStartForm.ShowLogInError(const AMessage: string);
 begin
   ErrorLoginLabel.Text := AMessage;
   ErrorLoginLabel.Visible := True;
@@ -341,7 +391,8 @@ begin
     [CurrentTETChainBlocksCount, FTotalTETBlocksToDownload]);
   DownloadProgressBar.Value := CurrentTETChainBlocksCount;
 
-  if CurrentTETChainBlocksCount = FTotalTETBlocksToDownload then
+  AppCore.TETChainSyncDone := CurrentTETChainBlocksCount = FTotalTETBlocksToDownload;
+  if AppCore.TETChainSyncDone then
     FloatAnimation3.Enabled := True;
 end;
 
@@ -351,6 +402,7 @@ var
 begin
   FTotalTETBlocksToDownload := ATotalTETBlocksToDownload;
   CurrentTETChainBlocksCount := AppCore.GetTETChainBlocksCount;
+  AppCore.TETChainSyncDone := FTotalTETBlocksToDownload = CurrentTETChainBlocksCount;
   if FTotalTETBlocksToDownload > CurrentTETChainBlocksCount then
   begin
     DownloadProgressBar.Max := ATotalTETBlocksToDownload;
@@ -362,7 +414,7 @@ begin
     OnDownloadingDone;
 end;
 
-procedure TStartForm.ShowSignUpError(const AMessage: String);
+procedure TStartForm.ShowSignUpError(const AMessage: string);
 begin
   ErrorSignUpLabel.Text := AMessage;
   ErrorSignUpLabel.Visible := True;

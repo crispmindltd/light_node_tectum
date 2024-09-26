@@ -34,10 +34,10 @@ type
       ANumber: Integer = MaxBlocksNumber): TArray<TTokenBase>;
 
 //    function TryGetTETAddress(const AOwnerID: Int64; out ATETAddress: String): Boolean;
-//    function TryGetTokenBase(AOwnerID: Int64; out AID: Integer;
-//      out tb: TTokenBase): Boolean; overload;
-//    function TryGetTokenBase(ATETAddress: String; out AID: Integer;
-//      out tb: TTokenBase): Boolean; overload;
+    function TryGetByUserID(AUserID: Int64; out ABlockID: Int64;
+      var ATETDynamic: TTokenBase): Boolean;
+    function TryGetByTETAddress(ATETAddress: string; out ABlockID: Int64;
+      out ATETDynamic: TTokenBase): Boolean;
   end;
 
 implementation
@@ -124,6 +124,56 @@ begin
     FFile.Seek(ASkip * GetBlockSize, soBeginning);
     SetLength(Result, Min(ANumber * GetBlockSize, FFile.Size - FFile.Position));
     FFile.Read(Result, Length(Result));
+  finally
+    if NeedClose then
+      DoClose;
+  end;
+end;
+
+function TBlockchainTETDynamic.TryGetByTETAddress(ATETAddress: string;
+  out ABlockID: Int64; out ATETDynamic: TTokenBase): Boolean;
+var
+  NeedClose: Boolean;
+  i: Integer;
+begin
+  Result := False;
+  NeedClose := DoOpen(fmOpenRead or fmShareDenyNone);
+  try
+    for i := 0 to (FFile.Size div GetBlockSize) - 1 do
+    begin
+      FFile.Seek(i * GetBlockSize, soBeginning);
+      FFile.ReadData<TTokenBase>(ATETDynamic);
+      if (ATETDynamic.Token = ATETAddress) and (ATETDynamic.TokenDatID = 1) then
+      begin
+        ABlockID := i;
+        exit(True);
+      end;
+    end;
+  finally
+    if NeedClose then
+      DoClose;
+  end;
+end;
+
+function TBlockchainTETDynamic.TryGetByUserID(AUserID: Int64; out ABlockID: Int64;
+  var ATETDynamic: TTokenBase): Boolean;
+var
+  NeedClose: Boolean;
+  i: Integer;
+begin
+  Result := False;
+  NeedClose := DoOpen(fmOpenRead or fmShareDenyNone);
+  try
+    for i := 0 to (FFile.Size div GetBlockSize) - 1 do
+    begin
+      FFile.Seek(i * GetBlockSize, soBeginning);
+      FFile.ReadData<TTokenBase>(ATETDynamic);
+      if (ATETDynamic.OwnerID = AUserID) and (ATETDynamic.TokenDatID = 1) then
+      begin
+        ABlockID := i;
+        exit(True);
+      end;
+    end;
   finally
     if NeedClose then
       DoClose;
@@ -240,32 +290,6 @@ end;
 //      Seek(FFile,i);
 //      Read(FFile,tb);
 //      if (tb.Token = ATETAddress) and (tb.TokenDatID = 1) then
-//      begin
-//        AID := i;
-//        Exit(True);
-//      end;
-//    end;
-//  finally
-//    CloseFile(FFile);
-//    FLock.Leave;
-//  end;
-//end;
-
-//function TBlockchainTETDynamic.TryGetTokenBase(AOwnerID: Int64; out AID: Integer;
-//  out tb: TTokenBase): Boolean;
-//var
-//  i: Integer;
-//begin
-//  FLock.Enter;
-//  Result := False;
-//  AssignFile(FFile, FFullFilePath);
-//  Reset(FFile);
-//  try
-//    for i := 0 to FileSize(FFile)-1 do
-//    begin
-//      Seek(FFile,i);
-//      Read(FFile,tb);
-//      if (tb.OwnerID = AOwnerID) and (tb.TokenDatID = 1) then
 //      begin
 //        AID := i;
 //        Exit(True);

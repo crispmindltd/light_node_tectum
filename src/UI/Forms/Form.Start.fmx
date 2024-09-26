@@ -228,6 +228,20 @@ object StartForm: TStartForm
                   TextSettings.Trimming = None
                   OnClick = LogInButtonClick
                 end
+                object LogInIndicator: TAniIndicator
+                  Align = Left
+                  Margins.Left = 10.000000000000000000
+                  Margins.Top = 5.000000000000000000
+                  Margins.Right = 15.000000000000000000
+                  Margins.Bottom = 5.000000000000000000
+                  Position.X = 180.000000000000000000
+                  Position.Y = 5.000000000000000000
+                  Size.Width = 30.000000000000000000
+                  Size.Height = 30.000000000000000000
+                  Size.PlatformDefault = False
+                  Style = Circular
+                  Visible = False
+                end
               end
               object HeightFloatAnimation1: TFloatAnimation
                 Duration = 0.100000001490116100
@@ -815,6 +829,13 @@ object StartForm: TStartForm
                   TextSettings.FontColor = claWhite
                   TextSettings.Trimming = None
                   OnClick = NextButtonClick
+                end
+                object RegIndicator: TAniIndicator
+                  Align = Center
+                  Size.Width = 30.000000000000000000
+                  Size.Height = 30.000000000000000000
+                  Size.PlatformDefault = False
+                  Visible = False
                 end
               end
               object HeightFloatAnimation2: TFloatAnimation
