@@ -32,8 +32,8 @@ type
       function GetTETChainBlocksToSend(out ABlocksNumber: Integer): TBytes;
       function GetTokenICOBlocksToSend(out ABlocksNumber: Integer): TBytes;
       function GetSmartKeyBlocksToSend(out ABlocksNumber: Integer): TBytes;
-//      function GetSmartBlocksToSend(out ASmartID: Integer;
-//        out AAmount: Integer): TBytesBlocks;
+      function GetTokenChainBlocksToSend(out ATokenID: Integer;
+        out ABlocksNumber: Integer): TBytes;
     protected
       procedure Execute; override;
     public
@@ -168,31 +168,30 @@ begin
   ABlocksNumber := Length(Result) div AppCore.GetTokenICOBlockSize;
 end;
 
-//function TConnectedClient.GetSmartBlocksToSend(out ASmartID: Integer;
-//  out AAmount: Integer): TBytesBlocks;
-//var
-//  smIDBytes:array[0..3] of Byte;
-//  incomSmartID: Integer absolute smIDBytes;
-//  incomCountBytes: array[0..3] of Byte;
-//  incomBlocksCount: Integer absolute incomCountBytes;
-//begin
-//  FSocket.Receive(smIDBytes,0,4,[TSocketFlag.WAITALL]);
-//  FSocket.Receive(incomCountBytes,0,4,[TSocketFlag.WAITALL]);
-////  Logs.DoLog(Format('<From %s>[%d]: smartID=%d, blockNum=%d',
-////    [FID,SMART_SYNC_COMMAND_CODE,incomSmartID,incomBlocksCount]),INCOM,sync);
-//  Result := AppCore.GetSmartBlocks(incomSmartID,incomBlocksCount,AAmount);
-//  ASmartID := incomSmartID;
-//end;
+function TConnectedClient.GetTokenChainBlocksToSend(out ATokenID: Integer;
+  out ABlocksNumber: Integer): TBytes;
+var
+  TokenIDBytes: array[0..3] of Byte;
+  TokenID: Integer absolute TokenIDBytes;
+  IncomCountBytes: array[0..7] of Byte;
+  IncomCount: Int64 absolute IncomCountBytes;
+begin
+  FSocket.Receive(TokenIDBytes,0,4,[TSocketFlag.WAITALL]);
+  FSocket.Receive(IncomCountBytes,0,8,[TSocketFlag.WAITALL]);
+  Result := AppCore.GetTokenChainBlocks(TokenID,IncomCount);
+  ATokenID := TokenID;
+  ABlocksNumber := Length(Result) div AppCore.GetTokenBlockSize;
+end;
 
 procedure TConnectedClient.ReceiveRequest;
 var
   Command: Byte;
-//  ID: Integer;
 //  tranferResult: String;
   OutgoBytes: array[0..7] of Byte;
   OutgoInt: Integer absolute OutgoBytes;
   OutgoInt64: Integer absolute OutgoBytes;
   ToSend: TBytes;
+  TokenID: Integer;
 begin
   FSocket.Receive(Command,0,1,[TSocketFlag.WAITALL]);
   case Command of
@@ -258,17 +257,18 @@ begin
           [FID,SMARTKEY_SYNC_COMMAND_CODE,OutgoInt]),OUTGO,sync);
       end;
 
-//    SMART_SYNC_COMMAND_CODE:
-//      begin
-//        AppCore.UpdateLists;
-//        toSend := GetSmartBlocksToSend(ID,outgoBlocksAmount);
-//        FSocket.Send(outgoCountBytes,0,4);
-//        if outgoBlocksAmount <= 0 then exit;
-//
-//        FSocket.Send(toSend,0,outgoBlocksAmount * AppCore.GetSmartBlockSize(ID));
-//        Logs.DoLog(Format('<To %s>[%d]: smartID=%d, blocksSended=%d',
-//          [FID,SMART_SYNC_COMMAND_CODE,ID,outgoBlocksAmount]),OUTGO,sync);
-//      end;
+    TOKEN_SYNC_COMMAND_CODE:
+      begin
+        AppCore.UpdateTokensList;
+        ToSend := GetTokenChainBlocksToSend(TokenID,OutgoInt);
+        FSocket.Send(OutgoBytes,0,4);
+        if OutgoInt <= 0 then
+          exit;
+
+        FSocket.Send(ToSend,0,Length(ToSend));
+        Logs.DoLog(Format('<To %s>[%d]: Token ID = %d, Blocks sended = %d',
+          [FID,TOKEN_SYNC_COMMAND_CODE,TokenID,OutgoInt]),OUTGO,sync);
+      end;
 
     else
       begin

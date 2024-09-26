@@ -13,7 +13,6 @@ uses
 type
   IUI = interface
     procedure Run;
-    procedure DoMessage(const AMessage: String);
     procedure NullForm(var Form);
     procedure ShowMainForm;
     procedure ShowEnterPrivateKeyForm;
@@ -21,7 +20,7 @@ type
     procedure ShowTotalBlocksToDownload(const ATotalTETBlocksToDownload: Int64);
     procedure ShowDownloadProgress;
     procedure NotifyNewTETBlocks(const ANeedRefreshBalance: Boolean);
-    procedure NotifyNewSmartBlocks;
+    procedure NotifyNewTokenBlocks(const ANeedRefreshBalance: Boolean);
   end;
 
   IAppCore = interface
@@ -41,7 +40,6 @@ type
     //TET chain methods
     function GetTETChainBlockSize: Integer;
     function GetTETChainBlocksCount: Int64;
-//    function GetTETChainBlock(ASkip: Int64): Tbc2;
     function GetTETChainBlocks(ASkip: Int64): TBytes;
 //    function GetChainBlocks(var AAmount: Integer): TBytesBlocks; overload;
     procedure SetTETChainBlocks(ASkip: Int64; ABytes: TBytes);
@@ -57,7 +55,6 @@ type
     //IcoDat blocks sync methods
     function GetTokenICOBlocksCount: Int64;
     function GetTokenICOBlockSize: Integer;
-    function TryGetTokenICO(ATokenID: Integer; var ATokenICO: TTokenICODat): Boolean;
     function GetTokenICOBlocks(ASkip: Int64): TBytes;
     procedure SetTokenICOBlocks(ASkip: Int64; ABytes: TBytes);
 
@@ -67,11 +64,15 @@ type
     function GetSmartKeyBlocks(ASkip: Int64): TBytes;
     procedure SetSmartKeyBlocks(ASkip: Int64; ABytes: TBytes);
 
-    //Tokens methods
+    //Tokens chains methods
+    procedure UpdateTokensList;
+    function GetTokensToSynchronize: TArray<Integer>;
+    procedure AddTokenToSynchronize(ATokenID: Integer);
+    procedure RemoveTokenToSynchronize(ATokenID: Integer);
     function GetTokenChainBlocksCount(ATokenID: Integer): Int64;
-//    function GetSmartBlockSize(ASmartID: Integer): Integer;
-//    function GetSmartBlocks(ASmartID: Integer; AFrom: Int64;
-//      out AAmount: Integer): TBytesBlocks; overload;
+    function GetTokenBlockSize: Integer;
+    function GetTokenChainBlocks(ATokenID: Integer; ASkip: Int64): TBytes;
+    procedure SetTokenBlocks(ATokenID: Integer; ASkip: Int64; ABytes: TBytes);
 //    function GetSmartBlocks(ASmartID: Integer;
 //      var AAmount: Integer): TBytesBlocks; overload;
 //    function GetSmartBlocks(ATicker: String;
@@ -80,8 +81,6 @@ type
 ////      var AAmount: Integer): TBytesBlocks; overload;
 //    function GetOneSmartKeyBlock(AFrom: Int64): TCSmartKey;
 //    function GetOneSmartBlock(ASmartID: Integer; AFrom: Int64): TCbc4;
-//    procedure SetSmartBlocks(ASmartID: Integer; APos: Int64; ABytes: TBytesBlocks;
-//      AAmount: Integer);
 //    function GetSmartTransactions(ATicker: String; ASkip: Integer;
 //      var ARows: Integer): TArray<TExplorerTransactionInfo>;
 //    function GetSmartLastTransactions(ATicker: String;
@@ -97,8 +96,6 @@ type
 //    procedure SetDynBlocks(ADynID: Integer; APos: Int64; ABytes: TBytesBlocks;
 //      AAmount: Integer);
 //    procedure SetDynBlock(ADynID: Integer; APos: Int64; ABytes: TOneBlockBytes);
-
-//    procedure UpdateLists;
 //
 //    function GetBlocksCount(AReqID: String): String;
     procedure DoReg(AReqID,ASeed: string; ACallBackProc: TGetStrProc); overload;

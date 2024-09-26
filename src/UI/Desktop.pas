@@ -40,14 +40,13 @@ type
     destructor Destroy; override;
 
     procedure Run;
-    procedure DoMessage(const AMessage: String);
     procedure ShowMainForm;
     procedure ShowEnterPrivateKeyForm;
     procedure NullForm(var Form);
     procedure ShowTotalBlocksToDownload(const ATotalTETBlocksToDownload: Int64);
     procedure ShowDownloadProgress;
     procedure NotifyNewTETBlocks(const ANeedRefreshBalance: Boolean);
-    procedure NotifyNewSmartBlocks;
+    procedure NotifyNewTokenBlocks(const ANeedRefreshBalance: Boolean);
   end;
 
 implementation
@@ -160,16 +159,6 @@ begin
   FreeAndNil(FStartFormCreated);
 end;
 
-procedure TUICore.DoMessage(const AMessage: String);
-begin
-  TThread.Synchronize(nil,
-  procedure
-  begin
-    ShowMessage(AMessage);
-//    if Assigned(MainFormNew) then MainFormNew.DoLog(AMessage);
-  end);
-end;
-
 procedure TUICore.DoReleaseForm(Form: TCommonCustomForm);
 begin
   TAccessCommonCustomForm(Form).ReleaseForm;
@@ -190,13 +179,13 @@ begin
     end);
 end;
 
-procedure TUICore.NotifyNewSmartBlocks;
+procedure TUICore.NotifyNewTokenBlocks(const ANeedRefreshBalance: Boolean);
 begin
   if Assigned(MainForm) then
     TThread.Synchronize(nil,
     procedure
     begin
-      MainForm.NewSmartBlocksEvent;
+      MainForm.NewTokenBlocksEvent(ANeedRefreshBalance);
     end);
 end;
 

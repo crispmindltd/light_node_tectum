@@ -48,8 +48,9 @@ uses
   App.Constants in 'Core\App.Constants.pas',
   OpenURL in 'UI\OpenURL.pas',
   Sync.TETChain in 'Sync\Sync.TETChain.pas',
-  Sync.Tokens in 'Sync\Sync.Tokens.pas' {$R *.res},
-  Blockchain.Token in 'Blockchain\Blockchain.Token.pas';
+  Blockchain.Token in 'Blockchain\Blockchain.Token.pas',
+  Blockchain.TokenDynamic in 'Blockchain\Blockchain.TokenDynamic.pas',
+  Sync.Tokens in 'Sync\Sync.Tokens.pas';
 
 {$R *.res}
 

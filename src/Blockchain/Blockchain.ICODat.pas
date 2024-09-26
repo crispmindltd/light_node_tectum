@@ -30,8 +30,7 @@ type
     function ReadBlocks(ASkip: Int64;
       ANumber: Integer = MaxBlocksNumber): TArray<TTokenICODat>;
 
-    function TryGetTokenICO(ATokenID: Integer; var ABlock: TTokenICODat): Boolean; overload;
-//    function TryGetTokenICO(ATicker: String; var ICOBlock: TTokenICODat): Boolean; overload;
+//    function TryGetTokenICO(ATicker: String; var ICOBlock: TTokenICODat): Boolean;
   end;
 
 implementation
@@ -194,27 +193,5 @@ end;
 //    FLock.Leave;
 //  end;
 //end;
-
-function TBlockchainICODat.TryGetTokenICO(ATokenID: Integer;
-  var ABlock: TTokenICODat): Boolean;
-var
-  i: Integer;
-begin
-  FLock.Enter;
-  Result := False;
-  FFile := TFileStream.Create(FullPath, fmOpenRead or fmShareDenyNone);
-  try
-    for i := 0 to GetBlocksCount - 1 do
-    begin
-      FFile.Seek(i * GetBlockSize, soBeginning);
-      FFile.ReadData<TTokenICODat>(ABlock);
-      if ABlock.ICOID = ATokenID then
-        exit(True);
-    end;
-  finally
-    FFile.Free;
-    FLock.Leave;
-  end;
-end;
 
 end.

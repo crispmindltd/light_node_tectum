@@ -90,29 +90,23 @@ end;
 
 procedure TTokensChainsBlocksUpdater.ReceiveTokenBlocks(ATokenID: Integer;
   const ABlocksCountNow: Int64);
-//var
-//  incomCountBytes: array[0..3] of Byte;
-//  incomCount: Integer absolute incomCountBytes;
-//  inBytes: TBytesBlocks;
+var
+  IncomCountBytes: array[0..3] of Byte;
+  IncomCount: Integer absolute IncomCountBytes;
+  BytesToReceive: TBytes;
 begin
-//  GetResponse(incomCountBytes,4);
-//  if Terminated then
-//    exit(False);
-//  Result := incomCount > -1;
-//  if incomCount <= 0 then
-//  begin
-//    FNeedDelay := True;
-//    exit;
-//  end;
-//
-//  FNeedDelay := False;
-//  GetResponse(inBytes,incomCount * AppCore.GetSmartBlockSize(ASmartID));
-//  if Terminated then
-//    exit;
-//
-//  Logs.DoLog(Format('<SmartC>[%d]: smartID=%d, blocksReceived=%d',
-//    [SMART_SYNC_COMMAND_CODE,ASmartID,incomCount]),INCOM,TLogFolder.sync);
-//  AppCore.SetSmartBlocks(ASmartID,ABlocksCountNow,inBytes,incomCount);
+  GetResponse(IncomCountBytes);
+  if Terminated or (IncomCount <= 0) then
+    exit;
+
+  FNeedDelay := False;
+  SetLength(BytesToReceive, IncomCount * AppCore.GetTokenBlockSize);
+  GetResponse(BytesToReceive);
+  if Terminated then
+    exit;
+  Logs.DoLog(Format('<SmartC>[%d]: Token ID = %d, Blocks received = %d',
+    [TOKEN_SYNC_COMMAND_CODE,ATokenID,IncomCount]),INCOM,TLogFolder.sync);
+  AppCore.SetTokenBlocks(ATokenID,ABlocksCountNow,BytesToReceive);
 end;
 
 procedure TTokensChainsBlocksUpdater.DoTokenBlocksRequest(ATokenID: Integer);
@@ -149,12 +143,12 @@ begin
     if Terminated then
       exit;
 
-    for i := 0 to AppCore.GetTokenICOBlocksCount - 1 do
+    for i in AppCore.GetTokensToSynchronize do
     begin
       if Terminated then
         exit;
 
-//      DoSmartRequest(smartKey.SmartID);
+      DoTokenBlocksRequest(i);
     end;
   except
     on E:EReceiveTimeout do

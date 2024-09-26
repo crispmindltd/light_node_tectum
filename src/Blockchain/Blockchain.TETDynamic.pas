@@ -203,6 +203,8 @@ procedure TBlockchainTETDynamic.WriteBlock(ASkip: Int64; ABlock: TTokenBase);
 var
   NeedClose: Boolean;
 begin
+  if not FileExists(FFullFilePath) then
+    TFile.WriteAllBytes(FFullFilePath, []);
   NeedClose := DoOpen(fmOpenWrite);
   try
     FFile.Seek(ASkip * GetBlockSize, soBeginning);
@@ -219,6 +221,8 @@ var
   i: Integer;
   NeedClose: Boolean;
 begin
+  if not FileExists(FFullFilePath) then
+    TFile.WriteAllBytes(FFullFilePath, []);
   NeedClose := DoOpen(fmOpenWrite);
   try
     FFile.Seek(ASkip * GetBlockSize, soBeginning);
@@ -238,6 +242,8 @@ begin
   if Length(ABytes) mod GetBlockSize <> 0 then
     exit;
 
+  if not FileExists(FFullFilePath) then
+    TFile.WriteAllBytes(FFullFilePath, []);
   NeedClose := DoOpen(fmOpenWrite);
   try
     FFile.Seek(ASkip * GetBlockSize, soBeginning);

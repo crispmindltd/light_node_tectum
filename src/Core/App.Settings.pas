@@ -16,28 +16,40 @@ const
 type
   TSettingsFile = class
     private
-      FPath: String;
+      FPath: string;
       FIni: TIniFile;
+      FSyncTokens: TStringList;
 
-      function GetFullPath: String;
-      function CheckAddress(const AAddress: String): Boolean;
-      procedure FillNodesList(AAddresses: String);
-      procedure SetHTTPPort(APort: String);
+      function GetFullPath: string;
+      function CheckAddress(const AAddress: string): Boolean;
+      procedure FillNodesList(AAddresses: string);
+      procedure SetHTTPPort(APort: string);
+
+      procedure ReadTokensToSyncFromFile;
+      procedure WriteTokensToSyncToFile;
     public
       constructor Create;
       destructor Destroy; override;
 
       procedure Init;
+      procedure AddTokenToSync(ATokenID: Integer);
+      function GetTokensToSynchronize: TArray<Integer>;
+      procedure RemoveTokenToSync(ATokenID: Integer);
   end;
 
 implementation
 
 { TSettingsFile }
 
-function TSettingsFile.CheckAddress(const AAddress: String): Boolean;
+procedure TSettingsFile.AddTokenToSync(ATokenID: Integer);
+begin
+  FSyncTokens.Add(ATokenID.ToString);
+end;
+
+function TSettingsFile.CheckAddress(const AAddress: string): Boolean;
 var
   i,j: Integer;
-  splt: TArray<String>;
+  splt: TArray<string>;
 begin
   if not(AAddress.Contains('.') and AAddress.Contains(':')) then
     Exit(False);
@@ -61,21 +73,27 @@ begin
     FIni.WriteString('connections','listen_to',DefaultTCPListenTo);
     FIni.WriteString('connections', 'nodes',Format('[%s]',[DefaultNodeAddress]));
     FIni.WriteString('http','port',DefaultPortHTTP.ToString);
+    FIni.WriteString('sync','tokens','[]');
     FIni.UpdateFile;
   end;
+
+  FSyncTokens := TStringList.Create(dupIgnore,True,False);
+  FSyncTokens.Delimiter := ',';
 end;
 
 destructor TSettingsFile.Destroy;
 begin
+  WriteTokensToSyncToFile;
+  FSyncTokens.Free;
   FIni.Free;
 
   inherited;
 end;
 
-procedure TSettingsFile.FillNodesList(AAddresses: String);
+procedure TSettingsFile.FillNodesList(AAddresses: string);
 var
   i: Integer;
-  splt: TArray<String>;
+  splt: TArray<string>;
 begin
   splt := AAddresses.Trim(['[',']']).Split([',']);
   if Length(splt) = 0 then exit;
@@ -87,45 +105,70 @@ begin
       raise Exception.Create(Format('Address "%s" is invalid',[splt[i]]));
 end;
 
-function TSettingsFile.GetFullPath: String;
+function TSettingsFile.GetFullPath: string;
 begin
   Result := TPath.Combine(FPath, ConstStr.SettingsFileName);
 end;
 
+function TSettingsFile.GetTokensToSynchronize: TArray<Integer>;
+var
+  i: Integer;
+begin
+  SetLength(Result, FSyncTokens.Count);
+  for i := 0 to FSyncTokens.Count - 1 do
+    Result[i] := FSyncTokens.Strings[i].ToInteger;
+end;
+
+procedure TSettingsFile.ReadTokensToSyncFromFile;
+var
+  SplittedString: TArray<string>;
+  i,Value: Integer;
+begin
+  FSyncTokens.Clear;
+  SplittedString := FIni.ReadString('sync','tokens','[]').Trim(['[',']']).Split([',']);
+  for i := 0 to Length(SplittedString) - 1 do
+    if TryStrToInt(SplittedString[i],Value) then
+      FSyncTokens.Add(SplittedString[i]);
+end;
+
+procedure TSettingsFile.RemoveTokenToSync(ATokenID: Integer);
+var
+  Index: Integer;
+begin
+  Index := FSyncTokens.IndexOf(ATokenID.ToString);
+  if Index > -1 then
+    FSyncTokens.Delete(Index);
+end;
+
 procedure TSettingsFile.Init;
 var
-  str: String;
-  AddrSL: TStringList;
+  str: string;
 begin
   if not FileExists(GetFullPath) then
     raise Exception.Create('Settings file not found. Please, restart the application');
 
-  AddrSL := TStringList.Create(dupIgnore,True,False);
-  try
-    str := FIni.ReadString('connections','listen_to','');
-    if str.IsEmpty then
-      raise Exception.Create('incorrect settings file');
-    if CheckAddress(str) then
-      ListenTo := str
-    else
-      raise Exception.Create(Format('address "%s" is invalid',[str]));
+  str := FIni.ReadString('connections','listen_to','');
+  if str.IsEmpty then
+    raise Exception.Create('incorrect settings file');
+  if CheckAddress(str) then
+    ListenTo := str
+  else
+    raise Exception.Create(Format('address "%s" is invalid',[str]));
 
-    str := FIni.ReadString('connections','nodes','');
-    FillNodesList(str);
-    if Nodes.IsEmpty then
-      raise Exception.Create('nodes addresses are not specified');
+  str := FIni.ReadString('connections','nodes','');
+  FillNodesList(str);
+  if Nodes.IsEmpty then
+    raise Exception.Create('nodes addresses are not specified');
 
-    str := FIni.ReadString('http','port','');
-    if str.IsEmpty then
-      raise Exception.Create('incorrect settings file');
-    SetHTTPPort(str);
-  finally
-    AddrSL.Clear;
-    AddrSL.Free;
-  end;
+  str := FIni.ReadString('http','port','');
+  if str.IsEmpty then
+    raise Exception.Create('incorrect settings file');
+  SetHTTPPort(str);
+
+  ReadTokensToSyncFromFile;
 end;
 
-procedure TSettingsFile.SetHTTPPort(APort: String);
+procedure TSettingsFile.SetHTTPPort(APort: string);
 var
   n: Integer;
 begin
@@ -133,6 +176,15 @@ begin
       raise Exception.Create(Format('HTTP port "%s" is invalid',[APort]));
 
   HTTPPort := n;
+end;
+
+procedure TSettingsFile.WriteTokensToSyncToFile;
+var
+  str: string;
+begin
+  str := FSyncTokens.DelimitedText;
+  FIni.WriteString('sync','tokens',Format('[%s]',[str]));
+  FIni.UpdateFile;
 end;
 
 end.

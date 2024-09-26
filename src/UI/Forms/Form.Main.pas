@@ -343,7 +343,7 @@ type
     procedure onExplorerFrameClick(Sender: TObject);
   public
     procedure NewTETBlocksEvent(ANeedRefreshBalance: Boolean);
-    procedure NewSmartBlocksEvent;
+    procedure NewTokenBlocksEvent(ANeedRefreshBalance: Boolean);
     procedure onKeysSaved;
     procedure onKeysSavingError;
   end;
@@ -957,11 +957,14 @@ begin
   end;
 end;
 
-procedure TMainForm.NewSmartBlocksEvent;
+procedure TMainForm.NewTokenBlocksEvent(ANeedRefreshBalance: Boolean);
 begin
-  RefreshTokensBalances;
-  RefreshTokenHistory;
   RefreshExplorer;
+  if ANeedRefreshBalance then
+  begin
+    RefreshTokensBalances;
+    RefreshTokenHistory;
+  end;
 end;
 
 procedure TMainForm.onExplorerFrameClick(Sender: TObject);

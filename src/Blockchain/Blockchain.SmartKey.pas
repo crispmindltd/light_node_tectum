@@ -74,11 +74,14 @@ function TBlockchainSmartKey.ReadBlocks(ASkip: Int64;
 var
   i: Integer;
 begin
+  Result := [];
   FLock.Enter;
   FFile := TFileStream.Create(FullPath, fmOpenRead or fmShareDenyNone);
   try
+    if ASkip * GetBlockSize > FFile.Size - GetBlockSize then
+      exit;
     FFile.Seek(ASkip * GetBlockSize, soBeginning);
-    SetLength(Result, Min(ANumber, FFile.Size - FFile.Position));
+    SetLength(Result, Min(ANumber, (FFile.Size - FFile.Position) div GetBlockSize));
     for i := 0 to Length(Result) - 1 do
       FFile.ReadData<TCSmartKey>(Result[i]);
   finally
@@ -90,9 +93,12 @@ end;
 function TBlockchainSmartKey.ReadBlocksAsBytes(ASkip: Int64;
   ANumber: Integer): TBytes;
 begin
+  Result := [];
   FLock.Enter;
   FFile := TFileStream.Create(FullPath, fmOpenRead or fmShareDenyNone);
   try
+    if ASkip * GetBlockSize > FFile.Size - GetBlockSize then
+      exit;
     FFile.Seek(ASkip * GetBlockSize, soBeginning);
     SetLength(Result, Min(ANumber * GetBlockSize, FFile.Size - FFile.Position));
     FFile.Read(Result, Length(Result));

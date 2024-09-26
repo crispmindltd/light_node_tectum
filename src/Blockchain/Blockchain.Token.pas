@@ -50,12 +50,17 @@ end;
 function TBlockchainToken.GetBlocksCount: Int64;
 begin
   FLock.Enter;
-  FFile := TFileStream.Create(FullPath, fmOpenRead or fmShareDenyNone);
   try
-    Result := FFile.Size div GetBlockSize;
-  finally
-    FFile.Free;
-    FLock.Leave;
+    FFile := TFileStream.Create(FullPath, fmOpenRead or fmShareDenyNone);
+    try
+      Result := FFile.Size div GetBlockSize;
+    finally
+      FFile.Free;
+      FLock.Leave;
+    end;
+  except
+    on EFOpenError do
+      Result := 0;
   end;
 end;
 

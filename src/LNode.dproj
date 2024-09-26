@@ -347,10 +347,9 @@
         <DCCReference Include="Core\App.Constants.pas"/>
         <DCCReference Include="UI\OpenURL.pas"/>
         <DCCReference Include="Sync\Sync.TETChain.pas"/>
-        <DCCReference Include="Sync\Sync.Tokens.pas">
-            <Form>$R *.res</Form>
-        </DCCReference>
         <DCCReference Include="Blockchain\Blockchain.Token.pas"/>
+        <DCCReference Include="Blockchain\Blockchain.TokenDynamic.pas"/>
+        <DCCReference Include="Sync\Sync.Tokens.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
