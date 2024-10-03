@@ -2613,15 +2613,84 @@ object MainForm: TMainForm
             Align = Client
             Padding.Top = -7.000000000000000000
             Margins.Top = 10.000000000000000000
-            Margins.Bottom = 20.000000000000000000
+            Margins.Bottom = 10.000000000000000000
             Size.Width = 1094.000000000000000000
-            Size.Height = 711.000000000000000000
+            Size.Height = 676.000000000000000000
             Size.PlatformDefault = False
             TabOrder = 10
             OnPaint = ExplorerVertScrollBoxPaint
             OnResized = ExplorerVertScrollBoxResized
             Viewport.Width = 1094.000000000000000000
-            Viewport.Height = 711.000000000000000000
+            Viewport.Height = 676.000000000000000000
+          end
+          object PaginationBottomLayout: TLayout
+            Align = Bottom
+            Margins.Bottom = 20.000000000000000000
+            Position.Y = 799.000000000000000000
+            Size.Width = 1094.000000000000000000
+            Size.Height = 25.000000000000000000
+            Size.PlatformDefault = False
+            TabOrder = 11
+            object PagesPanelLayout: TLayout
+              Align = HorzCenter
+              Position.X = 525.000000000000000000
+              Size.Width = 44.000000000000000000
+              Size.Height = 25.000000000000000000
+              Size.PlatformDefault = False
+              TabOrder = 0
+              object NextPageLayout: TLayout
+                Align = MostRight
+                Cursor = crHandPoint
+                HitTest = True
+                Position.X = 22.000000000000000000
+                Size.Width = 22.000000000000000000
+                Size.Height = 25.000000000000000000
+                Size.PlatformDefault = False
+                TabOrder = 1
+                OnMouseDown = NextPageLayoutMouseDown
+                object NextPagePath: TPath
+                  Align = Center
+                  Data.Path = {
+                    03000000000000002540953F65AA2A410100000051A5BA4058FFBF4001000000
+                    2540953FF0A7AA3F}
+                  Enabled = False
+                  Fill.Kind = None
+                  HitTest = False
+                  Size.Width = 8.000000000000000000
+                  Size.Height = 16.000000000000000000
+                  Size.PlatformDefault = False
+                  Stroke.Color = xFF5A6773
+                  Stroke.Thickness = 2.500000000000000000
+                  Stroke.Cap = Round
+                end
+              end
+              object PrevPageLayout: TLayout
+                Align = MostLeft
+                Cursor = crHandPoint
+                HitTest = True
+                Size.Width = 22.000000000000000000
+                Size.Height = 25.000000000000000000
+                Size.PlatformDefault = False
+                TabOrder = 0
+                OnMouseDown = PrevPageLayoutMouseDown
+                object PrevPagePath: TPath
+                  Align = Center
+                  Data.Path = {
+                    03000000000000002540953F65AA2A410100000051A5BA4058FFBF4001000000
+                    2540953FF0A7AA3F}
+                  Enabled = False
+                  Fill.Kind = None
+                  HitTest = False
+                  RotationAngle = 180.000000000000000000
+                  Size.Width = 8.000000000000000000
+                  Size.Height = 16.000000000000000000
+                  Size.PlatformDefault = False
+                  Stroke.Color = xFF5A6773
+                  Stroke.Thickness = 2.500000000000000000
+                  Stroke.Cap = Round
+                end
+              end
+            end
           end
         end
         object ExplorerTransactionDataTabItem: TTabItem

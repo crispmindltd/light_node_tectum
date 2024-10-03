@@ -10,6 +10,7 @@ uses
   Blockchain.Intf,
   Frame.Explorer,
   Frame.History,
+  Frame.PageNum,
   Frame.Ticker,
   Generics.Collections,
   Math,
@@ -262,6 +263,12 @@ type
     TokenFeeDetailsLabel: TLabel;
     TokenFeeDetailsText: TText;
     InputPrKeyButton: TButton;
+    PaginationBottomLayout: TLayout;
+    NextPagePath: TPath;
+    PagesPanelLayout: TLayout;
+    NextPageLayout: TLayout;
+    PrevPageLayout: TLayout;
+    PrevPagePath: TPath;
     procedure MainRectangleMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single);
     procedure TokenItemClick(Sender: TObject);
@@ -315,11 +322,16 @@ type
     procedure TokenCopyLoginLayoutClick(Sender: TObject);
     procedure TokenCopyAddressLayoutClick(Sender: TObject);
     procedure InputPrKeyButtonClick(Sender: TObject);
+    procedure PrevPageLayoutMouseDown(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Single);
+    procedure NextPageLayoutMouseDown(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Single);
   private
     FBalances: TDictionary<String,Extended>;
     chosenToken,chosenTicker: String;
+    totalPagesAmount,pageNum: Integer;
 
-    function DecimalsCount(const AValue:string):Integer;
+    function DecimalsCount(const AValue: string): Integer;
     procedure RefreshTETBalance;
     procedure RefreshTETHistory;
     procedure AlignTETHeaders;
@@ -327,12 +339,15 @@ type
     procedure RefreshTokensBalances;
     procedure RefreshTokenHistory;
     procedure AlignTokensHeaders;
+    procedure RefreshPagesLayout;
+    procedure OnPageSelected;
     procedure RefreshExplorer;
     procedure AlignExplorerHeaders;
     procedure CleanScrollBox(AVertScrollBox: TVertScrollBox);
 
     procedure AddTokenItem(AName: String; AValue: Extended);
     procedure AddTicker(AName: String);
+    procedure AddPageNum(APageNum: Integer; ATheLastOne: Boolean = False);
     procedure ShowTETTransferStatus(const AMessage: String; AIsError: Boolean = False);
     procedure ShowTokenTransferStatus(const AMessage: String; AIsError: Boolean = False);
     procedure ShowTokenCreatingStatus(const AMessage: String; AIsError: Boolean = False);
@@ -341,6 +356,8 @@ type
     procedure onTETHistoryFrameClick(Sender: TObject);
     procedure onTokenHistoryFrameClick(Sender: TObject);
     procedure onExplorerFrameClick(Sender: TObject);
+    procedure onPageNumFrameClick(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Single);
   public
     procedure NewChainBlocksEvent;
     procedure NewSmartBlocksEvent;
@@ -374,6 +391,20 @@ begin
   for i := 0 to TokensListBox.Count-1 do
     TokensListBox.ListItems[i].OnApplyStyleLookup(TokensListBox.ListItems[i]);
   MainRectangle.Visible := True;
+end;
+
+procedure TMainForm.AddPageNum(APageNum: Integer; ATheLastOne: Boolean);
+var
+  pageNumFrame: TPageNumFrame;
+begin
+  pageNumFrame := TPageNumFrame.Create(PagesPanelLayout,APageNum,APageNum = pageNum,
+    ATheLastOne);
+  pageNumFrame.Parent := PagesPanelLayout;
+
+  pageNumFrame.Position.X := NextPageLayout.Position.X - 5;
+  PagesPanelLayout.Width := PagesPanelLayout.Width + PageNumFrame.Width;
+  if APageNum > 0 then
+    pageNumFrame.OnMouseDown := onPageNumFrameClick;
 end;
 
 procedure TMainForm.AddTicker(AName: String);
@@ -801,6 +832,11 @@ begin
   CopyToLayout.OnMouseDown := StylesForm.OnCopyLayoutMouseDown;
   CopyToLayout.OnMouseUp := StylesForm.OnCopyLayoutMouseUp;
 
+  PrevPageLayout.OnMouseEnter := StylesForm.OnCopyLayoutMouseEnter;
+  PrevPageLayout.OnMouseLeave := StylesForm.OnCopyLayoutMouseLeave;
+  NextPageLayout.OnMouseEnter := StylesForm.OnCopyLayoutMouseEnter;
+  NextPageLayout.OnMouseLeave := StylesForm.OnCopyLayoutMouseLeave;
+
   chosenToken := '';
   chosenTicker := '';
   AddTicker('Tectum');
@@ -948,6 +984,29 @@ procedure TMainForm.NewChainBlocksEvent;
 begin
   RefreshTETBalance;
   RefreshTETHistory;
+  RefreshPagesLayout;
+  RefreshExplorer;
+end;
+
+procedure TMainForm.OnPageSelected;
+var
+  frame: TPageNumFrame;
+  i: Integer;
+begin
+  for i := 0 to PagesPanelLayout.ComponentCount-1 do
+  begin
+    if (PagesPanelLayout.Components[i] is TPageNumFrame) then
+    begin
+      frame := PagesPanelLayout.Components[i] as TPageNumFrame;
+      if ((PagesPanelLayout.Components[i] as TPageNumFrame).Tag = pageNum) then
+        frame.PageNumText.TextSettings.FontColor := $FF4285F4
+      else
+        frame.PageNumText.TextSettings.FontColor := MOUSE_LEAVE_COLOR;
+    end;
+  end;
+
+  PrevPageLayout.Enabled := pageNum > 1;
+  NextPageLayout.Enabled := pageNum < totalPagesAmount;
   RefreshExplorer;
 end;
 
@@ -955,7 +1014,15 @@ procedure TMainForm.NewSmartBlocksEvent;
 begin
   RefreshTokensBalances;
   RefreshTokenHistory;
+  RefreshPagesLayout;
   RefreshExplorer;
+end;
+
+procedure TMainForm.NextPageLayoutMouseDown(Sender: TObject;
+  Button: TMouseButton; Shift: TShiftState; X, Y: Single);
+begin
+  Inc(pageNum);
+  RefreshPagesLayout;
 end;
 
 procedure TMainForm.onExplorerFrameClick(Sender: TObject);
@@ -1018,6 +1085,13 @@ end;
 procedure TMainForm.onKeysSavingError;
 begin
   ShowTokenTransferStatus('Error saving keys: invalid private key',True);
+end;
+
+procedure TMainForm.onPageNumFrameClick(Sender: TObject; Button: TMouseButton;
+  Shift: TShiftState; X, Y: Single);
+begin
+  pageNum := (Sender as TPageNumFrame).Tag;
+  RefreshPagesLayout;
 end;
 
 procedure TMainForm.onTETHistoryFrameClick(Sender: TObject);
@@ -1116,6 +1190,13 @@ begin
   TokenTabControl.Next;
 end;
 
+procedure TMainForm.PrevPageLayoutMouseDown(Sender: TObject;
+  Button: TMouseButton; Shift: TShiftState; X, Y: Single);
+begin
+  Dec(pageNum);
+  RefreshPagesLayout;
+end;
+
 procedure TMainForm.RecepientAddressEditChangeTracking(Sender: TObject);
 begin
   if Length(RecepientAddressEdit.Text) = 42 then
@@ -1128,21 +1209,20 @@ procedure TMainForm.RefreshExplorer;
 var
   transArray: TArray<TExplorerTransactionInfo>;
   newTransFrame: TExplorerTransactionFrame;
-  amount: Integer;
-  i: Integer;
+  i,amount,pagesAmount: Integer;
   format: string;
   tICO: TTokenICODat;
 begin
   if chosenTicker.IsEmpty then exit;
 
-  amount := 20;
+  amount := 18;
   if chosenTicker = 'Tectum' then
   begin
-    transArray := AppCore.GetChainLastTransactions(amount);
+    transArray := AppCore.GetChainTransations((pageNum-1)*amount,amount);
     if not AppCore.TryGetTokenICO('TET',tICO) then exit;
   end else
   begin
-    transArray := AppCore.GetSmartLastTransactions(chosenTicker,amount);
+    transArray := AppCore.GetSmartTransactions(chosenTicker,(pageNum-1)*amount,amount);
     if not AppCore.TryGetTokenICO(chosenTicker,tICO) then exit;
   end;
 
@@ -1177,6 +1257,64 @@ begin
       Format('%s %s',[FormatFloat('0.########',value), AName]);
 
   AddressTokenLabel.Text := AppCore.GetSmartAddressByTicker(AName);
+end;
+
+procedure TMainForm.RefreshPagesLayout;
+var
+  frame: TPageNumFrame;
+  i,j,amount,blocksCount: Integer;
+  tBase: TCSmartKey;
+begin
+  amount := 18;
+  if chosenTicker = 'Tectum' then
+  begin
+    blocksCount := AppCore.GetChainBlocksCount;
+    TotalPagesAmount := blocksCount div amount;
+    if blocksCount mod amount > 0 then
+      Inc(TotalPagesAmount);
+  end else
+  begin
+    if not AppCore.TryGetTokenBase(chosenTicker,tBase) then
+      exit;
+    blocksCount := AppCore.GetSmartBlocksCount(tBase.SmartID);
+    TotalPagesAmount := blocksCount div amount;
+    if blocksCount mod amount > 0 then
+      Inc(TotalPagesAmount);
+  end;
+
+  PagesPanelLayout.BeginUpdate;
+  try
+    PagesPanelLayout.DestroyComponents;
+    PagesPanelLayout.Width := 44;
+    PaginationBottomLayout.Visible := TotalPagesAmount > 1;
+    if not PaginationBottomLayout.Visible then
+      exit;
+
+    AddPageNum(1);
+    j := Max(2,pageNum-2);
+    for i := pageNum downto j do
+    begin
+      if (i = 1) or (i = TotalPagesAmount) then
+        continue;
+      AddPageNum(i);
+    end;
+    if pageNum > 3 then
+      AddPageNum(-1);
+    j := Min(TotalPagesAmount-1,pageNum+2);
+    for i := pageNum+1 to j do
+    begin
+      if (i = 1) or (i = TotalPagesAmount) then
+        continue;
+      AddPageNum(i);
+    end;
+    if pageNum < TotalPagesAmount-3 then
+      AddPageNum(-2);
+    AddPageNum(TotalPagesAmount);
+    OnPageSelected;
+  finally
+    PagesPanelLayout.EndUpdate;
+    RefreshExplorer;
+  end;
 end;
 
 procedure TMainForm.RefreshTETBalance;
@@ -1328,7 +1466,7 @@ begin
   parent.Selected := True;
   chosenTicker := parent.Ticker;
 
-  for i := 0 to TopExplorerHorzLayout.ComponentCount-1 do
+  for i := 0 to TopExplorerHorzLayout.ComponentCount - 1 do
     if (TopExplorerHorzLayout.Components[i] is TTickerFrame) and
        ((TopExplorerHorzLayout.Components[i] as TTickerFrame).Ticker <> chosenTicker) and
        (TopExplorerHorzLayout.Components[i] as TTickerFrame).Selected then
@@ -1340,7 +1478,8 @@ begin
         break;
       end;
 
-  RefreshExplorer;
+  pageNum := 1;
+  RefreshPagesLayout;
 end;
 
 procedure TMainForm.AddOrRefreshBalance(AName: String; AValue: Extended);
