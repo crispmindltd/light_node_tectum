@@ -45,7 +45,9 @@ type
       function TryGetTETTokenBase(const ATETAddress: String; out AID: Integer;
         var tb:TTokenBase): Boolean; overload;
       function TryGetCTokenBase(ATokenID: Integer; const AOwnerID: Integer;
-        out AID: Integer; var tb:TCTokensBase): Boolean;
+        out AID: Integer; var tb:TCTokensBase): Boolean; overload;
+      function TryGetCTokenBase(ATokenID: Integer; const ATETAddress: String;
+        out AID: Integer; var tb:TCTokensBase): Boolean; overload;
       function TryGetOneICOBlock(AFrom: Int64; var ICOBlock: TTokenICODat): Boolean; overload;
       function TryGetOneICOBlock(ATicker: String; var ICOBlock: TTokenICODat): Boolean; overload;
       function TryGetSmartKey(ATicker: String; var sk: TCSmartKey): Boolean;
@@ -91,6 +93,7 @@ type
         var Amount: Integer): TArray<TExplorerTransactionInfo>;
       function GetSmartAddress(ATicker: String): String; overload;
       function GetSmartAddress(AID: Integer): String; overload;
+      function TryGetSmartID(ATickerOrAddr: String; out ASmartID: Integer): Boolean;
       function GetLastSmartUserTransactions(AUserID: Integer; ATicker: String;
         var AAmount: Integer): TArray<THistoryTransactionInfo>;
 
@@ -842,6 +845,23 @@ begin
     Result := FSmartKey.GetBlockSize;
 end;
 
+function TBlockchain.TryGetSmartID(ATickerOrAddr: String; out ASmartID: Integer): Boolean;
+var
+  TCSmartBlock: TCSmartKey;
+  i: Integer;
+begin
+  Result := False;
+  for i := 0 to FSmartKey.GetBlocksCount-1 do
+  begin
+    TCSmartBlock := GetOneSmartKeyBlock(i);
+    if (TCSmartBlock.key1 = ATickerOrAddr) or (TCSmartBlock.Abreviature = ATickerOrAddr) then
+    begin
+      ASmartID := TCSmartBlock.SmartID;
+      Exit(True);
+    end;
+  end;
+end;
+
 procedure TBlockchain.SetChainBlocks(APos: Int64; ABytes: TBytesBlocks; AAmount: Integer);
 var
   i,bAmount: Integer;
@@ -1034,6 +1054,18 @@ begin
     exit;
 
   Result := TBlockchainTokenDynamic(ChainFileWorker).TryGetTokenBase(AOwnerID,AID,tb);
+end;
+
+function TBlockchain.TryGetCTokenBase(ATokenID: Integer; const ATETAddress: String;
+  out AID: Integer; var tb:TCTokensBase): Boolean;
+var
+  ChainFileWorker: TChainFileWorker;
+begin
+  Result := False;
+  if not FDynamicBlocks.TryGetValue(DynamicNameByID(ATokenID),ChainFileWorker) then
+    exit;
+
+  Result := TBlockchainTokenDynamic(ChainFileWorker).TryGetTokenBase(ATETAddress,AID,tb);
 end;
 
 function TBlockchain.TryGetOneICOBlock(ATicker: String;

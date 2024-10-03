@@ -25,7 +25,9 @@ type
     procedure WriteOneBlock(APos: Int64; ABytes: TOneBlockBytes); override;
 
     function TryGetTokenBase(AOwnerID: Int64; out AID: Integer;
-      out tcb: TCTokensBase): Boolean;
+      out tcb: TCTokensBase): Boolean; overload;
+    function TryGetTokenBase(ATETAddress: String; out AID: Integer;
+      out tcb: TCTokensBase): Boolean; overload;
   end;
 
 implementation
@@ -101,6 +103,32 @@ begin
     begin
       Read(FFile,tcb);
       Move(tcb, Result[i * SizeOf(TCTokensBase)], SizeOf(tcb));
+    end;
+  finally
+    CloseFile(FFile);
+    FLock.Leave;
+  end;
+end;
+
+function TBlockchainTokenDynamic.TryGetTokenBase(ATETAddress: String;
+  out AID: Integer; out tcb: TCTokensBase): Boolean;
+var
+  i: Integer;
+begin
+  FLock.Enter;
+  Result := False;
+  AssignFile(FFile, FFullFilePath);
+  Reset(FFile);
+  try
+    for i := 0 to FileSize(FFile)-1 do
+    begin
+      Seek(FFile,i);
+      Read(FFile,tcb);
+      if tcb.Token = ATETAddress then
+      begin
+        AID := i;
+        Exit(True);
+      end;
     end;
   finally
     CloseFile(FFile);

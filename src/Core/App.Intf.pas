@@ -110,12 +110,12 @@ type
       AAmount: Extended; APrKey,APubKey: String): String;
     function SendToConfirm(AReqID,AToSend: String): String;
     function GetLocalTokensBalances: TArray<String>;
-    function GetLocalTokenBalance(ATokenID: Integer; AOwnerID: Int64): Extended;
-    function DoGetTokenBalanceWithSmartAddress(AReqID,AAddressTET,ASmartAddress: String): String;
-    function DoGetTokenBalanceWithTicker(AReqID,AAddressTET,ATicker: String): String;
+    function GetLocalTokenBalance(ATokenID: Integer; AOwnerID: Int64): Extended; overload;
+    function GetLocalTokenBalance(ATickerOrAddress: String; ATETAddress: String): Extended; overload;
 
     function GetSmartAddressByID(AID: Int64): String;
     function GetSmartAddressByTicker(ATicker: String): String;
+    function TryGetSmartIDByAddress(AAddress: String; out ASmartID: Integer): Boolean;
     function GetPubKeyByID(AReqID: String; AID: Int64): String;
     function GetPubKeyBySessionKey(AReqID,ASessionKey: String): String;
     function TrySaveKeysToFile(APrivateKey: String): Boolean;

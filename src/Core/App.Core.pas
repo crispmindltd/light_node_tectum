@@ -48,6 +48,8 @@ type
     function Remove0x(AAddress: String): String;
     function SignTransaction(const AToSign: String; const APrivateKey: String): String;
     function IsURKError(const ATest:string):Boolean;
+    function DoGetTokenBalanceWithSmartAddress(AReqID, AAddressTET,
+      ASmartAddress: String): String;
   public
     constructor Create;
     destructor Destroy; override;
@@ -134,12 +136,12 @@ type
       AAmount: Extended; APrKey,APubKey: String): String;
     function SendToConfirm(AReqID,AToSend: String): String;
     function GetLocalTokensBalances: TArray<String>;
-    function GetLocalTokenBalance(ATokenID: Integer; AOwnerID: Int64): Extended;
-    function DoGetTokenBalanceWithSmartAddress(AReqID,AAddressTET,ASmartAddress: String): String;
-    function DoGetTokenBalanceWithTicker(AReqID,AAddressTET,ATicker: String): String;
+    function GetLocalTokenBalance(ATokenID: Integer; AOwnerID: Int64): Extended; overload;
+    function GetLocalTokenBalance(ATickerOrAddress: String; ATETAddress: String): Extended; overload;
 
     function GetSmartAddressByID(AID: Int64): String;
     function GetSmartAddressByTicker(ATicker: String): String;
+    function TryGetSmartIDByAddress(AAddress: String; out ASmartID: Integer): Boolean;
     function GetPubKeyByID(AReqID: String; AID: Int64): String;
     function GetPubKeyBySessionKey(AReqID,ASessionKey: String): String;
     function TrySaveKeysToFile(APrivateKey: String): Boolean;
@@ -307,6 +309,29 @@ begin
     raise ENoInfoForThisAccountError.Create('');
 end;
 
+function TAppCore.GetLocalTokenBalance(ATickerOrAddress,
+  ATETAddress: String): Extended;
+var
+  bc4: TCbc4;
+  tICO: TTokenICODat;
+  tcb: TCTokensBase;
+  TokenID,ID: Integer;
+begin
+  if not FBlockchain.TryGetSmartID(ATickerOrAddress,TokenID) then
+    raise ESmartNotExistsError.Create('');
+  if not FBlockchain.TryGetCTokenBase(TokenID,ATETAddress,ID,tcb) then
+    Exit(0);
+
+  bc4 := FBlockchain.GetOneSmartBlock(TokenID,tcb.LastBlock);
+  if not FBlockchain.TryGetOneICOBlock(TokenID,tICO) then exit;
+  if ID = bc4.Smart.tkn[1].TokenID then
+		Result := bc4.Smart.tkn[1].Amount / Power(10,tICO.FloatSize)
+	else if ID = bc4.Smart.tkn[2].TokenID then
+		Result := bc4.Smart.tkn[2].Amount / Power(10,tICO.FloatSize)
+	else
+    raise ENoInfoForThisAccountError.Create('');
+end;
+
 function TAppCore.GetLocalTokensBalances: TArray<String>;
 var
   sk: TCSmartKey;
@@ -358,19 +383,6 @@ begin
       else raise EUnknownError.Create(splt[3]);
     end;
   end;
-end;
-
-function TAppCore.DoGetTokenBalanceWithTicker(AReqID,AAddressTET,
-  ATicker: String): String;
-var
-  smartAddr: String;
-begin
-  if (Length(ATicker) = 0) or not CheckTickerName(Trim(ATicker).ToUpper) then
-    raise EValidError.Create('invalid ticker');
-  AAddressTET := Remove0x(AAddressTET);
-
-  smartAddr := GetSmartAddressByTicker(ATicker.ToUpper);
-  Result := DoGetTokenBalanceWithSmartAddress(AReqID,AAddressTET,smartAddr);
 end;
 
 function TAppCore.DoNewToken(AReqID, ASessionKey, AFullName, AShortName, ATicker: String;
@@ -772,6 +784,11 @@ end;
 function TAppCore.GetSmartBlockSize(ASmartID: Integer): Integer;
 begin
   Result := FBlockchain.GetSmartBlockSize(ASmartID);
+end;
+
+function TAppCore.TryGetSmartIDByAddress(AAddress: String; out ASmartID: Integer): Boolean;
+begin
+  Result := FBlockchain.TryGetSmartID(AAddress,ASmartID);
 end;
 
 function TAppCore.GetSmartLastTransactions(ATicker: String;
