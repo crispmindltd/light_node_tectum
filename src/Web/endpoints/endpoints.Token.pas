@@ -355,9 +355,8 @@ function TTokenEndpoints.GetTokenBalanceWithAddress(AReqID: string;
   : TEndpointResponse;
 var
   JSON: TJSONObject;
-  Response: string;
   Params: TStringList;
-  SplittedResponse: TArray<string>;
+  balance: Extended;
 begin
   Result.ReqID := AReqID;
   Params := TStringList.Create(dupIgnore, True, False);
@@ -366,18 +365,15 @@ begin
       raise ENotSupportedError.Create('');
 
     Params.AddStrings(AParams);
-    if Params.Values['address_tet'].IsEmpty or Params.Values['smart_address'].IsEmpty
-    then
+    if Params.Values['address_tet'].IsEmpty or
+      Params.Values['smart_address'].IsEmpty then
       raise EValidError.Create('request parameters error');
 
-    Response := AppCore.DoGetTokenBalanceWithSmartAddress(AReqID,
-      params.Values['address_tet'], params.Values['smart_address']);
-    SplittedResponse := Response.Split([' ']);
+    balance := AppCore.GetLocalTokenBalance(Params.Values['smart_address'],
+                                            Params.Values['address_tet']);
     JSON := TJSONObject.Create;
     try
-      const BalanceStr = SplittedResponse[2];
-      const BalanceFloat = StrToExtended(BalanceStr);
-      JSON.AddPair('balance', FormatFloat('0.########', BalanceFloat));
+      JSON.AddPair('balance', FormatFloat('0.########', balance));
       Result.Code := HTTP_SUCCESS;
       Result.Response := JSON.ToString;
     finally
@@ -395,38 +391,25 @@ function TTokenEndpoints.GetTokenBalanceWithTicker(AReqID: string;
   : TEndpointResponse;
 var
   JSON: TJSONObject;
-  Response: string;
+  balance: Extended;
   Params: TStringList;
 begin
   Result.ReqID := AReqID;
   Params := TStringList.Create(dupIgnore, True, False);
   try
-    if (AComType <> hcGET) and (AComType <> hcPOST) then
+    if AComType <> hcGET then
       raise ENotSupportedError.Create('');
 
-    if AComType = hcGET then
-      Params.AddStrings(AParams)
-    else
-    begin
-      JSON := TJSONObject.ParseJSONValue(ABody, False, True) as TJSONObject;
-      try
-        Params.AddStrings(GetBodyParamsFromJSON(JSON));
-      finally
-        JSON.Free;
-      end;
-    end;
-
+    Params.AddStrings(AParams);
     if Params.Values['address_tet'].IsEmpty or
        Params.Values['ticker'].IsEmpty then
       raise EValidError.Create('request parameters error');
 
-    Response := AppCore.DoGetTokenBalanceWithTicker(AReqID,
-      Params.Values['address_tet'], Params.Values['ticker']);
+    balance := AppCore.GetLocalTokenBalance(Params.Values['ticker'].ToUpper,
+                                            Params.Values['address_tet']);
     JSON := TJSONObject.Create;
     try
-      const BalanceStr = Response.Split([' '])[2];
-      const BalanceFloat = StrToExtended(BalanceStr);
-      JSON.AddPair('balance', FormatFloat('0.########', BalanceFloat));
+      JSON.AddPair('balance', FormatFloat('0.########', balance));
       Result.Code := HTTP_SUCCESS;
       Result.Response := JSON.ToString;
     finally
@@ -706,7 +689,7 @@ begin
     else if not TryStrToInt(Params.Values['skip'], Skip) then
       raise EValidError.Create('request parameters error');
 
-    TETTransfersInfo := AppCore.GetSmartTransactions(Params.Values['ticker'],
+    TETTransfersInfo := AppCore.GetSmartTransactions(Params.Values['ticker'].ToUpper,
       Skip, Rows);
     JSON := TJSONObject.Create;
     try
