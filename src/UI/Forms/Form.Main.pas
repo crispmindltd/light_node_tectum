@@ -1262,6 +1262,8 @@ begin
 end;
 
 procedure TMainForm.RefreshPagesLayout;
+const
+  MaxNumberOfPages = 2;
 var
   frame: TPageNumFrame;
   i,j,amount,blocksCount: Integer;
@@ -1294,23 +1296,23 @@ begin
       exit;
 
     AddPageNum(1);
-    if pageNum > 4 then
+    if pageNum > MaxNumberOfPages + 2 then
       AddPageNum(-1);
-    j := Max(2,pageNum-2);
+    j := Max(2,pageNum-MaxNumberOfPages);
     for i := j to pageNum do
     begin
       if (i = 1) or (i = TotalPagesAmount) then
         continue;
       AddPageNum(i);
     end;
-    j := Min(TotalPagesAmount-1,pageNum+2);
+    j := Min(TotalPagesAmount-1,pageNum+MaxNumberOfPages);
     for i := pageNum+1 to j do
     begin
       if (i = 1) or (i = TotalPagesAmount) then
         continue;
       AddPageNum(i);
     end;
-    if pageNum < TotalPagesAmount-3 then
+    if pageNum < TotalPagesAmount-MaxNumberOfPages-1 then
       AddPageNum(-1);
     AddPageNum(TotalPagesAmount);
     OnPageSelected;
