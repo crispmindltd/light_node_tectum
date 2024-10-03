@@ -2656,8 +2656,8 @@ object MainForm: TMainForm
                   Enabled = False
                   Fill.Kind = None
                   HitTest = False
-                  Size.Width = 8.000000000000000000
-                  Size.Height = 16.000000000000000000
+                  Size.Width = 7.000000000000000000
+                  Size.Height = 14.000000000000000000
                   Size.PlatformDefault = False
                   Stroke.Color = xFF5A6773
                   Stroke.Thickness = 2.500000000000000000
@@ -2682,8 +2682,8 @@ object MainForm: TMainForm
                   Fill.Kind = None
                   HitTest = False
                   RotationAngle = 180.000000000000000000
-                  Size.Width = 8.000000000000000000
-                  Size.Height = 16.000000000000000000
+                  Size.Width = 7.000000000000000000
+                  Size.Height = 14.000000000000000000
                   Size.PlatformDefault = False
                   Stroke.Color = xFF5A6773
                   Stroke.Thickness = 2.500000000000000000

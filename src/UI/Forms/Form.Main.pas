@@ -347,7 +347,7 @@ type
 
     procedure AddTokenItem(AName: String; AValue: Extended);
     procedure AddTicker(AName: String);
-    procedure AddPageNum(APageNum: Integer; ATheLastOne: Boolean = False);
+    procedure AddPageNum(APageNum: Integer);
     procedure ShowTETTransferStatus(const AMessage: String; AIsError: Boolean = False);
     procedure ShowTokenTransferStatus(const AMessage: String; AIsError: Boolean = False);
     procedure ShowTokenCreatingStatus(const AMessage: String; AIsError: Boolean = False);
@@ -393,16 +393,16 @@ begin
   MainRectangle.Visible := True;
 end;
 
-procedure TMainForm.AddPageNum(APageNum: Integer; ATheLastOne: Boolean);
+procedure TMainForm.AddPageNum(APageNum: Integer);
 var
   pageNumFrame: TPageNumFrame;
 begin
-  pageNumFrame := TPageNumFrame.Create(PagesPanelLayout,APageNum,APageNum = pageNum,
-    ATheLastOne);
+  pageNumFrame := TPageNumFrame.Create(PagesPanelLayout,APageNum,APageNum = pageNum);
   pageNumFrame.Parent := PagesPanelLayout;
-
-  pageNumFrame.Position.X := NextPageLayout.Position.X - 5;
   PagesPanelLayout.Width := PagesPanelLayout.Width + PageNumFrame.Width;
+  pageNumFrame.Position.Y := -2;
+  pageNumFrame.Position.X := PagesPanelLayout.Width - NextPageLayout.Width -
+    PageNumFrame.Width;
   if APageNum > 0 then
     pageNumFrame.OnMouseDown := onPageNumFrameClick;
 end;
@@ -1090,6 +1090,8 @@ end;
 procedure TMainForm.onPageNumFrameClick(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Single);
 begin
+  if pageNum = (Sender as TPageNumFrame).Tag then
+    exit;
   pageNum := (Sender as TPageNumFrame).Tag;
   RefreshPagesLayout;
 end;
@@ -1282,6 +1284,7 @@ begin
       Inc(TotalPagesAmount);
   end;
 
+  PaginationBottomLayout.BeginUpdate;
   PagesPanelLayout.BeginUpdate;
   try
     PagesPanelLayout.DestroyComponents;
@@ -1291,15 +1294,15 @@ begin
       exit;
 
     AddPageNum(1);
+    if pageNum > 4 then
+      AddPageNum(-1);
     j := Max(2,pageNum-2);
-    for i := pageNum downto j do
+    for i := j to pageNum do
     begin
       if (i = 1) or (i = TotalPagesAmount) then
         continue;
       AddPageNum(i);
     end;
-    if pageNum > 3 then
-      AddPageNum(-1);
     j := Min(TotalPagesAmount-1,pageNum+2);
     for i := pageNum+1 to j do
     begin
@@ -1308,11 +1311,12 @@ begin
       AddPageNum(i);
     end;
     if pageNum < TotalPagesAmount-3 then
-      AddPageNum(-2);
+      AddPageNum(-1);
     AddPageNum(TotalPagesAmount);
     OnPageSelected;
   finally
     PagesPanelLayout.EndUpdate;
+    PaginationBottomLayout.EndUpdate;
     RefreshExplorer;
   end;
 end;

@@ -15,7 +15,7 @@ type
   private
   public
     constructor Create(AOwner: TComponent; ANumber: Integer;
-      AIsSelected: Boolean = False; ATheLastOne: Boolean = False);
+      AIsSelected: Boolean = False);
     destructor Destroy; override;
   end;
 
@@ -26,7 +26,7 @@ implementation
 { TPageNumFrame }
 
 constructor TPageNumFrame.Create(AOwner: TComponent; ANumber: Integer;
-  AIsSelected: Boolean; ATheLastOne: Boolean);
+  AIsSelected: Boolean);
 begin
   inherited Create(AOwner);
 
@@ -48,8 +48,6 @@ begin
   PageNumText.AutoSize := True;
   Self.Width := PageNumText.Width + 10;
   Self.Tag := ANumber;
-  if ATheLastOne then
-    Self.Align := TAlignLayout.Right;
 end;
 
 destructor TPageNumFrame.Destroy;

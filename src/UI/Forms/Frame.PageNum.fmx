@@ -1,5 +1,4 @@
 object PageNumFrame: TPageNumFrame
-  Align = Left
   Cursor = crHandPoint
   Size.Width = 320.000000000000000000
   Size.Height = 30.000000000000000000
