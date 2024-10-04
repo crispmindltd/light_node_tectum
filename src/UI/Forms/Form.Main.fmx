@@ -325,6 +325,7 @@ object MainForm: TMainForm
             end
             object SendTETToEdit: TEdit
               Touch.InteractiveGestures = [LongTap, DoubleTap]
+              StyleLookup = 'EditStyle'
               TabOrder = 1
               DisableFocusEffect = True
               TextSettings.Font.Family = 'Inter'
@@ -335,6 +336,7 @@ object MainForm: TMainForm
               Size.Height = 40.000000000000000000
               Size.PlatformDefault = False
               TextPrompt = 'Enter the recipient address'
+              StyledSettings = [Style]
               OnChangeTracking = AmountTETEditChangeTracking
               object ShadowEffect6: TShadowEffect
                 Distance = 3.000000000000000000
@@ -2469,9 +2471,9 @@ object MainForm: TMainForm
       ExplicitSize.cy = 1.000000000000000000
       object ExplorerTabControl: TTabControl
         Align = Client
-        Margins.Top = 55.000000000000000000
+        Margins.Top = 50.000000000000000000
         Size.Width = 1094.000000000000000000
-        Size.Height = 844.000000000000000000
+        Size.Height = 849.000000000000000000
         Size.PlatformDefault = False
         StyleLookup = 'AuthTabControlstyle'
         TabIndex = 0
@@ -2479,9 +2481,9 @@ object MainForm: TMainForm
         TabPosition = None
         Sizes = (
           1094s
-          844s
+          849s
           1094s
-          844s)
+          849s)
         object ExporerTabItemData: TTabItem
           CustomIcon = <
             item
@@ -2495,14 +2497,54 @@ object MainForm: TMainForm
           TabOrder = 0
           ExplicitSize.cx = 8.000000000000000000
           ExplicitSize.cy = 8.000000000000000000
+          object SearchEdit: TEdit
+            Touch.InteractiveGestures = [LongTap, DoubleTap]
+            Align = Top
+            StyleLookup = 'SearchEditStyle'
+            TabOrder = 10
+            CanParentFocus = True
+            DisableFocusEffect = True
+            MaxLength = 64
+            HideSelectionOnExit = False
+            FilterChar = 'qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM0123456789'
+            EnableDragHighlight = False
+            Size.Width = 1094.000000000000000000
+            Size.Height = 40.000000000000000000
+            Size.PlatformDefault = False
+            TextPrompt = 'Type here to search'
+            KillFocusByReturn = True
+            OnChangeTracking = SearchEditChangeTracking
+            object SearchButton: TButton
+              Align = Right
+              Cursor = crArrow
+              Enabled = False
+              StyledSettings = []
+              Margins.Top = 5.000000000000000000
+              Margins.Right = 5.000000000000000000
+              Margins.Bottom = 5.000000000000000000
+              Position.X = 929.000000000000000000
+              Position.Y = 5.000000000000000000
+              Size.Width = 160.000000000000000000
+              Size.Height = 30.000000000000000000
+              Size.PlatformDefault = False
+              StyleLookup = 'Buttonstyle'
+              TabOrder = 5
+              Text = 'Search'
+              TextSettings.Font.Family = 'Inter'
+              TextSettings.Font.Size = 14.000000000000000000
+              TextSettings.FontColor = claWhite
+              TextSettings.Trimming = None
+              OnClick = SearchButtonClick
+            end
+          end
           object ExplorerHeaderLayout: TLayout
             Align = Top
             Margins.Top = 10.000000000000000000
-            Position.Y = 75.000000000000000000
+            Position.Y = 115.000000000000000000
             Size.Width = 1094.000000000000000000
             Size.Height = 28.000000000000000000
             Size.PlatformDefault = False
-            TabOrder = 8
+            TabOrder = 7
             object AmountExplorerHeaderLabel: TLabel
               Align = Left
               StyledSettings = [Style]
@@ -2596,12 +2638,14 @@ object MainForm: TMainForm
           end
           object ExplorerHorzScrollBox: THorzScrollBox
             Align = Top
+            Margins.Top = 15.000000000000000000
+            Position.Y = 55.000000000000000000
             Size.Width = 1094.000000000000000000
-            Size.Height = 65.000000000000000000
+            Size.Height = 50.000000000000000000
             Size.PlatformDefault = False
-            TabOrder = 9
+            TabOrder = 8
             Viewport.Width = 1094.000000000000000000
-            Viewport.Height = 65.000000000000000000
+            Viewport.Height = 50.000000000000000000
             object TopExplorerHorzLayout: TLayout
               Size.Width = 1094.000000000000000000
               Size.Height = 40.000000000000000000
@@ -2615,13 +2659,13 @@ object MainForm: TMainForm
             Margins.Top = 10.000000000000000000
             Margins.Bottom = 20.000000000000000000
             Size.Width = 1094.000000000000000000
-            Size.Height = 711.000000000000000000
+            Size.Height = 676.000000000000000000
             Size.PlatformDefault = False
-            TabOrder = 10
+            TabOrder = 9
             OnPaint = ExplorerVertScrollBoxPaint
             OnResized = ExplorerVertScrollBoxResized
             Viewport.Width = 1094.000000000000000000
-            Viewport.Height = 711.000000000000000000
+            Viewport.Height = 676.000000000000000000
           end
         end
         object ExplorerTransactionDataTabItem: TTabItem

@@ -262,6 +262,8 @@ type
     TokenFeeDetailsLabel: TLabel;
     TokenFeeDetailsText: TText;
     InputPrKeyButton: TButton;
+    SearchEdit: TEdit;
+    SearchButton: TButton;
     procedure MainRectangleMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single);
     procedure TokenItemClick(Sender: TObject);
@@ -315,6 +317,8 @@ type
     procedure TokenCopyLoginLayoutClick(Sender: TObject);
     procedure TokenCopyAddressLayoutClick(Sender: TObject);
     procedure InputPrKeyButtonClick(Sender: TObject);
+    procedure SearchEditChangeTracking(Sender: TObject);
+    procedure SearchButtonClick(Sender: TObject);
   private
     FBalances: TDictionary<String,Extended>;
     chosenToken,chosenTicker: String;
@@ -1361,6 +1365,22 @@ begin
       break;
     end;
   end;
+end;
+
+procedure TMainForm.SearchButtonClick(Sender: TObject);
+var
+  BlockNum: Int64;
+begin
+  if TryStrToInt64(SearchEdit.Text,BlockNum) then
+  begin
+
+  end else
+    AppCore.SearchByHash(SearchEdit.Text);
+end;
+
+procedure TMainForm.SearchEditChangeTracking(Sender: TObject);
+begin
+  SearchButton.Enabled := not SearchEdit.Text.IsEmpty;
 end;
 
 procedure TMainForm.SearchTokenEditChangeTracking(Sender: TObject);

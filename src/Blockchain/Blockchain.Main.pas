@@ -52,6 +52,8 @@ type
       function TryGetOneICOBlock(ATicker: String; var ICOBlock: TTokenICODat): Boolean; overload;
       function TryGetSmartKey(ATicker: String; var sk: TCSmartKey): Boolean;
       function TryGetSmartKeyByAddress(const AAddress: String; var sk: TCSmartKey): Boolean;
+      function SearchTransactionByHash(const AHash: string;
+        out ATransaction: TExplorerTransactionInfo): Boolean;
 
       function GetChainBlockSize: Integer;
       function GetChainBlocksCount: Integer;
@@ -858,6 +860,28 @@ begin
     begin
       ASmartID := TCSmartBlock.SmartID;
       Exit(True);
+    end;
+  end;
+end;
+
+function TBlockchain.SearchTransactionByHash(const AHash: string;
+  out ATransaction: TExplorerTransactionInfo): Boolean;
+var
+  oneBlock: TOneBlockBytes;
+  bc2: Tbc2 absolute oneBlock;
+  i: Int64;
+  hashHex: string;
+  j: Byte;
+begin
+  for i := FTokenChn.GetBlocksCount - 1 downto 0 do
+  begin
+    oneBlock := FTokenChn.GetOneBlock(i);
+    hashHex := '';
+    for j := 1 to CHashLength do
+      hashHex := hashHex + IntToHex(bc2.Hash[j],2);
+    if hashHex.ToLower = AHash.ToLower then
+    begin
+
     end;
   end;
 end;
