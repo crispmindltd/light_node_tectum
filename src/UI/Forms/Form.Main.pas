@@ -326,6 +326,8 @@ type
       Shift: TShiftState; X, Y: Single);
     procedure NextPageLayoutMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single);
+  const
+    TransToDrawNumber = 18;
   private
     FBalances: TDictionary<String,Extended>;
     chosenToken,chosenTicker: String;
@@ -1211,20 +1213,20 @@ procedure TMainForm.RefreshExplorer;
 var
   transArray: TArray<TExplorerTransactionInfo>;
   newTransFrame: TExplorerTransactionFrame;
-  i,amount,pagesAmount: Integer;
+  i,TransNumber,pagesAmount: Integer;
   format: string;
   tICO: TTokenICODat;
 begin
   if chosenTicker.IsEmpty then exit;
 
-  amount := 18;
+  TransNumber := TransToDrawNumber;
   if chosenTicker = 'Tectum' then
   begin
-    transArray := AppCore.GetChainTransations((pageNum-1)*amount,amount);
+    transArray := AppCore.GetChainTransations((pageNum-1)*TransNumber,TransNumber);
     if not AppCore.TryGetTokenICO('TET',tICO) then exit;
   end else
   begin
-    transArray := AppCore.GetSmartTransactions(chosenTicker,(pageNum-1)*amount,amount);
+    transArray := AppCore.GetSmartTransactions(chosenTicker,(pageNum-1)*TransNumber,TransNumber);
     if not AppCore.TryGetTokenICO(chosenTicker,tICO) then exit;
   end;
 
@@ -1232,7 +1234,7 @@ begin
   ExplorerVertScrollBox.BeginUpdate;
   try
     format := '0.' + string.Create('0', tICO.FloatSize);
-    for i := 0 to amount-1 do
+    for i := 0 to TransNumber - 1 do
     begin
       newTransFrame := TExplorerTransactionFrame.Create(ExplorerVertScrollBox,
                                                         transArray[i].DateTime,
@@ -1263,26 +1265,24 @@ end;
 
 procedure TMainForm.RefreshPagesLayout;
 const
-  MaxNumberOfPages = 2;
+  AtTheEdges = 5;
 var
-  frame: TPageNumFrame;
-  i,j,amount,blocksCount: Integer;
-  tBase: TCSmartKey;
+  i,PageNumToDraw,PagesToDraw,TotalBlocksNumber: Integer;
+  TokenBase: TCSmartKey;
 begin
-  amount := 18;
   if chosenTicker = 'Tectum' then
   begin
-    blocksCount := AppCore.GetChainBlocksCount;
-    TotalPagesAmount := blocksCount div amount;
-    if blocksCount mod amount > 0 then
+    TotalBlocksNumber := AppCore.GetChainBlocksCount;
+    TotalPagesAmount := TotalBlocksNumber div TransToDrawNumber;
+    if TotalBlocksNumber mod TransToDrawNumber > 0 then
       Inc(TotalPagesAmount);
   end else
   begin
-    if not AppCore.TryGetTokenBase(chosenTicker,tBase) then
+    if not AppCore.TryGetTokenBase(chosenTicker,TokenBase) then
       exit;
-    blocksCount := AppCore.GetSmartBlocksCount(tBase.SmartID);
-    TotalPagesAmount := blocksCount div amount;
-    if blocksCount mod amount > 0 then
+    TotalBlocksNumber := AppCore.GetSmartBlocksCount(TokenBase.SmartID);
+    TotalPagesAmount := TotalBlocksNumber div TransToDrawNumber;
+    if TotalBlocksNumber mod TransToDrawNumber > 0 then
       Inc(TotalPagesAmount);
   end;
 
@@ -1290,29 +1290,41 @@ begin
   PagesPanelLayout.BeginUpdate;
   try
     PagesPanelLayout.DestroyComponents;
-    PagesPanelLayout.Width := 44;
+    PagesPanelLayout.Width := 48;
     PaginationBottomLayout.Visible := TotalPagesAmount > 1;
     if not PaginationBottomLayout.Visible then
       exit;
 
+    PagesToDraw := 3 + AtTheEdges * 2;
     AddPageNum(1);
-    if pageNum > MaxNumberOfPages + 2 then
+    if (pageNum - AtTheEdges > 3) and (TotalPagesAmount > PagesToDraw + 2) then
+    begin
       AddPageNum(-1);
-    j := Max(2,pageNum-MaxNumberOfPages);
-    for i := j to pageNum do
+      Dec(PagesToDraw);
+    end;
+    if (pageNum + AtTheEdges < TotalPagesAmount - 2) and
+      (TotalPagesAmount > PagesToDraw + 2) then
+      Dec(PagesToDraw);
+    PageNumToDraw := Max(2,Min(TotalPagesAmount - PagesToDraw,pageNum - AtTheEdges));
+    if (pageNum - AtTheEdges = 3) then
+      Dec(PageNumToDraw);
+    for i := PageNumToDraw to pageNum do
     begin
       if (i = 1) or (i = TotalPagesAmount) then
         continue;
       AddPageNum(i);
     end;
-    j := Min(TotalPagesAmount-1,pageNum+MaxNumberOfPages);
-    for i := pageNum+1 to j do
+    PageNumToDraw := Min(TotalPagesAmount - 1,Max(PagesToDraw + 1,pageNum + AtTheEdges));
+    if (pageNum + AtTheEdges = TotalPagesAmount - 2) then
+      Inc(PageNumToDraw);
+    for i := pageNum + 1 to PageNumToDraw do
     begin
       if (i = 1) or (i = TotalPagesAmount) then
         continue;
       AddPageNum(i);
     end;
-    if pageNum < TotalPagesAmount-MaxNumberOfPages-1 then
+    if (pageNum + AtTheEdges < TotalPagesAmount - 2) and
+      (TotalPagesAmount > PagesToDraw + 2) then
       AddPageNum(-1);
     AddPageNum(TotalPagesAmount);
     OnPageSelected;
