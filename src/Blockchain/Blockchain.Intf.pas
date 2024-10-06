@@ -3,6 +3,7 @@ unit Blockchain.Intf;
 interface
 
 uses
+  Classes,
   IOUtils,
   SyncObjs,
   SysUtils;
@@ -10,38 +11,39 @@ uses
 const
   MaxBlocksNumber = 3000; // max blocks number per request
   OneBlockSize = 316;
-  // SMART_BLOCK_SIZE_DEFAULT = 256;
-  // DYNAMIC_BLOCK_SIZE_DEFAULT = 72;
-
 type
-  TChainFileWorker = class abstract
+  TChainFileBase = class abstract
   private
     FSyncByDefault: Boolean;
   protected
-    FFileName: String;
-    FFileFolder: String;
-    FFullFilePath: String;
+    FFileName: string;
+    FFileFolder: string;
+    FFullFilePath: string;
+    FFileStream: TFileStream;
+    FIsOpened: Boolean;
     FLock: TCriticalSection;
+
+    function GetBlockSize: Integer; virtual; abstract;
+    function GetBlocksCount: Integer; virtual; abstract;
+    procedure WriteBlocksAsBytes(ASkipBlocks: Integer; ABytes: TBytes);
+      virtual; abstract;
+    function ReadBlocksAsBytes(ASkipBlocks: Integer;
+      ANumber: Integer = MaxBlocksNumber): TBytes; virtual; abstract;
   public
-    constructor Create(AFolder, AFileName: String;
+    constructor Create(AFolder, AFileName: string;
       AIsSystemChain: Boolean = False);
     destructor Destroy; override;
 
-    function GetBlockSize: Integer; virtual; abstract;
-    function GetBlocksCount: Int64; virtual; abstract;
-    procedure WriteBlocksAsBytes(ASkip: Int64; ABytes: TBytes); virtual; abstract;
-    function ReadBlocksAsBytes(ASkip: Int64; ANumber: Integer): TBytes; virtual; abstract;
-
-    property Name: String read FFileName;
-    property FullPath: String read FFullFilePath;
+    property Name: string read FFileName;
+    property FullPath: string read FFullFilePath;
     property IsSyncDefault: Boolean read FSyncByDefault;
   end;
 
 implementation
 
-{ TChainFileWorker }
+{ TChainFileBase }
 
-constructor TChainFileWorker.Create(AFolder, AFileName: String;
+constructor TChainFileBase.Create(AFolder, AFileName: string;
   AIsSystemChain: Boolean);
 begin
   FSyncByDefault := AIsSystemChain;
@@ -52,9 +54,10 @@ begin
   FFullFilePath := TPath.Combine(FFileFolder, AFileName);
 
   FLock := TCriticalSection.Create;
+  FIsOpened := False;
 end;
 
-destructor TChainFileWorker.Destroy;
+destructor TChainFileBase.Destroy;
 begin
   FLock.Free;
 

@@ -12,32 +12,31 @@ uses
   SysUtils;
 
 type
-  TBlockchainTETDynamic = class(TChainFileWorker)
+  TBlockchainTETDynamic = class(TChainFileBase)
   private
-    FFile: TFileStream;
-    FIsOpened: Boolean;
+    FFile: file of TTokenBase;
   public
     constructor Create;
     destructor Destory;
-    function DoOpen(AMode: Word): Boolean;
+    function DoOpen: Boolean;
     procedure DoClose;
 
     function GetBlockSize: Integer; override;
-    function GetBlocksCount: Int64; override;
-    procedure WriteBlock(ASkip: Int64; ABlock: TTokenBase);
-    procedure WriteBlocksAsBytes(ASkip: Int64; ABytes: TBytes); override;
-    procedure WriteBlocks(ASkip: Int64; ABlocks: TArray<TTokenBase>);
-    function TryReadBlock(ASkip: Int64; out ABlock: TTokenBase): Boolean;
-    function ReadBlocksAsBytes(ASkip: Int64;
+    function GetBlocksCount: Integer; override;
+    procedure WriteBlocksAsBytes(ASkipBlocks: Integer; ABytes: TBytes); override;
+    procedure WriteBlock(ASkip: Integer; ABlock: TTokenBase);
+//    procedure WriteBlocks(ASkip: Integer; ABlocks: TArray<TTokenBase>);
+    function TryReadBlock(ASkip: Integer; out ABlock: TTokenBase): Boolean;
+    function ReadBlocksAsBytes(ASkipBlocks: Integer;
       ANumber: Integer = MaxBlocksNumber): TBytes; override;
-    function ReadBlocks(ASkip: Int64;
+    function ReadBlocks(ASkip: Integer;
       ANumber: Integer = MaxBlocksNumber): TArray<TTokenBase>;
 
 //    function TryGetTETAddress(const AOwnerID: Int64; out ATETAddress: String): Boolean;
-    function TryGetByUserID(AUserID: Int64; out ABlockID: Int64;
-      var ATETDynamic: TTokenBase): Boolean;
-    function TryGetByTETAddress(ATETAddress: string; out ABlockID: Int64;
-      out ATETDynamic: TTokenBase): Boolean;
+//    function TryGetByUserID(AUserID: Int64; out ABlockID: Int64;
+//      var ATETDynamic: TTokenBase): Boolean;
+//    function TryGetByTETAddress(ATETAddress: string; out ABlockID: Int64;
+//      out ATETDynamic: TTokenBase): Boolean;
   end;
 
 implementation
@@ -48,7 +47,6 @@ constructor TBlockchainTETDynamic.Create;
 begin
   inherited Create(ConstStr.DBCPath, ConstStr.Token64FileName);
 
-  FIsOpened := False;
   if not FileExists(FFullFilePath) then
     TFile.WriteAllBytes(FFullFilePath, []);
 end;
@@ -63,30 +61,31 @@ procedure TBlockchainTETDynamic.DoClose;
 begin
   if FIsOpened then
   begin
-    FFile.Free;
-    FLock.Leave;
+    CloseFile(FFile);
     FIsOpened := False;
+    FLock.Leave;
   end;
 end;
 
-function TBlockchainTETDynamic.DoOpen(AMode: Word): Boolean;
+function TBlockchainTETDynamic.DoOpen: Boolean;
 begin
   Result := not FIsOpened;
   if Result then
   begin
     FLock.Enter;
-    FFile := TFileStream.Create(FullPath, AMode);
+    AssignFile(FFile, FFullFilePath);
+    Reset(FFile);
     FIsOpened := True;
   end;
 end;
 
-function TBlockchainTETDynamic.GetBlocksCount: Int64;
+function TBlockchainTETDynamic.GetBlocksCount: Integer;
 var
   NeedClose: Boolean;
 begin
-  NeedClose := DoOpen(fmOpenRead or fmShareDenyNone);
+  NeedClose := DoOpen;
   try
-    Result := FFile.Size div GetBlockSize;
+    Result := FileSize(FFile);
   finally
     if NeedClose then
       DoClose;
@@ -98,100 +97,59 @@ begin
   Result := SizeOf(TTokenBase);
 end;
 
-function TBlockchainTETDynamic.ReadBlocks(ASkip: Int64;
+function TBlockchainTETDynamic.ReadBlocks(ASkip,
   ANumber: Integer): TArray<TTokenBase>;
 var
   NeedClose: Boolean;
+  i: Integer;
 begin
-  NeedClose := DoOpen(fmOpenRead or fmShareDenyNone);
+  Result := [];
+  NeedClose := DoOpen;
   try
-    FFile.Seek(ASkip * GetBlockSize, soBeginning);
-    SetLength(Result, Min(ANumber * GetBlockSize, FFile.Size - FFile.Position));
-    FFile.Read(Result, Length(Result));
+    if (ASkip < 0) or (ASkip >= FileSize(FFile)) then
+      exit;
+    Seek(FFile, ASkip);
+    SetLength(Result, Min(ANumber, FileSize(FFile) - ASkip));
+    for i := 0 to Length(Result) - 1 do
+      Read(FFile, Result[i]);
   finally
     if NeedClose then
       DoClose;
   end;
 end;
 
-function TBlockchainTETDynamic.ReadBlocksAsBytes(ASkip: Int64;
+function TBlockchainTETDynamic.ReadBlocksAsBytes(ASkipBlocks,
   ANumber: Integer): TBytes;
-var
-  NeedClose: Boolean;
 begin
-  NeedClose := DoOpen(fmOpenRead or fmShareDenyNone);
+  Result := [];
+  FLock.Enter;
+  FFileStream := TFileStream.Create(FullPath, fmOpenRead or fmShareDenyNone);
   try
-    FFile.Seek(ASkip * GetBlockSize, soBeginning);
-    SetLength(Result, Min(ANumber * GetBlockSize, FFile.Size - FFile.Position));
-    FFile.Read(Result, Length(Result));
+    if (ASkipBlocks * GetBlockSize > FFileStream.Size - GetBlockSize) or
+      (ASkipBlocks < 0) then
+      exit;
+    FFileStream.Seek(ASkipBlocks * GetBlockSize, soBeginning);
+    SetLength(Result, Min(ANumber * GetBlockSize,
+      FFileStream.Size - FFileStream.Position));
+    FFileStream.Read(Result, Length(Result));
   finally
-    if NeedClose then
-      DoClose;
+    FFileStream.Free;
+    FLock.Leave;
   end;
 end;
 
-function TBlockchainTETDynamic.TryGetByTETAddress(ATETAddress: string;
-  out ABlockID: Int64; out ATETDynamic: TTokenBase): Boolean;
-var
-  NeedClose: Boolean;
-  i: Integer;
-begin
-  Result := False;
-  NeedClose := DoOpen(fmOpenRead or fmShareDenyNone);
-  try
-    for i := 0 to (FFile.Size div GetBlockSize) - 1 do
-    begin
-      FFile.Seek(i * GetBlockSize, soBeginning);
-      FFile.ReadData<TTokenBase>(ATETDynamic);
-      if (ATETDynamic.Token = ATETAddress) and (ATETDynamic.TokenDatID = 1) then
-      begin
-        ABlockID := i;
-        exit(True);
-      end;
-    end;
-  finally
-    if NeedClose then
-      DoClose;
-  end;
-end;
-
-function TBlockchainTETDynamic.TryGetByUserID(AUserID: Int64; out ABlockID: Int64;
-  var ATETDynamic: TTokenBase): Boolean;
-var
-  NeedClose: Boolean;
-  i: Integer;
-begin
-  Result := False;
-  NeedClose := DoOpen(fmOpenRead or fmShareDenyNone);
-  try
-    for i := 0 to (FFile.Size div GetBlockSize) - 1 do
-    begin
-      FFile.Seek(i * GetBlockSize, soBeginning);
-      FFile.ReadData<TTokenBase>(ATETDynamic);
-      if (ATETDynamic.OwnerID = AUserID) and (ATETDynamic.TokenDatID = 1) then
-      begin
-        ABlockID := i;
-        exit(True);
-      end;
-    end;
-  finally
-    if NeedClose then
-      DoClose;
-  end;
-end;
-
-function TBlockchainTETDynamic.TryReadBlock(ASkip: Int64;
+function TBlockchainTETDynamic.TryReadBlock(ASkip: Integer;
   out ABlock: TTokenBase): Boolean;
 var
   NeedClose: Boolean;
 begin
-  NeedClose := DoOpen(fmOpenRead or fmShareDenyNone);
+  NeedClose := DoOpen;
   try
     Result := (ASkip >= 0) and (ASkip < GetBlocksCount);
     if Result then
     begin
-      FFile.Seek(ASkip * GetBlockSize, soBeginning);
-      FFile.ReadData<TTokenBase>(ABlock);
+      Seek(FFile, ASkip);
+      Read(FFile, ABlock);
     end;
   finally
     if NeedClose then
@@ -199,60 +157,109 @@ begin
   end;
 end;
 
-procedure TBlockchainTETDynamic.WriteBlock(ASkip: Int64; ABlock: TTokenBase);
-var
-  NeedClose: Boolean;
-begin
-  if not FileExists(FFullFilePath) then
-    TFile.WriteAllBytes(FFullFilePath, []);
-  NeedClose := DoOpen(fmOpenWrite);
-  try
-    FFile.Seek(ASkip * GetBlockSize, soBeginning);
-    FFile.WriteData<TTokenBase>(ABlock);
-  finally
-    if NeedClose then
-      DoClose;
-  end;
-end;
-
-procedure TBlockchainTETDynamic.WriteBlocks(ASkip: Int64;
-  ABlocks: TArray<TTokenBase>);
-var
-  i: Integer;
-  NeedClose: Boolean;
-begin
-  if not FileExists(FFullFilePath) then
-    TFile.WriteAllBytes(FFullFilePath, []);
-  NeedClose := DoOpen(fmOpenWrite);
-  try
-    FFile.Seek(ASkip * GetBlockSize, soBeginning);
-    for i := 0 to Length(ABlocks) - 1 do
-      FFile.WriteData<TTokenBase>(ABlocks[i]);
-  finally
-    if NeedClose then
-      DoClose;
-  end;
-end;
-
-procedure TBlockchainTETDynamic.WriteBlocksAsBytes(ASkip: Int64;
+procedure TBlockchainTETDynamic.WriteBlocksAsBytes(ASkipBlocks: Integer;
   ABytes: TBytes);
-var
-  NeedClose: Boolean;
 begin
-  if Length(ABytes) mod GetBlockSize <> 0 then
+  if (Length(ABytes) mod GetBlockSize <> 0) or (ASkipBlocks < 0) then
     exit;
 
-  if not FileExists(FFullFilePath) then
-    TFile.WriteAllBytes(FFullFilePath, []);
-  NeedClose := DoOpen(fmOpenWrite);
+  FLock.Enter;
+  FFileStream := TFileStream.Create(FullPath, fmOpenWrite);
   try
-    FFile.Seek(ASkip * GetBlockSize, soBeginning);
-    FFile.Write(ABytes, Length(ABytes));
+    FFileStream.Seek(ASkipBlocks * GetBlockSize, soBeginning);
+    FFileStream.Write(ABytes, Length(ABytes));
+  finally
+    FFileStream.Free;
+    FLock.Leave;
+  end;
+end;
+
+//function TBlockchainTETDynamic.TryGetByTETAddress(ATETAddress: string;
+//  out ABlockID: Int64; out ATETDynamic: TTokenBase): Boolean;
+//var
+//  NeedClose: Boolean;
+//  i: Integer;
+//begin
+//  Result := False;
+//  NeedClose := DoOpen(fmOpenRead or fmShareDenyNone);
+//  try
+//    for i := 0 to (FFile.Size div GetBlockSize) - 1 do
+//    begin
+//      FFile.Seek(i * GetBlockSize, soBeginning);
+//      FFile.ReadData<TTokenBase>(ATETDynamic);
+//      if (ATETDynamic.Token = ATETAddress) and (ATETDynamic.TokenDatID = 1) then
+//      begin
+//        ABlockID := i;
+//        exit(True);
+//      end;
+//    end;
+//  finally
+//    if NeedClose then
+//      DoClose;
+//  end;
+//end;
+
+//function TBlockchainTETDynamic.TryGetByUserID(AUserID: Int64; out ABlockID: Int64;
+//  var ATETDynamic: TTokenBase): Boolean;
+//var
+//  NeedClose: Boolean;
+//  i: Integer;
+//begin
+//  Result := False;
+//  NeedClose := DoOpen(fmOpenRead or fmShareDenyNone);
+//  try
+//    for i := 0 to (FFile.Size div GetBlockSize) - 1 do
+//    begin
+//      FFile.Seek(i * GetBlockSize, soBeginning);
+//      FFile.ReadData<TTokenBase>(ATETDynamic);
+//      if (ATETDynamic.OwnerID = AUserID) and (ATETDynamic.TokenDatID = 1) then
+//      begin
+//        ABlockID := i;
+//        exit(True);
+//      end;
+//    end;
+//  finally
+//    if NeedClose then
+//      DoClose;
+//  end;
+//end;
+
+procedure TBlockchainTETDynamic.WriteBlock(ASkip: Integer; ABlock: TTokenBase);
+var
+  NeedClose: Boolean;
+begin
+  if ASkip < 0 then
+    exit;
+
+  NeedClose := DoOpen;
+  try
+    Seek(FFile, ASkip);
+    Read(FFile, ABlock);
   finally
     if NeedClose then
       DoClose;
   end;
 end;
+
+//procedure TBlockchainTETDynamic.WriteBlocks(ASkip: Int64;
+//  ABlocks: TArray<TTokenBase>);
+//var
+//  NeedClose: Boolean;
+//  i: Integer;
+//begin
+//  if ASkip < 0 then
+//    exit;
+//
+//  NeedClose := DoOpen;
+//  try
+//    Seek(FFile, ASkip);
+//    for i := 0 to Length(ABlocks) - 1 do
+//      Write(FFile, ABlocks[i]);
+//  finally
+//    if NeedClose then
+//      DoClose;
+//  end;
+//end;
 
 //function TBlockchainTETDynamic.TryGetTETAddress(const AOwnerID: Int64;
 //  out ATETAddress: String): Boolean;

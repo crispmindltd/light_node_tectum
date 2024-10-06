@@ -30,9 +30,6 @@ constructor TMutex.Create(const AName: string);
 var
   LMask: UInt16;
 begin
-  inherited Create;
-
-  FFileStream := nil;
   if not DirectoryExists(GetTempDir) then
     TDirectory.CreateDirectory(GetTempDir);
 
