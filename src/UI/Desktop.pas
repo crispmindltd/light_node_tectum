@@ -171,22 +171,22 @@ end;
 
 procedure TUICore.NotifyNewTETBlocks(const ANeedRefreshBalance: Boolean);
 begin
-  if Assigned(MainForm) then
-    TThread.Synchronize(nil,
-    procedure
-    begin
-      MainForm.NewTETBlocksEvent(ANeedRefreshBalance);
-    end);
+//  if Assigned(MainForm) then
+//    TThread.Synchronize(nil,
+//    procedure
+//    begin
+//      MainForm.NewTETBlocksEvent(ANeedRefreshBalance);
+//    end);
 end;
 
 procedure TUICore.NotifyNewTokenBlocks(const ANeedRefreshBalance: Boolean);
 begin
-  if Assigned(MainForm) then
-    TThread.Synchronize(nil,
-    procedure
-    begin
-      MainForm.NewTokenBlocksEvent(ANeedRefreshBalance);
-    end);
+//  if Assigned(MainForm) then
+//    TThread.Synchronize(nil,
+//    procedure
+//    begin
+//      MainForm.NewTokenBlocksEvent(ANeedRefreshBalance);
+//    end);
 end;
 
 procedure TUICore.NullForm(var Form);

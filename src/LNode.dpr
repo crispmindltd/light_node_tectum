@@ -46,7 +46,8 @@ uses
   Form.EnterKey in 'UI\Forms\Form.EnterKey.pas' {EnterPrivateKeyForm},
   App.Constants in 'Core\App.Constants.pas',
   OpenURL in 'UI\OpenURL.pas',
-  Sync.TETChain in 'Sync\Sync.TETChain.pas';
+  Sync.TETChain in 'Sync\Sync.TETChain.pas',
+  Frame.PageNum in 'UI\Forms\Frame.PageNum.pas' {PageNumFrame: TFrame};
 
 {$R *.res}
 

@@ -547,14 +547,14 @@ var
   val,balance: Extended;
   tICO:TTokenICODat;
 begin
-  const isGetTokenSuccess = AppCore.TryGetTokenICO(TokenNameEdit.Text, tICO);
+//  const isGetTokenSuccess = AppCore.TryGetTokenICO(TokenNameEdit.Text, tICO);
   FBalances.TryGetValue(TokenNameEdit.Text, balance);
   isNumber := TryStrToFloat(AmountTokenEdit.Text, val);
 
   const Decimals = DecimalsCount(AmountTokenEdit.Text);
 
-  SendTokenButton.Enabled := isGetTokenSuccess and (Length(RecepientAddressEdit.Text) >= 10) and
-    isNumber and (val > 0) and (val <= balance) and (Decimals <= tICO.FloatSize);
+//  SendTokenButton.Enabled := isGetTokenSuccess and (Length(RecepientAddressEdit.Text) >= 10) and
+//    isNumber and (val > 0) and (val <= balance) and (Decimals <= tICO.FloatSize);
 
   with TransferTokenStatusLabel do
   begin
@@ -654,10 +654,10 @@ var
   response: string;
 begin
   try
-    response := AppCore.DoNewToken('*',AppCore.SessionKey,
-      CreateTokenInformationMemo.Text, CreateTokenShortNameEdit.Text,
-      CreateTokenSymbolEdit.Text, CreateTokenAmountEdit.Text.ToInt64,
-      DecimalsEdit.Text.ToInteger);
+//    response := AppCore.DoNewToken('*',AppCore.SessionKey,
+//      CreateTokenInformationMemo.Text, CreateTokenShortNameEdit.Text,
+//      CreateTokenSymbolEdit.Text, CreateTokenAmountEdit.Text.ToInt64,
+//      DecimalsEdit.Text.ToInteger);
 
     CreateTokenShortNameEdit.Text := '';
     CreateTokenSymbolEdit.Text := '';
@@ -714,8 +714,8 @@ begin
 
   if CreateTokenButton.Enabled and TryStrToInt64(CreateTokenAmountEdit.Text,l) and
     TryStrToInt(DecimalsEdit.Text,k) then
-    TokenCreationFeeLabel.Text := Format('Creation token fee: %d TET',
-      [AppCore.GetNewTokenFee(l,k)])
+//    TokenCreationFeeLabel.Text := Format('Creation token fee: %d TET',
+//      [AppCore.GetNewTokenFee(l,k)])
   else
     TokenCreationFeeLabel.Text := 'Creation token fee: 0 TET';
 end;
@@ -761,11 +761,11 @@ begin
   RefreshHeaderBalance(TokenNameEdit.Text);
   MainRectangleMouseDown(nil,TMouseButton.mbLeft,[],0,0);
 
-  if AppCore.TryGetTokenICO(TokenNameEdit.Text,tICO) then
-  begin
-    TokenShortNameEdit.Text := tICO.ShortName;
-    TokenInfoMemo.Text := tICO.FullName;
-  end else
+//  if AppCore.TryGetTokenICO(TokenNameEdit.Text,tICO) then
+//  begin
+//    TokenShortNameEdit.Text := tICO.ShortName;
+//    TokenInfoMemo.Text := tICO.FullName;
+//  end else
   begin
     TokenShortNameEdit.Text := '';
     TokenInfoMemo.Text := '';
@@ -1036,8 +1036,8 @@ begin
     ticker := 'TET'
   else
     ticker := chosenTicker;
-  if not AppCore.TryGetTokenICO(ticker,tICO) then
-    exit;
+//  if not AppCore.TryGetTokenICO(ticker,tICO) then
+//    exit;
 
   with (Sender as TExplorerTransactionFrame) do
   begin
@@ -1103,8 +1103,8 @@ var
   ticker: String;
   tICO: TTokenICODat;
 begin
-  if not AppCore.TryGetTokenICO('TET',tICO) then
-    exit;
+//  if not AppCore.TryGetTokenICO('TET',tICO) then
+//    exit;
 
   with (Sender as THistoryTransactionFrame) do
   begin
@@ -1151,8 +1151,8 @@ var
   ticker: String;
   tICO: TTokenICODat;
 begin
-  if not AppCore.TryGetTokenICO(TokenNameEdit.Text,tICO) then
-    exit;
+//  if not AppCore.TryGetTokenICO(TokenNameEdit.Text,tICO) then
+//    exit;
 
   with (Sender as THistoryTransactionFrame) do
   begin
@@ -1222,12 +1222,12 @@ begin
   TransNumber := TransToDrawNumber;
   if chosenTicker = 'Tectum' then
   begin
-    transArray := AppCore.GetChainTransations((pageNum-1)*TransNumber,TransNumber);
-    if not AppCore.TryGetTokenICO('TET',tICO) then exit;
+//    transArray := AppCore.GetChainTransations((pageNum-1)*TransNumber,TransNumber);
+//    if not AppCore.TryGetTokenICO('TET',tICO) then exit;
   end else
   begin
-    transArray := AppCore.GetSmartTransactions(chosenTicker,(pageNum-1)*TransNumber,TransNumber);
-    if not AppCore.TryGetTokenICO(chosenTicker,tICO) then exit;
+//    transArray := AppCore.GetSmartTransactions(chosenTicker,(pageNum-1)*TransNumber,TransNumber);
+//    if not AppCore.TryGetTokenICO(chosenTicker,tICO) then exit;
   end;
 
   CleanScrollBox(ExplorerVertScrollBox);
@@ -1236,13 +1236,13 @@ begin
     format := '0.' + string.Create('0', tICO.FloatSize);
     for i := 0 to TransNumber - 1 do
     begin
-      newTransFrame := TExplorerTransactionFrame.Create(ExplorerVertScrollBox,
-                                                        transArray[i].DateTime,
-                                                        transArray[i].BlockNum,
-                                                        transArray[i].TransFrom,
-                                                        transArray[i].TransTo,
-                                                        transArray[i].Hash,
-                                                        FormatFloat(format,transArray[i].Amount));
+//      newTransFrame := TExplorerTransactionFrame.Create(ExplorerVertScrollBox,
+//                                                        transArray[i].DateTime,
+//                                                        transArray[i].BlockNum,
+//                                                        transArray[i].TransFrom,
+//                                                        transArray[i].TransTo,
+//                                                        transArray[i].Hash,
+//                                                        FormatFloat(format,transArray[i].Amount));
       newTransFrame.OnClick := onExplorerFrameClick;
       newTransFrame.Parent := ExplorerVertScrollBox;
     end;
@@ -1260,7 +1260,7 @@ begin
     BalanceTokenValueLabel.Text :=
       Format('%s %s',[FormatFloat('0.########',value), AName]);
 
-  AddressTokenLabel.Text := AppCore.GetSmartAddressByTicker(AName);
+//  AddressTokenLabel.Text := AppCore.GetSmartAddressByTicker(AName);
 end;
 
 procedure TMainForm.RefreshPagesLayout;
@@ -1272,15 +1272,15 @@ var
 begin
   if chosenTicker = 'Tectum' then
   begin
-    TotalBlocksNumber := AppCore.GetChainBlocksCount;
+//    TotalBlocksNumber := AppCore.GetChainBlocksCount;
     TotalPagesAmount := TotalBlocksNumber div TransToDrawNumber;
     if TotalBlocksNumber mod TransToDrawNumber > 0 then
       Inc(TotalPagesAmount);
   end else
   begin
-    if not AppCore.TryGetTokenBase(chosenTicker,TokenBase) then
-      exit;
-    TotalBlocksNumber := AppCore.GetSmartBlocksCount(TokenBase.SmartID);
+//    if not AppCore.TryGetTokenBase(chosenTicker,TokenBase) then
+//      exit;
+//    TotalBlocksNumber := AppCore.GetSmartBlocksCount(TokenBase.SmartID);
     TotalPagesAmount := TotalBlocksNumber div TransToDrawNumber;
     if TotalBlocksNumber mod TransToDrawNumber > 0 then
       Inc(TotalPagesAmount);
@@ -1340,7 +1340,7 @@ var
   val: Extended;
 begin
   try
-    FBalances.AddOrSetValue('TET',AppCore.GetLocalTETBalance);
+//    FBalances.AddOrSetValue('TET',AppCore.GetLocalTETBalance);
     FBalances.TryGetValue('TET',val);
     BalanceTETValueLabel.Text := FormatFloat('0.########',val) + ' TET';
   except
@@ -1359,7 +1359,7 @@ var
   amount: Integer;
 begin
   amount := 20;
-  transArray := AppCore.GetChainLastUserTransactions(AppCore.UserID,amount);
+//  transArray := AppCore.GetChainLastUserTransactions(AppCore.UserID,amount);
 
   NoTETHistoryLabel.Visible := amount = 0;
   HistoryTETHeaderLayout.Visible := not NoTETHistoryLabel.Visible;
@@ -1371,13 +1371,13 @@ begin
   try
     for i := 0 to amount-1 do
     begin
-      newTransFrame := THistoryTransactionFrame.Create(HistoryTETVertScrollBox,
-                                                       transArray[i].DateTime,
-                                                       transArray[i].BlockNum,
-                                                       transArray[i].Address,
-                                                       transArray[i].Hash,
-                                                       FormatFloat('0.00000000',transArray[i].Amount),
-                                                       transArray[i].Incom);
+//      newTransFrame := THistoryTransactionFrame.Create(HistoryTETVertScrollBox,
+//                                                       transArray[i].DateTime,
+//                                                       transArray[i].BlockNum,
+//                                                       transArray[i].Address,
+//                                                       transArray[i].Hash,
+//                                                       FormatFloat('0.00000000',transArray[i].Amount),
+//                                                       transArray[i].Incom);
       newTransFrame.OnClick := onTETHistoryFrameClick;
       newTransFrame.Parent := HistoryTETVertScrollBox;
     end;
@@ -1396,11 +1396,11 @@ var
   format: String;
   tICO: TTokenICODat;
 begin
-  if not AppCore.TryGetTokenICO(TokenNameEdit.Text,tICO) then
-    exit;
+//  if not AppCore.TryGetTokenICO(TokenNameEdit.Text,tICO) then
+//    exit;
 
   amount := 20;
-  transArray := AppCore.GetSmartLastUserTransactions(AppCore.UserID,TokenNameEdit.Text,amount);
+//  transArray := AppCore.GetSmartLastUserTransactions(AppCore.UserID,TokenNameEdit.Text,amount);
 
   NoTokenHistoryLabel.Visible := amount = 0;
   HistoryTokenHeaderLayout.Visible := not NoTokenHistoryLabel.Visible;
@@ -1413,13 +1413,13 @@ begin
     format := '0.' + string.Create('0', tICO.FloatSize);
     for i := 0 to amount-1 do
     begin
-      newTransFrame := THistoryTransactionFrame.Create(HistoryTokenVertScrollBox,
-                                                       transArray[i].DateTime,
-                                                       transArray[i].BlockNum,
-                                                       transArray[i].Address,
-                                                       transArray[i].Hash,
-                                                       FormatFloat(format,transArray[i].Amount),
-                                                       transArray[i].Incom);
+//      newTransFrame := THistoryTransactionFrame.Create(HistoryTokenVertScrollBox,
+//                                                       transArray[i].DateTime,
+//                                                       transArray[i].BlockNum,
+//                                                       transArray[i].Address,
+//                                                       transArray[i].Hash,
+//                                                       FormatFloat(format,transArray[i].Amount),
+//                                                       transArray[i].Incom);
       newTransFrame.OnClick := onTokenHistoryFrameClick;
       newTransFrame.Parent := HistoryTokenVertScrollBox;
     end;
@@ -1435,7 +1435,7 @@ var
   balance: String;
   i: Integer;
 begin
-  for balance in AppCore.GetLocalTokensBalances do
+//  for balance in AppCore.GetLocalTokensBalances do
   begin
     splt := balance.Split([':']);
     AddOrRefreshBalance(splt[0],splt[1].ToExtended);
@@ -1579,8 +1579,8 @@ var
   response: string;
 begin
   try
-    response := AppCore.DoCoinsTransfer('*',AppCore.SessionKey,SendTETToEdit.Text,
-      AmountTETEdit.Text.ToExtended);
+//    response := AppCore.DoCoinsTransfer('*',AppCore.SessionKey,SendTETToEdit.Text,
+//      AmountTETEdit.Text.ToExtended);
     SendTETToEdit.Text := '';
     AmountTETEdit.Text := '';
     ShowTETTransferStatus('Transaction successful');
@@ -1607,8 +1607,8 @@ var
 begin
   try
     AppCore.TryExtractPrivateKeyFromFile(prKey,pubKey);
-    response := AppCore.DoTokenTransfer('*',AppCore.TETAddress,RecepientAddressEdit.Text,
-      AddressTokenLabel.Text, AmountTokenEdit.Text.ToExtended,prKey,pubKey);
+//    response := AppCore.DoTokenTransfer('*',AppCore.TETAddress,RecepientAddressEdit.Text,
+//      AddressTokenLabel.Text, AmountTokenEdit.Text.ToExtended,prKey,pubKey);
 
     RecepientAddressEdit.Text := '';
     AmountTokenEdit.Text := '';

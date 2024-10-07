@@ -1314,8 +1314,8 @@ object MainForm: TMainForm
               Size.PlatformDefault = False
               StyleLookup = 'PathMemostyle'
               TabOrder = 12
-              Viewport.Width = 564.000000000000000000
-              Viewport.Height = 184.000000000000000000
+              Viewport.Width = 568.000000000000000000
+              Viewport.Height = 188.000000000000000000
             end
           end
         end
@@ -2032,8 +2032,8 @@ object MainForm: TMainForm
           Size.PlatformDefault = False
           StyleLookup = 'TokenInfoMemostyle'
           TabOrder = 4
-          Viewport.Width = 382.000000000000000000
-          Viewport.Height = 126.000000000000000000
+          Viewport.Width = 410.000000000000000000
+          Viewport.Height = 152.000000000000000000
           object ShadowEffect12: TShadowEffect
             Distance = 3.000000000000000000
             Direction = 70.000000000000000000
