@@ -109,7 +109,7 @@ type
     procedure EmailEditKeyDown(Sender: TObject; var Key: Word;
       var KeyChar: WideChar; Shift: TShiftState);
   private
-    FTotalTETBlocksToDownload: Int64;
+    FTotalBlocksNumberToLoad: UInt64;
     FSeedPhrase: string;
     procedure ShowLogInError(const AMessage: string);
     procedure HideLogInError;
@@ -119,7 +119,7 @@ type
     procedure RegCallBack(const AResponse: string);
     procedure LogInCallBack(const AResponse: string);
   public
-    procedure SetMaxProgressBarValue(const ATotalTETBlocksToDownload: Int64);
+    procedure IncProgressBarMaxValue(const ABlocksNumberToLoad: Integer);
     procedure ShowProgress;
   end;
 
@@ -216,6 +216,7 @@ procedure TStartForm.FormCreate(Sender: TObject);
 begin
   Caption := 'LNode' + ' ' + AppCore.GetVersion;
   AuthTabControl.TabHeight := 64;
+  FTotalBlocksNumberToLoad := 0;
 
   EyeLayout.OnMouseEnter := StylesForm.OnCopyLayoutMouseEnter;
   EyeLayout.OnMouseLeave := StylesForm.OnCopyLayoutMouseLeave;
@@ -340,6 +341,7 @@ procedure TStartForm.OnDownloadingDone;
 begin
   EmailEditChangeTracking(Self);
   SignUpTabItem.Enabled := True;
+  FloatAnimation3.Enabled := True;
 end;
 
 procedure TStartForm.RegCallBack(const AResponse: string);
@@ -384,33 +386,34 @@ end;
 
 procedure TStartForm.ShowProgress;
 var
-  CurrentTETChainBlocksCount: Int64;
+  CurrentBlocksNumber: Integer;
 begin
-  CurrentTETChainBlocksCount := AppCore.GetTETChainBlocksCount;
+  CurrentBlocksNumber := AppCore.GetTETChainBlocksCount +
+    AppCore.GetDynTETChainBlocksCount;
   ProgressLabel.Text := Format('%d of %d blocks loaded',
-    [CurrentTETChainBlocksCount, FTotalTETBlocksToDownload]);
-  DownloadProgressBar.Value := CurrentTETChainBlocksCount;
+    [CurrentBlocksNumber, FTotalBlocksNumberToLoad]);
+  DownloadProgressBar.Value := CurrentBlocksNumber;
 
-  AppCore.TETChainSyncDone := CurrentTETChainBlocksCount = FTotalTETBlocksToDownload;
-  if AppCore.TETChainSyncDone then
-    FloatAnimation3.Enabled := True;
+  AppCore.BlocksSyncDone := CurrentBlocksNumber = FTotalBlocksNumberToLoad;
+  if AppCore.BlocksSyncDone then
+    OnDownloadingDone;
 end;
 
-procedure TStartForm.SetMaxProgressBarValue(const ATotalTETBlocksToDownload: Int64);
+procedure TStartForm.IncProgressBarMaxValue(const ABlocksNumberToLoad: Integer);
 var
-  CurrentTETChainBlocksCount: Int64;
+  CurrentBlocksNumber: UInt64;
 begin
-  FTotalTETBlocksToDownload := ATotalTETBlocksToDownload;
-  CurrentTETChainBlocksCount := AppCore.GetTETChainBlocksCount;
-  AppCore.TETChainSyncDone := FTotalTETBlocksToDownload = CurrentTETChainBlocksCount;
-  if FTotalTETBlocksToDownload > CurrentTETChainBlocksCount then
-  begin
-    DownloadProgressBar.Max := ATotalTETBlocksToDownload;
-    ProgressLabel.Text := Format('%d of %d blocks loaded',
-      [CurrentTETChainBlocksCount, FTotalTETBlocksToDownload]);
-    DownloadProgressBar.Value := CurrentTETChainBlocksCount;
-    DownloadProgressBar.Visible := True;
-  end else
+  Inc(FTotalBlocksNumberToLoad, ABlocksNumberToLoad);
+  CurrentBlocksNumber := AppCore.GetTETChainBlocksCount +
+    AppCore.GetDynTETChainBlocksCount;
+  DownloadProgressBar.Max := FTotalBlocksNumberToLoad;
+  ProgressLabel.Text := Format('%d of %d blocks loaded',
+    [CurrentBlocksNumber, FTotalBlocksNumberToLoad]);
+  DownloadProgressBar.Value := CurrentBlocksNumber;
+  DownloadProgressBar.Visible := True;
+
+  AppCore.BlocksSyncDone := FTotalBlocksNumberToLoad = CurrentBlocksNumber;
+  if AppCore.BlocksSyncDone then
     OnDownloadingDone;
 end;
 

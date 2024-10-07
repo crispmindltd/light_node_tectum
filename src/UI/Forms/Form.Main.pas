@@ -1193,7 +1193,7 @@ var
   TETBalance: Double;
 begin
   try
-    FBalances.AddOrSetValue('TET',AppCore.GetTETLocalBalance);
+//    FBalances.AddOrSetValue('TET',AppCore.GetTETLocalBalance);
     FBalances.TryGetValue('TET',TETBalance);
     BalanceTETValueLabel.Text := FormatFloat('0.########',TETBalance) + ' TET';
   except
@@ -1212,7 +1212,7 @@ var
   TransNumber: Integer;
 begin
   TransNumber := DefaultTransNumberToShow;
-  Transactions := AppCore.GetTETUserLastTransactions(AppCore.UserID,TransNumber);
+//  Transactions := AppCore.GetTETUserLastTransactions(AppCore.UserID,TransNumber);
 
   NoTETHistoryLabel.Visible := TransNumber = 0;
   HistoryTETHeaderLayout.Visible := not NoTETHistoryLabel.Visible;

@@ -64,7 +64,7 @@ begin
     try
       if not FCommands.TryGetValue(URI, EndpointFunc) then
         raise ENotFoundError.Create('')
-      else if not AppCore.TETChainSyncDone then
+      else if not AppCore.BlocksSyncDone then
         raise EDownloadingNotFinished.Create('');
 
       if Assigned(ARequestInfo.PostStream) then

@@ -15,6 +15,7 @@ type
   TBlockchainTET = class(TChainFileBase)
   private
     FFile: file of Tbc2;
+    FIsOpened: Boolean;
   public
     constructor Create;
     destructor Destory;
@@ -39,7 +40,7 @@ implementation
 
 constructor TBlockchainTET.Create;
 begin
-  inherited Create(ConstStr.DBCPath, ConstStr.TokenCHNFileName, True);
+  inherited Create(ConstStr.DBCPath, ConstStr.TokenCHNFileName);
 
   if not FileExists(FFullFilePath) then
     TFile.WriteAllBytes(FFullFilePath, []);
@@ -112,21 +113,29 @@ begin
 end;
 
 function TBlockchainTET.ReadBlocksAsBytes(ASkipBlocks, ANumber: Integer): TBytes;
+var
+  NeedClose: Boolean;
+  BlockBytes: array[0..SizeOf(Tbc2) - 1] of Byte;
+  Tbc2Block: Tbc2 absolute BlockBytes;
+  i: Integer;
 begin
   Result := [];
-  FLock.Enter;
-  FFileStream := TFileStream.Create(FullPath, fmOpenRead or fmShareDenyNone);
+  NeedClose := DoOpen;
   try
-    if (ASkipBlocks * GetBlockSize > FFileStream.Size - GetBlockSize) or
+    if (ASkipBlocks >= FileSize(FFile)) or
       (ASkipBlocks < 0) then
       exit;
-    FFileStream.Seek(ASkipBlocks * GetBlockSize, soBeginning);
-    SetLength(Result, Min(ANumber * GetBlockSize,
-      FFileStream.Size - FFileStream.Position));
-    FFileStream.Read(Result, Length(Result));
+
+    Seek(FFile, ASkipBlocks);
+    SetLength(Result, Min(ANumber, FileSize(FFile) - ASkipBlocks) * GetBlockSize);
+    for i := 0 to (Length(Result) div GetBlockSize) - 1 do
+    begin
+      Read(FFile, Tbc2Block);
+      Move(BlockBytes[0], Result[i * GetBlockSize], GetBlockSize);
+    end;
   finally
-    FFileStream.Free;
-    FLock.Leave;
+    if NeedClose then
+      DoClose;
   end;
 end;
 
@@ -185,18 +194,26 @@ end;
 //end;
 
 procedure TBlockchainTET.WriteBlocksAsBytes(ASkipBlocks: Integer; ABytes: TBytes);
+var
+  NeedClose: Boolean;
+  BlockBytes: array[0..SizeOf(Tbc2) - 1] of Byte;
+  Tbc2Block: Tbc2 absolute BlockBytes;
+  i: Integer;
 begin
   if (Length(ABytes) mod GetBlockSize <> 0) or (ASkipBlocks < 0) then
     exit;
 
-  FLock.Enter;
-  FFileStream := TFileStream.Create(FullPath, fmOpenWrite);
+  NeedClose := DoOpen;
   try
-    FFileStream.Seek(ASkipBlocks * GetBlockSize, soBeginning);
-    FFileStream.Write(ABytes, Length(ABytes));
+    Seek(FFile, ASkipBlocks);
+    for i := 0 to (Length(ABytes) div GetBlockSize) - 1 do
+    begin
+      Move(ABytes[i * GetBlockSize], BlockBytes[0], GetBlockSize);
+      Write(FFile, Tbc2Block);
+    end;
   finally
-    FFileStream.Free;
-    FLock.Leave;
+    if NeedClose then
+      DoClose;
   end;
 end;
 

@@ -17,7 +17,7 @@ type
     procedure ShowMainForm;
     procedure ShowEnterPrivateKeyForm;
     function IsChainNeedSync(const AName: String): Boolean;
-    procedure ShowTotalBlocksToDownload(const ATotalTETBlocksToDownload: Int64);
+    procedure ShowTotalBlocksToDownload(const ABlocksNumberToLoad: Integer);
     procedure ShowDownloadProgress;
     procedure NotifyNewTETBlocks(const ANeedRefreshBalance: Boolean);
     procedure NotifyNewTokenBlocks(const ANeedRefreshBalance: Boolean);
@@ -39,40 +39,47 @@ type
 
     //TET chain methods
     function GetTETChainBlockSize: Integer;
-    function GetTETChainBlocksCount: Int64;
-    function GetTETChainBlocks(ASkip: Int64): TBytes;
-//    function GetChainBlocks(var AAmount: Integer): TBytesBlocks; overload;
-    procedure SetTETChainBlocks(ASkip: Int64; ABytes: TBytes);
+    function GetTETChainBlocksCount: Integer;
+    function GetTETChainBlocks(ASkip: Integer): TBytes;
+    procedure SetTETChainBlocks(ASkip: Integer; ABytes: TBytes);
 //    function GetChainTransations(ASkip: Integer; var ARows: Integer): TArray<TExplorerTransactionInfo>;
 //    function GetChainLastTransactions(var Amount: Integer): TArray<TExplorerTransactionInfo>;
 //    function GetChainUserTransactions(AUserID: Integer; ASkip: Integer;
 //      var ARows: Integer): TArray<THistoryTransactionInfo>;
-    function GetTETUserLastTransactions(AUserID: Int64;
-      var ANumber: Integer): TArray<THistoryTransactionInfo>;
-    function GetTETLocalBalance: Double; overload;
-    function GetTETLocalBalance(ATETAddress: String): Double; overload;
+//    function GetTETUserLastTransactions(AUserID: Int64;
+//      var ANumber: Integer): TArray<THistoryTransactionInfo>;
+//    function GetTETLocalBalance: Double; overload;
+//    function GetTETLocalBalance(ATETAddress: String): Double; overload;
+
+    //TET dynamic blocks sync methods
+    procedure BeginUpdateDynTETChain;
+    procedure EndUpdateDynTETChain;
+    function GetDynTETChainBlockSize: Integer;
+    function GetDynTETChainBlocksCount: Integer;
+    function GetDynTETChainBlocks(ASkip: Integer): TBytes;
+    procedure SetDynTETChainBlocks(ASkip: Integer; ABytes: TBytes);
 
     //IcoDat blocks sync methods
-    function GetTokenICOBlocksCount: Int64;
     function GetTokenICOBlockSize: Integer;
-    function GetTokenICOBlocks(ASkip: Int64): TBytes;
-    procedure SetTokenICOBlocks(ASkip: Int64; ABytes: TBytes);
+    function GetTokenICOBlocksCount: Integer;
+    function GetTokenICOBlocks(ASkip: Integer): TBytes;
+    procedure SetTokenICOBlocks(ASkip: Integer; ABytes: TBytes);
 
     //SmartKey blocks sync methods
-    function GetSmartKeyBlocksCount: Int64;
-    function GetSmartKeyBlockSize: Integer;
-    function GetSmartKeyBlocks(ASkip: Int64): TBytes;
-    procedure SetSmartKeyBlocks(ASkip: Int64; ABytes: TBytes);
+//    function GetSmartKeyBlocksCount: Int64;
+//    function GetSmartKeyBlockSize: Integer;
+//    function GetSmartKeyBlocks(ASkip: Int64): TBytes;
+//    procedure SetSmartKeyBlocks(ASkip: Int64; ABytes: TBytes);
 
     //Tokens chains methods
-    procedure UpdateTokensList;
-    function GetTokensToSynchronize: TArray<Integer>;
-    procedure AddTokenToSynchronize(ATokenID: Integer);
-    procedure RemoveTokenToSynchronize(ATokenID: Integer);
-    function GetTokenChainBlocksCount(ATokenID: Integer): Int64;
-    function GetTokenBlockSize: Integer;
-    function GetTokenChainBlocks(ATokenID: Integer; ASkip: Int64): TBytes;
-    procedure SetTokenBlocks(ATokenID: Integer; ASkip: Int64; ABytes: TBytes);
+//    procedure UpdateTokensList;
+//    function GetTokensToSynchronize: TArray<Integer>;
+//    procedure AddTokenToSynchronize(ATokenID: Integer);
+//    procedure RemoveTokenToSynchronize(ATokenID: Integer);
+//    function GetTokenChainBlocksCount(ATokenID: Integer): Int64;
+//    function GetTokenBlockSize: Integer;
+//    function GetTokenChainBlocks(ATokenID: Integer; ASkip: Int64): TBytes;
+//    procedure SetTokenBlocks(ATokenID: Integer; ASkip: Int64; ABytes: TBytes);
 //    function GetSmartBlocks(ASmartID: Integer;
 //      var AAmount: Integer): TBytesBlocks; overload;
 //    function GetSmartBlocks(ATicker: String;
@@ -135,7 +142,7 @@ type
     property SessionKey: string read GetSessionKey write SetSessionKey;
     property TETAddress: string read GetTETAddress;
     property UserID: Int64 read GetUserID write SetUserID;
-    property TETChainSyncDone: Boolean read GetLoadingStatus write SetLoadingStatus;
+    property BlocksSyncDone: Boolean read GetLoadingStatus write SetLoadingStatus;
   end;
 
 var

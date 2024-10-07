@@ -30,7 +30,6 @@ uses
   Blockchain.BaseTypes in 'Blockchain\Blockchain.BaseTypes.pas',
   Net.Data in 'Net\Net.Data.pas',
   Net.LightSocket in 'Net\Net.LightSocket.pas',
-  Blockchain.SmartKey in 'Blockchain\Blockchain.SmartKey.pas',
   endpoints.Account in 'Web\endpoints\endpoints.Account.pas',
   App.Exceptions in 'Core\App.Exceptions.pas',
   endpoints.Token in 'Web\endpoints\endpoints.Token.pas',
@@ -47,10 +46,7 @@ uses
   Form.EnterKey in 'UI\Forms\Form.EnterKey.pas' {EnterPrivateKeyForm},
   App.Constants in 'Core\App.Constants.pas',
   OpenURL in 'UI\OpenURL.pas',
-  Sync.TETChain in 'Sync\Sync.TETChain.pas',
-  Blockchain.Token in 'Blockchain\Blockchain.Token.pas',
-  Blockchain.TokenDynamic in 'Blockchain\Blockchain.TokenDynamic.pas',
-  Sync.Tokens in 'Sync\Sync.Tokens.pas';
+  Sync.TETChain in 'Sync\Sync.TETChain.pas';
 
 {$R *.res}
 

@@ -65,40 +65,48 @@ type
 
     //TET chain methods
     function GetTETChainBlockSize: Integer;
-    function GetTETChainBlocksCount: Int64;
-    function GetTETChainBlocks(ASkip: Int64): TBytes;
-//    function GetChainBlocks(var AAmount: Integer): TBytesBlocks; overload;
-    procedure SetTETChainBlocks(ASkip: Int64; ABytes: TBytes);
+    function GetTETChainBlocksCount: Integer;
+    function GetTETChainBlocks(ASkip: Integer): TBytes;
+    procedure SetTETChainBlocks(ASkip: Integer; ABytes: TBytes);
 //    function GetChainTransations(ASkip: Integer; var ARows: Integer): TArray<TExplorerTransactionInfo>;
 //    function GetChainLastTransactions(var Amount: Integer): TArray<TExplorerTransactionInfo>;
 //    function GetChainUserTransactions(AUserID: Integer; ASkip: Integer;
 //      var ARows: Integer): TArray<THistoryTransactionInfo>;
-    function GetTETUserLastTransactions(AUserID: Int64;
-      var ANumber: Integer): TArray<THistoryTransactionInfo>;
-    function GetTETLocalBalance: Double; overload;
-    function GetTETLocalBalance(ATETAddress: string): Double; overload;
+//    function GetTETUserLastTransactions(AUserID: Int64;
+//      var ANumber: Integer): TArray<THistoryTransactionInfo>;
+//    function GetTETLocalBalance: Double; overload;
+//    function GetTETLocalBalance(ATETAddress: string): Double; overload;
+
+    //TET dynamic blocks sync methods
+    procedure BeginUpdateDynTETChain;
+    procedure EndUpdateDynTETChain;
+    function GetDynTETChainBlockSize: Integer;
+    function GetDynTETChainBlocksCount: Integer;
+    function GetDynTETChainBlocks(ASkip: Integer): TBytes;
+    procedure SetDynTETChainBlocks(ASkip: Integer; ABytes: TBytes);
+//    procedure SetDynBlock(ADynID: Integer; APos: Int64; ABytes: TOneBlockBytes);
 
     //IcoDat blocks sync methods
-    function GetTokenICOBlocksCount: Int64;
     function GetTokenICOBlockSize: Integer;
-    function GetTokenICOBlocks(ASkip: Int64): TBytes;
-    procedure SetTokenICOBlocks(ASkip: Int64; ABytes: TBytes);
+    function GetTokenICOBlocksCount: Integer;
+    function GetTokenICOBlocks(ASkip: Integer): TBytes;
+    procedure SetTokenICOBlocks(ASkip: Integer; ABytes: TBytes);
 
     //SmartKey blocks sync methods
-    function GetSmartKeyBlocksCount: Int64;
-    function GetSmartKeyBlockSize: Integer;
-    function GetSmartKeyBlocks(ASkip: Int64): TBytes;
-    procedure SetSmartKeyBlocks(ASkip: Int64; ABytes: TBytes);
+//    function GetSmartKeyBlocksCount: Int64;
+//    function GetSmartKeyBlockSize: Integer;
+//    function GetSmartKeyBlocks(ASkip: Int64): TBytes;
+//    procedure SetSmartKeyBlocks(ASkip: Int64; ABytes: TBytes);
 
     //Tokens chains methods
-    procedure UpdateTokensList;
+//    procedure UpdateTokensList;
     function GetTokensToSynchronize: TArray<Integer>;
     procedure AddTokenToSynchronize(ATokenID: Integer);
     procedure RemoveTokenToSynchronize(ATokenID: Integer);
-    function GetTokenChainBlocksCount(ATokenID: Integer): Int64;
-    function GetTokenChainBlocks(ATokenID: Integer; ASkip: Int64): TBytes;
-    function GetTokenBlockSize: Integer;
-    procedure SetTokenBlocks(ATokenID: Integer; ASkip: Int64; ABytes: TBytes);
+//    function GetTokenChainBlocksCount(ATokenID: Integer): Int64;
+//    function GetTokenChainBlocks(ATokenID: Integer; ASkip: Int64): TBytes;
+//    function GetTokenBlockSize: Integer;
+//    procedure SetTokenBlocks(ATokenID: Integer; ASkip: Int64; ABytes: TBytes);
 //    function GetSmartBlocks(ASmartID: Integer; AFrom: Int64;
 //      out AAmount: Integer): TBytesBlocks; overload;
 //    function GetSmartBlocks(ASmartID: Integer;
@@ -115,15 +123,6 @@ type
 //      var Amount: Integer): TArray<TExplorerTransactionInfo>;
 //    function GetSmartLastUserTransactions(AUserID: Integer; ATicker: string;
 //      var Amount: Integer): TArray<THistoryTransactionInfo>;
-
-    //Dynamic blocks sync methods
-//    function GetDynBlocksCount(ADynID: Integer): Integer;
-//    function GetDynBlockSize(ADynID: Integer): Integer;
-//    function GetDynBlocks(ADynID: Integer; AFrom: Int64;
-//      out AAmount: Integer): TBytesBlocks;
-//    procedure SetDynBlocks(ADynID: Integer; APos: Int64; ABytes: TBytesBlocks;
-//      AAmount: Integer);
-//    procedure SetDynBlock(ADynID: Integer; APos: Int64; ABytes: TOneBlockBytes);
 
 //    procedure UpdateLists;
 
@@ -164,7 +163,7 @@ type
     property SessionKey: string read GetSessionKey write SetSessionKey;
     property TETAddress: string read GetTETAddress;
     property UserID: Int64 read GetUserID write SetUserID;
-    property TETChainSyncDone: Boolean read GetLoadingStatus write SetLoadingStatus;
+    property BlocksSyncDone: Boolean read GetLoadingStatus write SetLoadingStatus;
   end;
 
 implementation
@@ -668,14 +667,9 @@ begin
   Result := (l*(x2 - x1 + 1) div (p1) + x1).ToString;
 end;
 
-function TAppCore.GetTETChainBlocks(ASkip: Int64): TBytes;
-begin
-  Result := FBlockchain.GetTETChainBlocks(ASkip);
-end;
-
-//function TAppCore.GetChainBlocks(var AAmount: Integer): TBytesBlocks;
+//function TAppCore.GetTETChainBlocks(ASkip: Int64): TBytes;
 //begin
-//  Result := FBlockchain.GetChainBlocks(AAmount);
+//  Result := FBlockchain.GetTETChainBlocks(ASkip);
 //end;
 
 //function TAppCore.GetBlocksCount(AReqID: string): string;
@@ -683,114 +677,98 @@ end;
 //  Result := FNodeClient.DoRequest(AReqID,'GetBlockCount1 * *');
 //end;
 
-function TAppCore.GetTETChainBlocksCount: Int64;
-begin
-  Result := FBlockchain.GetTETChainBlocksCount;
-end;
-
-function TAppCore.GetTETChainBlockSize: Integer;
-begin
-  Result := FBlockchain.GetTETChainBlockSize;
-end;
-
-function TAppCore.GetTokenICOBlocks(ASkip: Int64): TBytes;
-begin
-  Result := FBlockchain.GetICOBlocks(ASkip);
-end;
-
-//function TAppCore.GetDynBlocks(ADynID: Integer; AFrom: Int64;
-//  out AAmount: Integer): TBytesBlocks;
+//function TAppCore.GetTETChainBlocksCount: Int64;
 //begin
-//  Result := FBlockchain.GetDynBlocks(ADynID,AFrom,AAmount);
+//  Result := FBlockchain.GetTETChainBlocksCount;
 //end;
 
-//function TAppCore.GetDynBlocksCount(ADynID: Integer): Integer;
+//function TAppCore.GetTETChainBlockSize: Integer;
 //begin
-//  Result := FBlockchain.GetDynBlocksCount(ADynID);
+//  Result := FBlockchain.GetTETChainBlockSize;
 //end;
 
-//function TAppCore.GetDynBlockSize(ADynID: Integer): Integer;
+//function TAppCore.GetTokenICOBlocks(ASkip: Int64): TBytes;
 //begin
-//  Result := FBlockchain.GetDynBlockSize(ADynID);
+//  Result := FBlockchain.GetICOBlocks(ASkip);
 //end;
 
-function TAppCore.GetTokenICOBlocksCount: Int64;
-begin
-  Result := FBlockchain.GetICOBlocksCount;
-end;
+//function TAppCore.GetTokenICOBlocksCount: Int64;
+//begin
+//  Result := FBlockchain.GetICOBlocksCount;
+//end;
 
-function TAppCore.GetTokenICOBlockSize: Integer;
-begin
-  Result := FBlockchain.GetICOBlockSize;
-end;
+//function TAppCore.GetTokenICOBlockSize: Integer;
+//begin
+//  Result := FBlockchain.GetICOBlockSize;
+//end;
 
 function TAppCore.GetTokensToSynchronize: TArray<Integer>;
 begin
   Result := FSettings.GetTokensToSynchronize;
 end;
 
-function TAppCore.GetTETLocalBalance(ATETAddress: string): Double;
-var
-  TETBlock: Tbc2;
-  ICODat: TTokenICODat;
-  TETDynamic: TTokenBase;
-  BlockID: Int64;
-begin
-  if not FBlockchain.TryGetTETDynamic(ATETAddress,BlockID,TETDynamic) then
-    raise EAddressNotExistsError.Create('');
-  TETBlock := FBlockchain.GetTETChainBlock(TETDynamic.LastBlock);
-  if not FBlockchain.TryGetICOBlock(TETDynamic.TokenDatID,ICODat) then
-    exit;
+//function TAppCore.GetTETLocalBalance(ATETAddress: string): Double;
+//var
+//  TETBlock: Tbc2;
+//  ICODat: TTokenICODat;
+//  TETDynamic: TTokenBase;
+//  BlockID: Int64;
+//begin
+//  if not FBlockchain.TryGetTETDynamic(ATETAddress,BlockID,TETDynamic) then
+//    raise EAddressNotExistsError.Create('');
+//  TETBlock := FBlockchain.GetTETChainBlock(TETDynamic.LastBlock);
+//  if not FBlockchain.TryGetICOBlock(TETDynamic.TokenDatID,ICODat) then
+//    exit;
+//
+//  if BlockID = TETBlock.Smart.tkn[1].TokenID then
+//		Result := TETBlock.Smart.tkn[1].Amount / Power(10,ICODat.FloatSize)
+//	else if BlockID = TETBlock.Smart.tkn[2].TokenID then
+//		Result := TETBlock.Smart.tkn[2].Amount / Power(10,ICODat.FloatSize)
+//	else
+//    raise EUnknownError.Create('');
+//end;
 
-  if BlockID = TETBlock.Smart.tkn[1].TokenID then
-		Result := TETBlock.Smart.tkn[1].Amount / Power(10,ICODat.FloatSize)
-	else if BlockID = TETBlock.Smart.tkn[2].TokenID then
-		Result := TETBlock.Smart.tkn[2].Amount / Power(10,ICODat.FloatSize)
-	else
-    raise EUnknownError.Create('');
-end;
+//function TAppCore.GetTETUserLastTransactions(AUserID: Int64;
+//  var ANumber: Integer): TArray<THistoryTransactionInfo>;
+//begin
+//  Result := FBlockchain.GetTETUserLastTransactions(AUserID,ANumber);
+//end;
 
-function TAppCore.GetTETUserLastTransactions(AUserID: Int64;
-  var ANumber: Integer): TArray<THistoryTransactionInfo>;
-begin
-  Result := FBlockchain.GetTETUserLastTransactions(AUserID,ANumber);
-end;
-
-function TAppCore.GetTETLocalBalance: Double;
-var
-  TETBlock: Tbc2;
-  ICODat: TTokenICODat;
-  TETDynamic: TTokenBase;
-  BlockID: Int64;
-begin
-  if not FBlockchain.TryGetTETDynamic(FUserID,BlockID,TETDynamic) then
-    raise EAddressNotExistsError.Create('');
-  TETBlock := FBlockchain.GetTETChainBlock(TETDynamic.LastBlock);
-  if not FBlockchain.TryGetICOBlock(TETDynamic.TokenDatID,ICODat) then
-    exit;
-
-  if BlockID = TETBlock.Smart.tkn[1].TokenID then
-		Result := TETBlock.Smart.tkn[1].Amount / Power(10,ICODat.FloatSize)
-	else if BlockID = TETBlock.Smart.tkn[2].TokenID then
-		Result := TETBlock.Smart.tkn[2].Amount / Power(10,ICODat.FloatSize)
-	else
-    raise EUnknownError.Create('');
-end;
+//function TAppCore.GetTETLocalBalance: Double;
+//var
+//  TETBlock: Tbc2;
+//  ICODat: TTokenICODat;
+//  TETDynamic: TTokenBase;
+//  BlockID: Int64;
+//begin
+//  if not FBlockchain.TryGetTETDynamic(FUserID,BlockID,TETDynamic) then
+//    raise EAddressNotExistsError.Create('');
+//  TETBlock := FBlockchain.GetTETChainBlock(TETDynamic.LastBlock);
+//  if not FBlockchain.TryGetICOBlock(TETDynamic.TokenDatID,ICODat) then
+//    exit;
+//
+//  if BlockID = TETBlock.Smart.tkn[1].TokenID then
+//		Result := TETBlock.Smart.tkn[1].Amount / Power(10,ICODat.FloatSize)
+//	else if BlockID = TETBlock.Smart.tkn[2].TokenID then
+//		Result := TETBlock.Smart.tkn[2].Amount / Power(10,ICODat.FloatSize)
+//	else
+//    raise EUnknownError.Create('');
+//end;
 
 function TAppCore.GetLoadingStatus: Boolean;
 begin
   Result := FStartLoadingDone;
 end;
 
-function TAppCore.GetTokenBlockSize: Integer;
-begin
-  Result := SizeOf(TCbc4);
-end;
+//function TAppCore.GetTokenBlockSize: Integer;
+//begin
+//  Result := SizeOf(TCbc4);
+//end;
 
-function TAppCore.GetTokenChainBlocks(ATokenID: Integer; ASkip: Int64): TBytes;
-begin
-  Result := FBlockchain.GetTokenChainBlocks(ATokenID,ASkip);
-end;
+//function TAppCore.GetTokenChainBlocks(ATokenID: Integer; ASkip: Int64): TBytes;
+//begin
+//  Result := FBlockchain.GetTokenChainBlocks(ATokenID,ASkip);
+//end;
 
 //function TAppCore.GetOneSmartKeyBlock(AFrom: Int64): TCSmartKey;
 //begin
@@ -858,10 +836,10 @@ end;
 //  Result := FBlockchain.GetSmartBlocks(ASmartName,AFrom,AAmount);
 //end;
 
-function TAppCore.GetTokenChainBlocksCount(ATokenID: Integer): Int64;
-begin
-  Result := FBlockchain.GetTokenChainBlocksCount(ATokenID);
-end;
+//function TAppCore.GetTokenChainBlocksCount(ATokenID: Integer): Int64;
+//begin
+//  Result := FBlockchain.GetTokenChainBlocksCount(ATokenID);
+//end;
 
 //function TAppCore.GetSmartLastTransactions(ATicker: string;
 //  var Amount: Integer): TArray<TExplorerTransactionInfo>;
@@ -928,20 +906,20 @@ begin
   Result := FSessionKey;
 end;
 
-function TAppCore.GetSmartKeyBlocks(ASkip: Int64): TBytes;
-begin
-  Result := FBlockchain.GetSmartKeyBlocks(ASkip);
-end;
+//function TAppCore.GetSmartKeyBlocks(ASkip: Int64): TBytes;
+//begin
+//  Result := FBlockchain.GetSmartKeyBlocks(ASkip);
+//end;
 
-function TAppCore.GetSmartKeyBlocksCount: Int64;
-begin
-  Result := FBlockchain.GetSmartKeyBlocksCount;
-end;
+//function TAppCore.GetSmartKeyBlocksCount: Int64;
+//begin
+//  Result := FBlockchain.GetSmartKeyBlocksCount;
+//end;
 
-function TAppCore.GetSmartKeyBlockSize: Integer;
-begin
-  Result := FBlockchain.GetSmartKeyBlockSize;
-end;
+//function TAppCore.GetSmartKeyBlockSize: Integer;
+//begin
+//  Result := FBlockchain.GetSmartKeyBlockSize;
+//end;
 
 //function TAppCore.GetSmartAddressByID(AID: Int64): string;
 //begin
@@ -964,6 +942,76 @@ end;
 function TAppCore.GetTETAddress: string;
 begin
   Result := FTETAddress;
+end;
+
+function TAppCore.GetTETChainBlockSize: Integer;
+begin
+  Result := FBlockchain.GetTETChainBlockSize;
+end;
+
+function TAppCore.GetTETChainBlocksCount: Integer;
+begin
+  Result := FBlockchain.GetTETChainBlocksCount;
+end;
+
+function TAppCore.GetTETChainBlocks(ASkip: Integer): TBytes;
+begin
+  Result := FBlockchain.GetTETChainBlocks(ASkip);
+end;
+
+procedure TAppCore.SetTETChainBlocks(ASkip: Integer; ABytes: TBytes);
+begin
+  FBlockchain.SetTETChainBlocks(ASkip, ABytes);
+end;
+
+procedure TAppCore.BeginUpdateDynTETChain;
+begin
+  FBlockchain.BeginUpdateDynTETChain;
+end;
+
+procedure TAppCore.EndUpdateDynTETChain;
+begin
+  FBlockchain.EndUpdateDynTETChain;
+end;
+
+function TAppCore.GetDynTETChainBlockSize: Integer;
+begin
+  Result := FBlockchain.GetDynTETChainBlockSize;
+end;
+
+function TAppCore.GetDynTETChainBlocksCount: Integer;
+begin
+  Result := FBlockchain.GetDynTETChainBlocksCount;
+end;
+
+function TAppCore.GetDynTETChainBlocks(ASkip: Integer): TBytes;
+begin
+  Result := FBlockchain.GetDynTETChainBlocks(ASkip);
+end;
+
+procedure TAppCore.SetDynTETChainBlocks(ASkip: Integer; ABytes: TBytes);
+begin
+  FBlockchain.SetDynBlock(ASkip, ABytes);
+end;
+
+function TAppCore.GetTokenICOBlockSize: Integer;
+begin
+  Result := FBlockchain.GetICOBlockSize;
+end;
+
+function TAppCore.GetTokenICOBlocksCount: Integer;
+begin
+  Result := FBlockchain.GetICOBlocksCount;
+end;
+
+function TAppCore.GetTokenICOBlocks(ASkip: Integer): TBytes;
+begin
+  Result := FBlockchain.GetICOBlocks(ASkip);
+end;
+
+procedure TAppCore.SetTokenICOBlocks(ASkip: Integer; ABytes: TBytes);
+begin
+  FBlockchain.SetTokenICOBlocks(ASkip, ABytes);
 end;
 
 //function TAppCore.GetTokensICOs(ASkip: Integer; var ARows: Integer): TArray<TTokenICODat>;
@@ -1040,31 +1088,31 @@ begin
   TFile.AppendAllText(Path, 'private key:' + APrivateKey + sLineBreak);
 end;
 
-procedure TAppCore.UpdateTokensList;
-begin
-  FBlockchain.UpdateTokensList;
-end;
+//procedure TAppCore.UpdateTokensList;
+//begin
+//  FBlockchain.UpdateTokensList;
+//end;
 
 //function TAppCore.SendToConfirm(AReqID, AToSend: string): string;
 //begin
 //  Result := FNodeClient.DoRequest(AReqID,AToSend);
 //end;
 
-procedure TAppCore.SetTETChainBlocks(ASkip: Int64; ABytes: TBytes);
-begin
-  FBlockchain.SetTETChainBlocks(ASkip,ABytes);
-end;
+//procedure TAppCore.SetTETChainBlocks(ASkip: Int64; ABytes: TBytes);
+//begin
+//  FBlockchain.SetTETChainBlocks(ASkip,ABytes);
+//end;
 
-procedure TAppCore.SetTokenBlocks(ATokenID: Integer; ASkip: Int64;
-  ABytes: TBytes);
-begin
-  FBlockchain.SetTokenBlocks(ATokenID,ASkip,ABytes);
-end;
+//procedure TAppCore.SetTokenBlocks(ATokenID: Integer; ASkip: Int64;
+//  ABytes: TBytes);
+//begin
+//  FBlockchain.SetTokenBlocks(ATokenID,ASkip,ABytes);
+//end;
 
-procedure TAppCore.SetTokenICOBlocks(ASkip: Int64; ABytes: TBytes);
-begin
-  FBlockchain.SetTokenICOBlocks(ASkip,ABytes);
-end;
+//procedure TAppCore.SetTokenICOBlocks(ASkip: Int64; ABytes: TBytes);
+//begin
+//  FBlockchain.SetTokenICOBlocks(ASkip,ABytes);
+//end;
 
 procedure TAppCore.AddTokenToSynchronize(ATokenID: Integer);
 begin
@@ -1076,26 +1124,15 @@ begin
   FStartLoadingDone := AIsDone;
 end;
 
-//procedure TAppCore.SetDynBlocks(ADynID: Integer; APos: Int64;
-//  ABytes: TBytesBlocks; AAmount: Integer);
-//begin
-//  FBlockchain.SetDynBlocks(ADynID,APos,ABytes,AAmount);
-//end;
-
-//procedure TAppCore.SetDynBlock(ADynID: Integer; APos: Int64; ABytes: TOneBlockBytes);
-//begin
-//  FBlockchain.SetDynBlock(ADynID,APos,ABytes);
-//end;
-
 procedure TAppCore.SetSessionKey(const ASessionKey: string);
 begin
   FSessionKey := ASessionKey;
 end;
 
-procedure TAppCore.SetSmartKeyBlocks(ASkip: Int64; ABytes: TBytes);
-begin
-  FBlockchain.SetSmartKeyBlocks(ASkip,ABytes);
-end;
+//procedure TAppCore.SetSmartKeyBlocks(ASkip: Int64; ABytes: TBytes);
+//begin
+//  FBlockchain.SetSmartKeyBlocks(ASkip,ABytes);
+//end;
 
 procedure TAppCore.SetUserID(const AID: Int64);
 begin

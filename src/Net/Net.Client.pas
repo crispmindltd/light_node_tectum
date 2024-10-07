@@ -14,7 +14,7 @@ uses
   Net.Data,
   Sync.Base,
   Sync.TETChain,
-  Sync.Tokens,
+//  Sync.Tokens,
   SyncObjs,
   SysUtils;
 
@@ -28,26 +28,26 @@ type
     FStatus: TServerStatus;
   private
     FTETChainBlocksUpdater: TTETChainBlocksUpdater;
-    FTokensChainsBlocksUpdater: TTokensChainsBlocksUpdater;
+//    FTokensChainsBlocksUpdater: TTokensChainsBlocksUpdater;
     FTETChainSyncDone: TEvent;
-    FTokensSyncDone: TEvent;
+//    FTokensSyncDone: TEvent;
     FRemoteServer: TCustomSocket;
 
-    procedure StartTETChainSync(AAddress: String);
-    procedure onTETChainUpdaterTerminate(Sender: TObject);
+    procedure StartTETChainSync(AAddress: string);
+    procedure OnTETChainUpdaterTerminate(Sender: TObject);
     procedure KillTETChainUpdater;
-    procedure StartTokensChainsSync(AAddress: String);
-    procedure onTokensChainsUpdaterTerminate(Sender: TObject);
-    procedure KillTokensChainsUpdater;
+//    procedure StartTokensChainsSync(AAddress: string);
+//    procedure onTokensChainsUpdaterTerminate(Sender: TObject);
+//    procedure KillTokensChainsUpdater;
   public
     constructor Create;
     destructor Destroy; override;
 
     procedure Start;
-//    procedure BeginSync(const AChainName: String; AIsSystemChain: Boolean);
-//    procedure StopSync(const AChainName: String; AIsSystemChain: Boolean);
-    function DoRequest(AReqID,ARequest: String): String;
-    function DoRequestToValidator(ARequest: String): String;
+//    procedure BeginSync(const AChainName: string; AIsSystemChain: Boolean);
+//    procedure StopSync(const AChainName: string; AIsSystemChain: Boolean);
+    function DoRequest(AReqID,ARequest: string): string;
+    function DoRequestToValidator(ARequest: string): string;
     procedure Stop;
 end;
 
@@ -55,7 +55,7 @@ implementation
 
 { TNodeClient }
 
-procedure TNodeClient.StartTETChainSync(AAddress: String);
+procedure TNodeClient.StartTETChainSync(AAddress: string);
 var
   splt: TArray<string>;
 begin
@@ -69,19 +69,19 @@ begin
   FTETChainBlocksUpdater.Resume;
 end;
 
-procedure TNodeClient.StartTokensChainsSync(AAddress: String);
-var
-  splt: TArray<string>;
-begin
-  if Assigned(FTokensChainsBlocksUpdater) then exit;
-
-  splt := AAddress.Split([' ',':']);
-  FTokensChainsBlocksUpdater := TTokensChainsBlocksUpdater.Create(splt[0],
-    splt[1].ToInteger);
-  FTokensChainsBlocksUpdater.SyncDoneEvent := FTokensSyncDone;
-  FTokensChainsBlocksUpdater.OnTerminate := onTokensChainsUpdaterTerminate;
-  FTokensChainsBlocksUpdater.Resume;
-end;
+//procedure TNodeClient.StartTokensChainsSync(AAddress: string);
+//var
+//  splt: TArray<string>;
+//begin
+//  if Assigned(FTokensChainsBlocksUpdater) then exit;
+//
+//  splt := AAddress.Split([' ',':']);
+//  FTokensChainsBlocksUpdater := TTokensChainsBlocksUpdater.Create(splt[0],
+//    splt[1].ToInteger);
+//  FTokensChainsBlocksUpdater.SyncDoneEvent := FTokensSyncDone;
+//  FTokensChainsBlocksUpdater.OnTerminate := onTokensChainsUpdaterTerminate;
+//  FTokensChainsBlocksUpdater.Resume;
+//end;
 
 constructor TNodeClient.Create;
 begin
@@ -90,10 +90,10 @@ begin
   FRemoteServer := TCustomSocket.Create;
   FStatus := ssStoped;
   FTETChainSyncDone := TEvent.Create;
-  FTokensSyncDone := TEvent.Create;
+//  FTokensSyncDone := TEvent.Create;
 end;
 
-//procedure TNodeClient.BeginSync(const AChainName: String; AIsSystemChain: Boolean);
+//procedure TNodeClient.BeginSync(const AChainName: string; AIsSystemChain: Boolean);
 //var
 //  BU: TChainBlocksUpdater;
 //begin
@@ -109,12 +109,12 @@ begin
   Stop;
   FRemoteServer.Free;
   FTETChainSyncDone.Free;
-  FTokensSyncDone.Free;
+//  FTokensSyncDone.Free;
 
   inherited;
 end;
 
-function TNodeClient.DoRequest(AReqID, ARequest: String): String;
+function TNodeClient.DoRequest(AReqID, ARequest: string): string;
 begin
   try
     FRemoteServer.Connect;
@@ -133,10 +133,10 @@ begin
   end;
 end;
 
-function TNodeClient.DoRequestToValidator(ARequest: String): String;
+function TNodeClient.DoRequestToValidator(ARequest: string): string;
 var
-  addr: String;
-  splt: TArray<String>;
+  addr: string;
+  splt: TArray<string>;
   attemptsCount: Integer;
   FValidator: TLightSocket;
 begin
@@ -175,16 +175,16 @@ begin
     FTETChainBlocksUpdater.Terminate;
 end;
 
-procedure TNodeClient.KillTokensChainsUpdater;
-begin
-  if Assigned(FTokensChainsBlocksUpdater) then
-    FTokensChainsBlocksUpdater.Terminate;
-end;
+//procedure TNodeClient.KillTokensChainsUpdater;
+//begin
+//  if Assigned(FTokensChainsBlocksUpdater) then
+//    FTokensChainsBlocksUpdater.Terminate;
+//end;
 
-procedure TNodeClient.onTETChainUpdaterTerminate(Sender: TObject);
+procedure TNodeClient.OnTETChainUpdaterTerminate(Sender: TObject);
 var
   chUpdater: TTETChainBlocksUpdater;
-  anotherAddr: String;
+  anotherAddr: string;
 begin
   chUpdater := Sender as TTETChainBlocksUpdater;
   if chUpdater.IsError and (FStatus = ssStarted) then
@@ -196,27 +196,27 @@ begin
     FTETChainBlocksUpdater := nil;
 end;
 
-procedure TNodeClient.onTokensChainsUpdaterTerminate(Sender: TObject);
-var
-  smUpdater: TTokensChainsBlocksUpdater;
-  anotherAddr: String;
-begin
-  smUpdater := Sender as TTokensChainsBlocksUpdater;
-  if smUpdater.IsError and (FStatus = ssStarted) then
-  begin
-    anotherAddr := Nodes.GetAnotherNodeToConnect(smUpdater.Address);
-    FTokensChainsBlocksUpdater := nil;
-    StartTokensChainsSync(anotherAddr);
-  end else
-    FTokensChainsBlocksUpdater := nil;
-end;
+//procedure TNodeClient.onTokensChainsUpdaterTerminate(Sender: TObject);
+//var
+//  smUpdater: TTokensChainsBlocksUpdater;
+//  anotherAddr: string;
+//begin
+//  smUpdater := Sender as TTokensChainsBlocksUpdater;
+//  if smUpdater.IsError and (FStatus = ssStarted) then
+//  begin
+//    anotherAddr := Nodes.GetAnotherNodeToConnect(smUpdater.Address);
+//    FTokensChainsBlocksUpdater := nil;
+//    StartTokensChainsSync(anotherAddr);
+//  end else
+//    FTokensChainsBlocksUpdater := nil;
+//end;
 
 procedure TNodeClient.Start;
 begin
   if FStatus <> ssStoped then exit;
 
   StartTETChainSync(Nodes.GetNodeToConnect);
-  StartTokensChainsSync(Nodes.GetNodeToConnect);
+//  StartTokensChainsSync(Nodes.GetNodeToConnect);
   FStatus := ssStarted;
 end;
 
@@ -226,13 +226,13 @@ begin
 
   FStatus := ssShuttingDown;
   KillTETChainUpdater;
-  KillTokensChainsUpdater;
+//  KillTokensChainsUpdater;
   FTETChainSyncDone.WaitFor(ShuttingDownTimeout);
-  FTokensSyncDone.WaitFor(ShuttingDownTimeout);
+//  FTokensSyncDone.WaitFor(ShuttingDownTimeout);
   FStatus := ssStoped;
 end;
 
-//procedure TNodeClient.StopSync(const AChainName: String; AIsSystemChain: Boolean);
+//procedure TNodeClient.StopSync(const AChainName: string; AIsSystemChain: Boolean);
 //var
 //  BU: TChainBlocksUpdater;
 //begin
