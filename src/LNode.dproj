@@ -350,6 +350,11 @@
         </DCCReference>
         <DCCReference Include="Core\App.Constants.pas"/>
         <DCCReference Include="UI\OpenURL.pas"/>
+        <DCCReference Include="UI\Forms\Frame.PageNum.pas">
+            <Form>PageNumFrame</Form>
+            <FormType>fmx</FormType>
+            <DesignClass>TFrame</DesignClass>
+        </DCCReference>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
