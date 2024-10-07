@@ -66,18 +66,13 @@ begin
     try
       DoDynTETChainTotalNumberRequest;
       DoTETChainTotalNumberRequest;
-      AppCore.BeginUpdateDynTETChain;
-      try
-        while (FDynTETChainTotalBlocksToLoad > AppCore.GetDynTETChainBlocksCount) and
-          not Terminated do         
-          DoDynTETChainBlocksRequest;  
-        while (FTETChainTotalBlocksToLoad > AppCore.GetTETChainBlocksCount) and 
-          not Terminated do
-          DoTETChainBlocksRequest;              
-      finally
-        AppCore.EndUpdateDynTETChain;       
-      end;
-      
+      while (FDynTETChainTotalBlocksToLoad > AppCore.GetDynTETChainBlocksCount) and
+        not Terminated do
+        DoDynTETChainBlocksRequest;
+      while (FTETChainTotalBlocksToLoad > AppCore.GetTETChainBlocksCount) and
+        not Terminated do
+        DoTETChainBlocksRequest;
+
       while not (Terminated or IsError) do
         DoRequests;
       if not IsError then
@@ -234,10 +229,13 @@ begin
     exit;
 
   try
-    DoTETChainBlocksRequest;
+    DoTokenICORequest;
     if Terminated then
       exit;
-    DoTokenICORequest;
+    DoDynTETChainBlocksRequest;
+    if Terminated then
+      exit;
+    DoTETChainBlocksRequest;
   except
     on E:EReceiveTimeout do
       if not DoTryReconnect then raise;

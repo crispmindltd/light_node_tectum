@@ -52,8 +52,6 @@ type
 //    function GetTETLocalBalance(ATETAddress: String): Double; overload;
 
     //TET dynamic blocks sync methods
-    procedure BeginUpdateDynTETChain;
-    procedure EndUpdateDynTETChain;
     function GetDynTETChainBlockSize: Integer;
     function GetDynTETChainBlocksCount: Integer;
     function GetDynTETChainBlocks(ASkip: Integer): TBytes;

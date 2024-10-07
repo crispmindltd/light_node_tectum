@@ -42,6 +42,7 @@ constructor TBlockchainTET.Create;
 begin
   inherited Create(ConstStr.DBCPath, ConstStr.TokenCHNFileName);
 
+  FIsOpened := False;
   if not FileExists(FFullFilePath) then
     TFile.WriteAllBytes(FFullFilePath, []);
 end;

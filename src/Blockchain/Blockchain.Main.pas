@@ -53,8 +53,6 @@ type
     function GetTETChainBlocks(ASkip: Integer): TBytes;
     procedure SetTETChainBlocks(ASkip: Integer; ABytes: TBytes);
 
-    procedure BeginUpdateDynTETChain;
-    procedure EndUpdateDynTETChain;
     function GetDynTETChainBlockSize: Integer;
     function GetDynTETChainBlocksCount: Integer;
     function GetDynTETChainBlocks(ASkip: Integer): TBytes;
@@ -182,18 +180,39 @@ begin
 end;
 
 procedure TBlockchain.SetTETChainBlocks(ASkip: Integer; ABytes: TBytes);
+var
+  NeedClose: Boolean;
+  NewBlockBytes: array[0..SizeOf(Tbc2) - 1] of Byte;
+  NewBlock: Tbc2 absolute NewBlockBytes;
+  TotalBlocks, NewBlocksNumber, i: Integer;
+  TETDynBlock: TTokenBase;
 begin
   FTETChain.WriteBlocksAsBytes(ASkip, ABytes);
-end;
 
-procedure TBlockchain.BeginUpdateDynTETChain;
-begin
-  FTETDynamic.DoOpen;
-end;
+  TotalBlocks := FTETChain.GetBlocksCount;
+  NewBlocksNumber := Length(ABytes) div GetTETChainBlockSize;
+  NeedClose := FTETDynamic.DoOpen;
+  try
+    for i := 0 to NewBlocksNumber - 1 do
+    begin
+      Move(ABytes[i * GetTETChainBlockSize], NewBlockBytes[0],
+        GetTETChainBlockSize);
 
-procedure TBlockchain.EndUpdateDynTETChain;
-begin
-  FTETDynamic.DoClose;
+      if FTETDynamic.TryReadBlock(NewBlock.Smart.tkn[1].TokenID, TETDynBlock) then
+      begin
+        TETDynBlock.LastBlock := TotalBlocks - NewBlocksNumber + i;
+        FTETDynamic.WriteBlock(NewBlock.Smart.tkn[1].TokenID, TETDynBlock);
+      end;
+      if FTETDynamic.TryReadBlock(NewBlock.Smart.tkn[2].TokenID, TETDynBlock) then
+      begin
+        TETDynBlock.LastBlock := TotalBlocks - NewBlocksNumber + i;
+        FTETDynamic.WriteBlock(NewBlock.Smart.tkn[2].TokenID, TETDynBlock);
+      end;
+    end;
+  finally
+    if NeedClose then
+      FTETDynamic.DoClose;
+  end;
 end;
 
 function TBlockchain.GetDynTETChainBlockSize: Integer;

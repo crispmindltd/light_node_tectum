@@ -78,8 +78,6 @@ type
 //    function GetTETLocalBalance(ATETAddress: string): Double; overload;
 
     //TET dynamic blocks sync methods
-    procedure BeginUpdateDynTETChain;
-    procedure EndUpdateDynTETChain;
     function GetDynTETChainBlockSize: Integer;
     function GetDynTETChainBlocksCount: Integer;
     function GetDynTETChainBlocks(ASkip: Integer): TBytes;
@@ -962,16 +960,6 @@ end;
 procedure TAppCore.SetTETChainBlocks(ASkip: Integer; ABytes: TBytes);
 begin
   FBlockchain.SetTETChainBlocks(ASkip, ABytes);
-end;
-
-procedure TAppCore.BeginUpdateDynTETChain;
-begin
-  FBlockchain.BeginUpdateDynTETChain;
-end;
-
-procedure TAppCore.EndUpdateDynTETChain;
-begin
-  FBlockchain.EndUpdateDynTETChain;
 end;
 
 function TAppCore.GetDynTETChainBlockSize: Integer;
