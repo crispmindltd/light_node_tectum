@@ -325,6 +325,7 @@ object MainForm: TMainForm
             end
             object SendTETToEdit: TEdit
               Touch.InteractiveGestures = [LongTap, DoubleTap]
+              StyleLookup = 'EditStyle'
               TabOrder = 1
               DisableFocusEffect = True
               TextSettings.Font.Family = 'Inter'
@@ -335,6 +336,7 @@ object MainForm: TMainForm
               Size.Height = 40.000000000000000000
               Size.PlatformDefault = False
               TextPrompt = 'Enter the recipient address'
+              StyledSettings = [Style]
               OnChangeTracking = AmountTETEditChangeTracking
               object ShadowEffect6: TShadowEffect
                 Distance = 3.000000000000000000
@@ -2469,9 +2471,9 @@ object MainForm: TMainForm
       ExplicitSize.cy = 1.000000000000000000
       object ExplorerTabControl: TTabControl
         Align = Client
-        Margins.Top = 55.000000000000000000
+        Margins.Top = 50.000000000000000000
         Size.Width = 1094.000000000000000000
-        Size.Height = 842.000000000000000000
+        Size.Height = 847.000000000000000000
         Size.PlatformDefault = False
         StyleLookup = 'AuthTabControlstyle'
         TabIndex = 0
@@ -2479,9 +2481,9 @@ object MainForm: TMainForm
         TabPosition = None
         Sizes = (
           1094s
-          842s
+          847s
           1094s
-          842s)
+          847s)
         object ExporerTabItemData: TTabItem
           CustomIcon = <
             item
@@ -2495,14 +2497,90 @@ object MainForm: TMainForm
           TabOrder = 0
           ExplicitSize.cx = 8.000000000000000000
           ExplicitSize.cy = 8.000000000000000000
+          object SearchEdit: TEdit
+            Touch.InteractiveGestures = [LongTap, DoubleTap]
+            Align = Top
+            StyleLookup = 'SearchEditStyle'
+            TabOrder = 10
+            CanParentFocus = True
+            DisableFocusEffect = True
+            MaxLength = 64
+            HideSelectionOnExit = False
+            FilterChar = 'qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM0123456789'
+            EnableDragHighlight = False
+            Size.Width = 1094.000000000000000000
+            Size.Height = 40.000000000000000000
+            Size.PlatformDefault = False
+            TextPrompt = 'Type here to search'
+            OnChangeTracking = SearchEditChangeTracking
+            OnKeyDown = SearchEditKeyDown
+            object SearchButton: TButton
+              Align = MostRight
+              Cursor = crArrow
+              Enabled = False
+              StyledSettings = []
+              Margins.Top = 5.000000000000000000
+              Margins.Right = 5.000000000000000000
+              Margins.Bottom = 5.000000000000000000
+              Position.X = 929.000000000000000000
+              Position.Y = 5.000000000000000000
+              Size.Width = 160.000000000000000000
+              Size.Height = 30.000000000000000000
+              Size.PlatformDefault = False
+              StyleLookup = 'Buttonstyle'
+              TabOrder = 5
+              Text = 'Search'
+              TextSettings.Font.Family = 'Inter'
+              TextSettings.Font.Size = 14.000000000000000000
+              TextSettings.FontColor = claWhite
+              TextSettings.Trimming = None
+              OnClick = SearchButtonClick
+            end
+            object TransactionNotFoundLabel: TLabel
+              Align = Right
+              AutoSize = True
+              StyledSettings = [Style]
+              Opacity = 0.000000000000000000
+              Margins.Right = 10.000000000000000000
+              Position.X = 769.000000000000000000
+              Size.Width = 150.000000000000000000
+              Size.Height = 40.000000000000000000
+              Size.PlatformDefault = False
+              TextSettings.Font.Family = 'Inter'
+              TextSettings.Font.Size = 14.000000000000000000
+              TextSettings.FontColor = xFFFF7070
+              TextSettings.WordWrap = False
+              Text = 'Transaction(s) not found'
+              TabOrder = 7
+              object FloatAnimation4: TFloatAnimation
+                Duration = 0.400000005960464500
+                OnFinish = FloatAnimation4Finish
+                PropertyName = 'Opacity'
+                StartValue = 0.000000000000000000
+                StopValue = 1.000000000000000000
+              end
+            end
+            object AniIndicator1: TAniIndicator
+              Align = Right
+              Margins.Top = 10.000000000000000000
+              Margins.Right = 10.000000000000000000
+              Margins.Bottom = 10.000000000000000000
+              Position.X = 899.000000000000000000
+              Position.Y = 10.000000000000000000
+              Size.Width = 20.000000000000000000
+              Size.Height = 20.000000000000000000
+              Size.PlatformDefault = False
+              Visible = False
+            end
+          end
           object ExplorerHeaderLayout: TLayout
             Align = Top
             Margins.Top = 10.000000000000000000
-            Position.Y = 75.000000000000000000
+            Position.Y = 105.000000000000000000
             Size.Width = 1094.000000000000000000
             Size.Height = 28.000000000000000000
             Size.PlatformDefault = False
-            TabOrder = 8
+            TabOrder = 7
             object AmountExplorerHeaderLabel: TLabel
               Align = Left
               StyledSettings = [Style]
@@ -2596,37 +2674,46 @@ object MainForm: TMainForm
           end
           object ExplorerHorzScrollBox: THorzScrollBox
             Align = Top
+            Margins.Top = 10.000000000000000000
+            Position.Y = 50.000000000000000000
             Size.Width = 1094.000000000000000000
-            Size.Height = 65.000000000000000000
+            Size.Height = 45.000000000000000000
             Size.PlatformDefault = False
-            TabOrder = 9
+            TabOrder = 8
             Viewport.Width = 1094.000000000000000000
-            Viewport.Height = 65.000000000000000000
+            Viewport.Height = 45.000000000000000000
             object TopExplorerHorzLayout: TLayout
               Size.Width = 1094.000000000000000000
               Size.Height = 40.000000000000000000
               Size.PlatformDefault = False
               TabOrder = 0
+              object HideTransactionNotFoundTimer: TTimer
+                Enabled = False
+                Interval = 3000
+                OnTimer = HideTransactionNotFoundTimerTimer
+                Left = 1064
+                Top = 168
+              end
             end
           end
           object ExplorerVertScrollBox: TVertScrollBox
             Align = Client
             Padding.Top = -7.000000000000000000
-            Margins.Top = 10.000000000000000000
-            Margins.Bottom = 10.000000000000000000
+            Margins.Top = 6.000000000000000000
+            Margins.Bottom = 15.000000000000000000
             Size.Width = 1094.000000000000000000
-            Size.Height = 671.000000000000000000
+            Size.Height = 650.000000000000000000
             Size.PlatformDefault = False
-            TabOrder = 10
+            TabOrder = 9
             OnPaint = ExplorerVertScrollBoxPaint
             OnResized = ExplorerVertScrollBoxResized
             Viewport.Width = 1094.000000000000000000
-            Viewport.Height = 671.000000000000000000
+            Viewport.Height = 650.000000000000000000
           end
           object PaginationBottomLayout: TLayout
             Align = Bottom
-            Margins.Bottom = 20.000000000000000000
-            Position.Y = 794.000000000000000000
+            Margins.Bottom = 15.000000000000000000
+            Position.Y = 804.000000000000000000
             Size.Width = 1094.000000000000000000
             Size.Height = 28.000000000000000000
             Size.PlatformDefault = False
@@ -2647,7 +2734,6 @@ object MainForm: TMainForm
                 Size.Height = 28.000000000000000000
                 Size.PlatformDefault = False
                 TabOrder = 1
-                OnMouseDown = NextPageLayoutMouseDown
                 object NextPagePath: TPath
                   Align = Center
                   Data.Path = {
@@ -2672,7 +2758,6 @@ object MainForm: TMainForm
                 Size.Height = 28.000000000000000000
                 Size.PlatformDefault = False
                 TabOrder = 0
-                OnMouseDown = PrevPageLayoutMouseDown
                 object PrevPagePath: TPath
                   Align = Center
                   Data.Path = {
