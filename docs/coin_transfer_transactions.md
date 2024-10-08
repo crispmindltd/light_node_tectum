@@ -1,5 +1,5 @@
 
-### Purpose
+## Purpose
 Retrieve a list of coin transfer transactions for a user based on the session key and the amount of transactions to retrieve.
 
 ### Request Description

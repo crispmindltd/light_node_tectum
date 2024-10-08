@@ -36,7 +36,7 @@ The Light Node supports the following types of requests:
 
 -   GET /coins/balances: Retrieve balances for multiple tokens
 -   POST /coins/transfer: Transfer TET
--   GET /coins/transfers: Retrieve TET transfer history
+-   **[GET /coins/transfers](docs/coin_transfer_transactions.md)**: Retrieve TET transfer history
 -   GET /coins/transfers/user: Retrieve TET transfer history for user
 -   GET /coins/transfers/fee: Retrieve fee for transfer
 
