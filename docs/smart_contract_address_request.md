@@ -4,7 +4,7 @@ Retrieve the smart contract address by its ID.
 
 ### Request Description
 - **Method**: GET  
-- **URL**: `/token/address/byid`
+- **URL**: `/tokens/address/byid`
 
 ### Request Parameters
 
@@ -14,7 +14,7 @@ Retrieve the smart contract address by its ID.
 
 #### Example Request
 ```
-GET /token/address/byid?smart_id=24
+GET /tokens/address/byid?smart_id=24
 ```
 
 ### Response Parameters
