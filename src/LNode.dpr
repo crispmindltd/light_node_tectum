@@ -50,7 +50,8 @@ uses
   Frame.History in 'UI\Forms\Frame.History.pas' {HistoryTransactionFrame: TFrame},
   Form.EnterKey in 'UI\Forms\Form.EnterKey.pas' {EnterPrivateKeyForm},
   App.Constants in 'Core\App.Constants.pas',
-  OpenURL in 'UI\OpenURL.pas';
+  OpenURL in 'UI\OpenURL.pas',
+  Frame.PageNum in 'UI\Forms\Frame.PageNum.pas' {PageNumFrame: TFrame};
 
 {$R *.res}
 
