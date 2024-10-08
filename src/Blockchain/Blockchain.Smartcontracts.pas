@@ -24,6 +24,9 @@ type
     function GetOneBlock(AFrom: Int64): TOneBlockBytes; override;
     procedure WriteBlocks(APos: Int64; ABytes: TBytesBlocks; AAmount: Integer); override;
     procedure WriteOneBlock(APos: Int64; ABytes: TOneBlockBytes); override;
+
+    function TryFindBlockByHash(AHash: string; out ABlockNum: Integer;
+      out ABlock: TCbc4): Boolean;
   end;
 
 implementation
@@ -122,6 +125,35 @@ begin
     begin
       Read(FFile,Cbc4);
       Move(Cbc4, Result[i * SizeOf(TCbc4)], SizeOf(Cbc4));
+    end;
+  finally
+    CloseFile(FFile);
+    FLock.Leave;
+  end;
+end;
+
+function TBlockchainSmart.TryFindBlockByHash(AHash: string;
+  out ABlockNum: Integer; out ABlock: TCbc4): Boolean;
+var
+  HashHex: string;
+  i, j: Integer;
+begin
+  Result := False;
+  FLock.Enter;
+  AssignFile(FFile, FFullFilePath);
+  Reset(FFile);
+  try
+    Seek(FFile, 0);
+    for i := FileSize(FFile) - 1 downto 0 do
+    begin
+      Read(FFile, ABlock);
+      HashHex := '';
+      ABlockNum := FileSize(FFile) - i - 1;
+      for j := 1 to TokenLength do
+        HashHex := HashHex + IntToHex(ABlock.Hash[j], 2);
+      Result := HashHex.ToLower = AHash.ToLower;
+      if Result then
+        exit;
     end;
   finally
     CloseFile(FFile);

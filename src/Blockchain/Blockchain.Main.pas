@@ -52,6 +52,8 @@ type
       function TryGetOneICOBlock(ATicker: String; var ICOBlock: TTokenICODat): Boolean; overload;
       function TryGetSmartKey(ATicker: String; var sk: TCSmartKey): Boolean;
       function TryGetSmartKeyByAddress(const AAddress: String; var sk: TCSmartKey): Boolean;
+      function SearchTransactionByHash(const AHash: string; var ATicker: string;
+        out ATransaction: TExplorerTransactionInfo): Boolean;
 
       function GetChainBlockSize: Integer;
       function GetChainBlocksCount: Integer;
@@ -858,6 +860,62 @@ begin
     begin
       ASmartID := TCSmartBlock.SmartID;
       Exit(True);
+    end;
+  end;
+end;
+
+function TBlockchain.SearchTransactionByHash(const AHash: string; var ATicker: string;
+  out ATransaction: TExplorerTransactionInfo): Boolean;
+var
+  bc2: Tbc2;
+  bc4: TCbc4;
+  Key: string;
+  BlockNum, DynID: Integer;
+  TokenBase: TTokenBase;
+  TCTokenBase: TCTokensBase;
+  ChainFileWorker: TChainFileWorker;
+  TokenICO: TTokenICODat;
+begin
+  Result := TBlockchainTokenCHN(FTokenCHN).TryFindBlockByHash(AHash, BlockNum, bc2);
+  if Result then
+  begin
+    ATransaction.DateTime := bc2.Smart.TimeEvent;
+    ATransaction.BlockNum := BlockNum;
+    ATransaction.Hash := AHash;
+    if GetOneChainDynBlock(bc2.Smart.tkn[1].TokenID, TokenBase) then
+      ATransaction.TransFrom := TokenBase.Token
+    else
+      ATransaction.TransFrom := '';
+    if GetOneChainDynBlock(bc2.Smart.tkn[2].TokenID, TokenBase) then
+      ATransaction.TransTo := TokenBase.Token
+    else
+      ATransaction.TransTo := '';
+    ATransaction.Amount := bc2.Smart.Delta / 100000000;
+    ATicker := 'TET';
+    Result := True;
+  end else
+  begin
+    for Key in FSmartcontracts.Keys do
+    begin
+      ChainFileWorker := FSmartcontracts.Items[Key];
+      Result := TBlockchainSmart(ChainFileWorker).TryFindBlockByHash(AHash,
+        BlockNum, bc4);
+      if Result then
+      begin
+        ATransaction.DateTime := bc4.Smart.TimeEvent;
+        ATransaction.BlockNum := BlockNum;
+        ATransaction.Hash := AHash;
+        DynID := SmartIDByName(Key);
+        if GetOneSmartDynBlock(DynID, bc4.Smart.tkn[1].TokenID, TCTokenBase) then
+          ATransaction.TransFrom := TCTokenBase.Token;
+        if GetOneSmartDynBlock(dynID, bc4.Smart.tkn[2].TokenID, TCTokenBase) then
+          ATransaction.TransTo := TCTokenBase.Token;
+        if TryGetOneICOBlock(dynID, TokenICO) then
+          ATransaction.Amount := bc4.Smart.Delta / Power(10, TokenICO.FloatSize);
+        ATicker := TokenICO.Abreviature;
+        Result := True;
+        break;
+      end
     end;
   end;
 end;
