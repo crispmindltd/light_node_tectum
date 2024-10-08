@@ -1,10 +1,10 @@
 
-### Purpose
+## Purpose
 To transfer tokens between two addresses using a smart contract.
 
 ### Request Description
 - **Method**: POST  
-- **URL**: `/token/transfer`
+- **URL**: `/tokens/transfer`
 
 ### Request Parameters
 

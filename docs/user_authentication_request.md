@@ -1,5 +1,5 @@
 
-### Purpose
+## Purpose
 Authenticate an existing user with their login and password.
 
 ### Request Description

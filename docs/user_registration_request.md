@@ -1,5 +1,5 @@
 
-### Purpose
+## Purpose
 To register a new user in the system.
 
 ### Request Description

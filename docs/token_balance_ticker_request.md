@@ -1,10 +1,10 @@
 
-### Purpose
+## Purpose
 Retrieve the balance of a token for a given address by using the token's ticker.
 
 ### Request Description
 - **Method**: GET  
-- **URL**: `/token/balance/byticker`
+- **URL**: `/tokens/balance/byticker`
 
 ### Request Parameters
 
@@ -14,7 +14,7 @@ Retrieve the balance of a token for a given address by using the token's ticker.
 | ticker         | Yes      | Query    | String    | Valid ticker  | The ticker symbol of the token                    |
 
 #### Example Request
-GET /token/balance/byticker?address_tet=0x535af33106dcdf40b68348fe227f7bee1347cae6&ticker=kar
+GET /tokens/balance/byticker?address_tet=0x535af33106dcdf40b68348fe227f7bee1347cae6&ticker=kar
 
 ### Response Parameters
 

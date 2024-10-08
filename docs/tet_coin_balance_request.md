@@ -1,5 +1,5 @@
 
-### Purpose
+## Purpose
 Retrieve the TET coin balance for a given wallet address.
 
 ### Request Description

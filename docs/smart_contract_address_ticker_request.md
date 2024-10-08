@@ -1,10 +1,10 @@
 
-### Purpose
+## Purpose
 Retrieve the smart contract address by its token ticker.
 
 ### Request Description
 - **Method**: GET  
-- **URL**: `/token/address/byticker`
+- **URL**: `/tokens/address/byticker`
 
 ### Request Parameters
 
@@ -14,7 +14,7 @@ Retrieve the smart contract address by its token ticker.
 
 #### Example Request
 ```
-GET /token/address/byticker?ticker=kar
+GET /tokens/address/byticker?ticker=kar
 ```
 
 ### Response Parameters

@@ -1,10 +1,10 @@
 
-### Purpose
+## Purpose
 Retrieve the balance of a token for a given address by using the token's smart contract address.
 
 ### Request Description
 - **Method**: GET  
-- **URL**: `/token/balance/byaddress`
+- **URL**: `/tokens/balance/byaddress`
 
 ### Request Parameters
 
@@ -14,7 +14,7 @@ Retrieve the balance of a token for a given address by using the token's smart c
 | smart_address  | Yes      | Query    | String    | Valid address | The smart contract address of the token           |
 
 #### Example Request
-GET /token/balance/byaddress?address_tet=0x535af33106dcdf40b68348fe227f7bee1347cae6&smart_address=0x4752cbb6b5f0d60b816188163f35d4128da9fa75
+GET /tokens/balance/byaddress?address_tet=0x535af33106dcdf40b68348fe227f7bee1347cae6&smart_address=0x4752cbb6b5f0d60b816188163f35d4128da9fa75
 
 ### Response Parameters
 
