@@ -8,7 +8,7 @@ uses
   App.Logs,
   Classes,
   endpoints.Account,
-  endpoints.Chain,
+  endpoints.Node,
   endpoints.Token,
   Generics.Collections,
   JSON,
@@ -26,7 +26,7 @@ type
     CommandDoingTimeout = 12000;
   strict private
     FMainEndpoints: TMainEndpoints;
-    FChainEndpoints: TChainEndpoints;
+    FNodeEndpoints: TNodeEndpoints;
     FTokenEndpoints: TTokenEndpoints;
   private
     FCommands: TDictionary<string, TEndpointFunc>;
@@ -235,9 +235,10 @@ begin
   inherited;
 
   FCommands := TDictionary<string, TEndpointFunc>.Create;
-  FChainEndpoints := TChainEndpoints.Create;
-  FCommands.Add('/blockscountl', FChainEndpoints.BlocksCountLocal);
-  FCommands.Add('/blockscount', FChainEndpoints.BlocksCount);
+  FNodeEndpoints := TNodeEndpoints.Create;
+  FCommands.Add('/blockscountl', FNodeEndpoints.BlocksCountLocal);
+  FCommands.Add('/blockscount', FNodeEndpoints.BlocksCount);
+  FCommands.Add('/version', FNodeEndpoints.Version);
   FMainEndpoints := TMainEndpoints.Create;
   FCommands.Add('/user/registration', FMainEndpoints.DoReg);
   FCommands.Add('/user/auth', FMainEndpoints.DoAuth);
@@ -269,7 +270,7 @@ end;
 destructor THTTPServer.Destroy;
 begin
   FTokenEndpoints.Free;
-  FChainEndpoints.Free;
+  FNodeEndpoints.Free;
   FMainEndpoints.Free;
   FCommands.Free;
 

@@ -16,7 +16,7 @@ uses
   Net.ConnectedClient in 'Net\Net.ConnectedClient.pas',
   App.Logs in 'Core\App.Logs.pas',
   server.HTTP in 'Web\server\server.HTTP.pas',
-  endpoints.Chain in 'Web\endpoints\endpoints.Chain.pas',
+  endpoints.Node in 'Web\endpoints\endpoints.Node.pas',
   Desktop in 'UI\Desktop.pas',
   Net.CustomSocket in 'Net\Net.CustomSocket.pas',
   Net.Server in 'Net\Net.Server.pas',
