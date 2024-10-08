@@ -1,5 +1,5 @@
 
-### Purpose
+## Purpose
 Recover the public and private keys using a provided seed phrase.
 
 ### Request Description

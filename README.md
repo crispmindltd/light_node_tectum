@@ -21,13 +21,13 @@ The Light Node supports the following types of requests:
 ### Token operations: ###
 
 -   GET /tokens: Retrieve a list of all tokens
--   POST /tokens: Create a new token
+-   **[POST /tokens](docs/create_token_request.md)**: Create a new token
 -   GET /tokens/fee: Retrieve fee of creating token
 -   GET /tokens/ticker: Retrieve information about a specific token
 -   POST /tokens/transfer: Transfer tokens
 -   GET /tokens/transfer/fee: Retrieve fee of token transfer
 -   GET /tokens/transfers: Retrieve token transfer history
--   GET /tokens/address/byid: Retrieve the smart contract address by ID
+-   **[GET /tokens/address/byid](docs/smart_contract_address_request.md)**: Retrieve the smart contract address by ID
 -   GET /tokens/address/byticker: Retrieve the smart contract address by ticker
 -   GET /tokens/balance/byaddress: Retrieve token balance by address
 -   GET /tokens/balance/byticker: Retrieve token balance by ticker
@@ -48,9 +48,9 @@ The Light Node supports the following types of requests:
 ### Key management: ###
 
 -   POST /keys/generate: Generate new keys
--   POST /keys/recover: Recover keys using a seed phrase
--   GET /keys/public/byuserid: Retrieve the public key by user ID
--   GET /keys/public/byskey: Retrieve the public key by session key
+-   **[POST /keys/recover](docs/keys_recovery_request.md)**: Recover keys using a seed phrase
+-   **[GET /keys/public/byuserid](docs/public_key_by_userid_request.md)**: Retrieve the public key by user ID
+-   **[GET /keys/public/byskey](docs/public_key_by_skey_request.md)**: Retrieve the public key by session key
 
 ### Blocks: ###
 
