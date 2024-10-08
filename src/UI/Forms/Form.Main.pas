@@ -264,9 +264,9 @@ type
     TokenFeeDetailsText: TText;
     InputPrKeyButton: TButton;
     PaginationBottomLayout: TLayout;
-    NextPagePath: TPath;
     PagesPanelLayout: TLayout;
     NextPageLayout: TLayout;
+    NextPagePath: TPath;
     PrevPageLayout: TLayout;
     PrevPagePath: TPath;
     procedure MainRectangleMouseDown(Sender: TObject; Button: TMouseButton;
