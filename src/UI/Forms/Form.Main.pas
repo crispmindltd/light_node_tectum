@@ -1219,17 +1219,31 @@ var
   i,TransNumber,pagesAmount: Integer;
   format: string;
   tICO: TTokenICODat;
+  smartKey: TCSmartKey;
 begin
   if chosenTicker.IsEmpty then exit;
 
   TransNumber := TransToDrawNumber;
   if chosenTicker = 'Tectum' then
   begin
-    transArray := AppCore.GetChainTransations((pageNum-1)*TransNumber,TransNumber);
+    i := AppCore.GetChainBlocksCount - pageNum * TransNumber;
+    if i < 0 then
+    begin
+      Inc(TransNumber,i);
+      i := 0;
+    end;
+    transArray := AppCore.GetChainTransations(i,TransNumber);
     if not AppCore.TryGetTokenICO('TET',tICO) then exit;
   end else
   begin
-    transArray := AppCore.GetSmartTransactions(chosenTicker,(pageNum-1)*TransNumber,TransNumber);
+    if not AppCore.TryGetTokenBase(chosenTicker,smartKey) then exit;
+    i := AppCore.GetSmartBlocksCount(smartKey.SmartID) - pageNum * TransNumber;
+    if i < 0 then
+    begin
+      Inc(TransNumber,i);
+      i := 0;
+    end;
+    transArray := AppCore.GetSmartTransactions(chosenTicker,i,TransNumber);
     if not AppCore.TryGetTokenICO(chosenTicker,tICO) then exit;
   end;
 
@@ -1237,7 +1251,7 @@ begin
   ExplorerVertScrollBox.BeginUpdate;
   try
     format := '0.' + string.Create('0', tICO.FloatSize);
-    for i := 0 to TransNumber - 1 do
+    for i := TransNumber - 1 downto 0 do
     begin
       newTransFrame := TExplorerTransactionFrame.Create(ExplorerVertScrollBox,
                                                         transArray[i].DateTime,
