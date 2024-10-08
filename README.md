@@ -36,9 +36,10 @@ The Light Node supports the following types of requests:
 
 -   **[GET /coins/balances](docs/tet_coin_balance_request.md)**: Retrieve balances for multiple tokens
 -   **[POST /coins/transfer](docs/tet_transfer_request.md)**: Transfer TET coins from one wallet to another.
+-   GET /coins/transfer/fee: Retrieve fee for transfer
 -   **[GET /coins/transfers](docs/coin_transfer_transactions.md)**: Retrieve TET transfer history
 -   GET /coins/transfers/user: Retrieve TET transfer history for user
--   GET /coins/transfers/fee: Retrieve fee for transfer
+
 
 ### User management: ###
 
@@ -47,7 +48,6 @@ The Light Node supports the following types of requests:
 
 ### Key management: ###
 
--   POST /keys/generate: Generate new keys
 -   **[POST /keys/recover](docs/keys_recovery_request.md)**: Recover keys using a seed phrase
 -   **[GET /keys/public/byuserid](docs/public_key_by_userid_request.md)**: Retrieve the public key by user ID
 -   **[GET /keys/public/byskey](docs/public_key_by_skey_request.md)**: Retrieve the public key by session key
