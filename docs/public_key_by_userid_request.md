@@ -1,5 +1,5 @@
 
-### Purpose
+## Purpose
 Retrieve the public key associated with a user by their user ID.
 
 ### Request Description

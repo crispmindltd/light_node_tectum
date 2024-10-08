@@ -1,5 +1,5 @@
 
-### Purpose
+## Purpose
 To create a new token with specified parameters.
 
 ### Request Description

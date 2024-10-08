@@ -1,5 +1,5 @@
 
-### Purpose
+## Purpose
 Retrieve the smart contract address by its token ticker.
 
 ### Request Description

@@ -1,5 +1,5 @@
 
-### Purpose
+## Purpose
 Retrieve the balance of a token for a given address by using the token's ticker.
 
 ### Request Description

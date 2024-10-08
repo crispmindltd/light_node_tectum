@@ -1,5 +1,5 @@
 
-### Purpose
+## Purpose
 Transfer TET coins from one wallet to another.
 
 ### Request Description

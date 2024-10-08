@@ -1,5 +1,5 @@
 
-### Purpose
+## Purpose
 Retrieve the public key associated with a session key.
 
 ### Request Description
