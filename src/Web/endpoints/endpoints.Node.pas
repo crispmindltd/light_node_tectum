@@ -1,4 +1,4 @@
-unit endpoints.Chain;
+unit endpoints.Node;
 
 interface
 
@@ -14,7 +14,7 @@ uses
   SysUtils;
 
 type
-  TChainEndpoints = class(TEndpointsBase)
+  TNodeEndpoints = class(TEndpointsBase)
   public
     constructor Create;
     destructor Destroy; override;
@@ -25,11 +25,14 @@ type
     function BlocksCount(AReqID: string; AEvent: TEvent;
       AComType: THTTPCommandType; AParams: TStrings; ABody: string)
       : TEndpointResponse;
+    function Version(AReqID: string; AEvent: TEvent;
+      AComType: THTTPCommandType; AParams: TStrings; ABody: string)
+      : TEndpointResponse;
   end;
 
 implementation
 
-function TChainEndpoints.BlocksCount(AReqID: string; AEvent: TEvent;
+function TNodeEndpoints.BlocksCount(AReqID: string; AEvent: TEvent;
   AComType: THTTPCommandType; AParams: TStrings; ABody: string): TEndpointResponse;
 var
   JSON: TJSONObject;
@@ -57,7 +60,7 @@ begin
   end;
 end;
 
-function TChainEndpoints.BlocksCountLocal(AReqID: string; AEvent: TEvent;
+function TNodeEndpoints.BlocksCountLocal(AReqID: string; AEvent: TEvent;
   AComType: THTTPCommandType; AParams: TStrings; ABody: string): TEndpointResponse;
 var
   JSON: TJSONObject;
@@ -71,7 +74,7 @@ begin
       JSON.AddPair('blocksCount',
         TJSONNumber.Create(AppCore.GetChainBlocksCount));
       Result.Code := HTTP_SUCCESS;
-      Result.response := JSON.ToString;
+      Result.Response := JSON.ToString;
     finally
       JSON.Free;
     end;
@@ -81,15 +84,40 @@ begin
   end;
 end;
 
-constructor TChainEndpoints.Create;
+constructor TNodeEndpoints.Create;
 begin
   inherited;
 end;
 
-destructor TChainEndpoints.Destroy;
+destructor TNodeEndpoints.Destroy;
 begin
 
   inherited;
+end;
+
+function TNodeEndpoints.Version(AReqID: string; AEvent: TEvent;
+  AComType: THTTPCommandType; AParams: TStrings;
+  ABody: string): TEndpointResponse;
+var
+  JSON: TJSONObject;
+begin
+  Result.ReqID := AReqID;
+  try
+    if AComType <> hcGET then
+      raise ENotSupportedError.Create('');
+
+    JSON := TJSONObject.Create;
+    try
+      JSON.AddPair('version', AppCore.GetVersion);
+      Result.Code := HTTP_SUCCESS;
+      Result.Response := JSON.ToString;
+    finally
+      JSON.Free;
+    end;
+  finally
+    if Assigned(AEvent) then
+      AEvent.SetEvent;
+  end;
 end;
 
 end.
