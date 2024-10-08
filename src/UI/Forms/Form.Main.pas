@@ -269,6 +269,8 @@ type
     NextPagePath: TPath;
     PrevPageLayout: TLayout;
     PrevPagePath: TPath;
+    SearchEdit: TEdit;
+    SearchButton: TButton;
     procedure MainRectangleMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single);
     procedure TokenItemClick(Sender: TObject);
@@ -326,6 +328,7 @@ type
       Shift: TShiftState; X, Y: Single);
     procedure NextPageLayoutMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single);
+    procedure SearchEditChangeTracking(Sender: TObject);
   const
     TransToDrawNumber = 18;
   private
@@ -1518,6 +1521,11 @@ begin
       break;
     end;
   end;
+end;
+
+procedure TMainForm.SearchEditChangeTracking(Sender: TObject);
+begin
+  SearchButton.Enabled := not SearchEdit.Text.IsEmpty;
 end;
 
 procedure TMainForm.SearchTokenEditChangeTracking(Sender: TObject);

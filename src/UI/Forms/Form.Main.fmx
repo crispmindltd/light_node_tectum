@@ -34,13 +34,13 @@ object MainForm: TMainForm
     OnChange = TabsChange
     Sizes = (
       1094s
-      899s
+      897s
       1094s
-      899s
+      897s
       1094s
-      899s
+      897s
       1094s
-      899s)
+      897s)
     object TectumTabItem: TTabItem
       CustomIcon = <
         item
@@ -71,7 +71,7 @@ object MainForm: TMainForm
         Align = Client
         Margins.Top = 55.000000000000000000
         Size.Width = 1094.000000000000000000
-        Size.Height = 844.000000000000000000
+        Size.Height = 842.000000000000000000
         Size.PlatformDefault = False
         StyleLookup = 'AuthTabControlstyle'
         TabIndex = 0
@@ -79,9 +79,9 @@ object MainForm: TMainForm
         TabPosition = None
         Sizes = (
           1094s
-          844s
+          842s
           1094s
-          844s)
+          842s)
         object TETTabItemData: TTabItem
           CustomIcon = <
             item
@@ -108,9 +108,9 @@ object MainForm: TMainForm
               AutoSize = True
               StyledSettings = [Style]
               Margins.Top = 10.000000000000000000
-              Position.Y = 76.000000000000000000
+              Position.Y = 80.000000000000000000
               Size.Width = 1094.000000000000000000
-              Size.Height = 19.000000000000000000
+              Size.Height = 20.000000000000000000
               Size.PlatformDefault = False
               TextSettings.Font.Family = 'Inter'
               TextSettings.Font.Size = 15.000000000000000000
@@ -124,7 +124,7 @@ object MainForm: TMainForm
               AutoSize = True
               StyledSettings = [Style]
               Size.Width = 1094.000000000000000000
-              Size.Height = 19.000000000000000000
+              Size.Height = 20.000000000000000000
               Size.PlatformDefault = False
               TextSettings.Font.Family = 'Inter'
               TextSettings.Font.Size = 15.000000000000000000
@@ -138,9 +138,9 @@ object MainForm: TMainForm
               AutoSize = True
               StyledSettings = []
               Margins.Top = 10.000000000000000000
-              Position.Y = 29.000000000000000000
+              Position.Y = 30.000000000000000000
               Size.Width = 1094.000000000000000000
-              Size.Height = 37.000000000000000000
+              Size.Height = 40.000000000000000000
               Size.PlatformDefault = False
               TextSettings.Font.Family = 'Inter'
               TextSettings.Font.Size = 30.000000000000000000
@@ -154,7 +154,7 @@ object MainForm: TMainForm
           object HistoryTETHeaderLayout: TLayout
             Align = Top
             Margins.Top = 30.000000000000000000
-            Position.Y = 381.000000000000000000
+            Position.Y = 384.000000000000000000
             Size.Width = 1094.000000000000000000
             Size.Height = 28.000000000000000000
             Size.PlatformDefault = False
@@ -251,7 +251,7 @@ object MainForm: TMainForm
             Margins.Top = 32.000000000000000000
             Position.Y = 320.000000000000000000
             Size.Width = 1094.000000000000000000
-            Size.Height = 31.000000000000000000
+            Size.Height = 34.000000000000000000
             Size.PlatformDefault = False
             TextSettings.Font.Family = 'Inter'
             TextSettings.Font.Size = 25.000000000000000000
@@ -375,13 +375,13 @@ object MainForm: TMainForm
             Margins.Top = 10.000000000000000000
             Margins.Bottom = 20.000000000000000000
             Size.Width = 1094.000000000000000000
-            Size.Height = 405.000000000000000000
+            Size.Height = 400.000000000000000000
             Size.PlatformDefault = False
             TabOrder = 8
             OnPaint = HistoryTETVertScrollBoxPaint
             OnResized = HistoryTETVertScrollBoxResized
             Viewport.Width = 1094.000000000000000000
-            Viewport.Height = 405.000000000000000000
+            Viewport.Height = 400.000000000000000000
           end
         end
         object TETTransactionDataTabItem: TTabItem
@@ -892,7 +892,7 @@ object MainForm: TMainForm
         Align = Client
         Margins.Top = 55.000000000000000000
         Size.Width = 1094.000000000000000000
-        Size.Height = 844.000000000000000000
+        Size.Height = 842.000000000000000000
         Size.PlatformDefault = False
         StyleLookup = 'AuthTabControlstyle'
         TabIndex = 0
@@ -900,9 +900,9 @@ object MainForm: TMainForm
         TabPosition = None
         Sizes = (
           1094s
-          844s
+          842s
           1094s
-          844s)
+          842s)
         object TokenTabItemData: TTabItem
           CustomIcon = <
             item
@@ -929,9 +929,9 @@ object MainForm: TMainForm
               AutoSize = True
               StyledSettings = [Style]
               Margins.Top = 10.000000000000000000
-              Position.Y = 76.000000000000000000
+              Position.Y = 80.000000000000000000
               Size.Width = 1094.000000000000000000
-              Size.Height = 19.000000000000000000
+              Size.Height = 20.000000000000000000
               Size.PlatformDefault = False
               TextSettings.Font.Family = 'Inter'
               TextSettings.Font.Size = 15.000000000000000000
@@ -945,7 +945,7 @@ object MainForm: TMainForm
               AutoSize = True
               StyledSettings = [Style]
               Size.Width = 1094.000000000000000000
-              Size.Height = 19.000000000000000000
+              Size.Height = 20.000000000000000000
               Size.PlatformDefault = False
               TextSettings.Font.Family = 'Inter'
               TextSettings.Font.Size = 15.000000000000000000
@@ -959,9 +959,9 @@ object MainForm: TMainForm
               AutoSize = True
               StyledSettings = []
               Margins.Top = 10.000000000000000000
-              Position.Y = 29.000000000000000000
+              Position.Y = 30.000000000000000000
               Size.Width = 1094.000000000000000000
-              Size.Height = 37.000000000000000000
+              Size.Height = 40.000000000000000000
               Size.PlatformDefault = False
               TextSettings.Font.Family = 'Inter'
               TextSettings.Font.Size = 30.000000000000000000
@@ -975,7 +975,7 @@ object MainForm: TMainForm
           object HistoryTokenHeaderLayout: TLayout
             Align = Top
             Margins.Top = 30.000000000000000000
-            Position.Y = 434.000000000000000000
+            Position.Y = 437.000000000000000000
             Size.Width = 1094.000000000000000000
             Size.Height = 28.000000000000000000
             Size.PlatformDefault = False
@@ -1072,7 +1072,7 @@ object MainForm: TMainForm
             Margins.Top = 32.000000000000000000
             Position.Y = 373.000000000000000000
             Size.Width = 1094.000000000000000000
-            Size.Height = 31.000000000000000000
+            Size.Height = 34.000000000000000000
             Size.PlatformDefault = False
             TextSettings.Font.Family = 'Inter'
             TextSettings.Font.Size = 25.000000000000000000
@@ -1088,13 +1088,13 @@ object MainForm: TMainForm
             Margins.Top = 10.000000000000000000
             Margins.Bottom = 20.000000000000000000
             Size.Width = 1094.000000000000000000
-            Size.Height = 352.000000000000000000
+            Size.Height = 347.000000000000000000
             Size.PlatformDefault = False
             TabOrder = 9
             OnPaint = HistoryTokenVertScrollBoxPaint
             OnResized = HistoryTokenVertScrollBoxResized
             Viewport.Width = 1094.000000000000000000
-            Viewport.Height = 352.000000000000000000
+            Viewport.Height = 347.000000000000000000
           end
           object NoTokenHistoryLabel: TLabel
             Align = Client
@@ -1825,7 +1825,7 @@ object MainForm: TMainForm
         Margins.Top = 88.000000000000000000
         Position.Y = 88.000000000000000000
         Size.Width = 1094.000000000000000000
-        Size.Height = 37.000000000000000000
+        Size.Height = 40.000000000000000000
         Size.PlatformDefault = False
         TextSettings.Font.Family = 'Inter'
         TextSettings.Font.Size = 30.000000000000000000
@@ -1839,9 +1839,9 @@ object MainForm: TMainForm
         Align = MostLeft
         Margins.Top = 40.000000000000000000
         Margins.Bottom = 55.000000000000000000
-        Position.Y = 165.000000000000000000
+        Position.Y = 168.000000000000000000
         Size.Width = 410.000000000000000000
-        Size.Height = 679.000000000000000000
+        Size.Height = 674.000000000000000000
         Size.PlatformDefault = False
         TabOrder = 1
         object CreateTokenShortNameEdit: TEdit
@@ -2119,7 +2119,7 @@ object MainForm: TMainForm
           Position.X = 20.000000000000000000
           Position.Y = 24.000000000000000000
           Size.Width = 577.000000000000000000
-          Size.Height = 19.000000000000000000
+          Size.Height = 20.000000000000000000
           Size.PlatformDefault = False
           TextSettings.Font.Family = 'Inter'
           TextSettings.Font.Size = 15.000000000000000000
@@ -2135,9 +2135,9 @@ object MainForm: TMainForm
           StyledSettings = [Style]
           Margins.Top = 3.000000000000000000
           Position.X = 20.000000000000000000
-          Position.Y = 46.000000000000000000
+          Position.Y = 47.000000000000000000
           Size.Width = 577.000000000000000000
-          Size.Height = 19.000000000000000000
+          Size.Height = 20.000000000000000000
           Size.PlatformDefault = False
           TextSettings.Font.Family = 'Inter'
           TextSettings.Font.Size = 15.000000000000000000
@@ -2153,9 +2153,9 @@ object MainForm: TMainForm
           StyledSettings = [Style]
           Margins.Top = 3.000000000000000000
           Position.X = 20.000000000000000000
-          Position.Y = 68.000000000000000000
+          Position.Y = 70.000000000000000000
           Size.Width = 577.000000000000000000
-          Size.Height = 19.000000000000000000
+          Size.Height = 20.000000000000000000
           Size.PlatformDefault = False
           TextSettings.Font.Family = 'Inter'
           TextSettings.Font.Size = 15.000000000000000000
@@ -2171,9 +2171,9 @@ object MainForm: TMainForm
           StyledSettings = [Style]
           Margins.Top = 3.000000000000000000
           Position.X = 20.000000000000000000
-          Position.Y = 90.000000000000000000
+          Position.Y = 93.000000000000000000
           Size.Width = 577.000000000000000000
-          Size.Height = 19.000000000000000000
+          Size.Height = 20.000000000000000000
           Size.PlatformDefault = False
           TextSettings.Font.Family = 'Inter'
           TextSettings.Font.Size = 15.000000000000000000
@@ -2189,9 +2189,9 @@ object MainForm: TMainForm
           StyledSettings = [Style]
           Margins.Top = 3.000000000000000000
           Position.X = 20.000000000000000000
-          Position.Y = 112.000000000000000000
+          Position.Y = 116.000000000000000000
           Size.Width = 577.000000000000000000
-          Size.Height = 19.000000000000000000
+          Size.Height = 20.000000000000000000
           Size.PlatformDefault = False
           TextSettings.Font.Family = 'Inter'
           TextSettings.Font.Size = 15.000000000000000000
@@ -2207,9 +2207,9 @@ object MainForm: TMainForm
           StyledSettings = [Style]
           Margins.Top = 3.000000000000000000
           Position.X = 20.000000000000000000
-          Position.Y = 134.000000000000000000
+          Position.Y = 139.000000000000000000
           Size.Width = 577.000000000000000000
-          Size.Height = 19.000000000000000000
+          Size.Height = 20.000000000000000000
           Size.PlatformDefault = False
           TextSettings.Font.Family = 'Inter'
           TextSettings.Font.Size = 15.000000000000000000
@@ -2223,9 +2223,9 @@ object MainForm: TMainForm
           StyledSettings = []
           Margins.Top = 25.000000000000000000
           Position.X = 20.000000000000000000
-          Position.Y = 178.000000000000000000
+          Position.Y = 184.000000000000000000
           Size.Width = 577.000000000000000000
-          Size.Height = 19.000000000000000000
+          Size.Height = 20.000000000000000000
           Size.PlatformDefault = False
           TextSettings.Font.Family = 'Inter'
           TextSettings.Font.Size = 15.000000000000000000
@@ -2240,7 +2240,7 @@ object MainForm: TMainForm
           Align = Top
           Margins.Top = 25.000000000000000000
           Position.X = 20.000000000000000000
-          Position.Y = 222.000000000000000000
+          Position.Y = 229.000000000000000000
           Size.Width = 577.000000000000000000
           Size.Height = 23.000000000000000000
           Size.PlatformDefault = False
@@ -2278,7 +2278,7 @@ object MainForm: TMainForm
           Align = Top
           Margins.Top = 25.000000000000000000
           Position.X = 20.000000000000000000
-          Position.Y = 270.000000000000000000
+          Position.Y = 277.000000000000000000
           Size.Width = 577.000000000000000000
           Size.Height = 23.000000000000000000
           Size.PlatformDefault = False
@@ -2316,7 +2316,7 @@ object MainForm: TMainForm
           Align = Top
           Margins.Top = 25.000000000000000000
           Position.X = 20.000000000000000000
-          Position.Y = 318.000000000000000000
+          Position.Y = 325.000000000000000000
           Size.Width = 577.000000000000000000
           Size.Height = 23.000000000000000000
           Size.PlatformDefault = False
@@ -2354,7 +2354,7 @@ object MainForm: TMainForm
           Align = Top
           Margins.Top = 25.000000000000000000
           Position.X = 20.000000000000000000
-          Position.Y = 366.000000000000000000
+          Position.Y = 373.000000000000000000
           Size.Width = 577.000000000000000000
           Size.Height = 23.000000000000000000
           Size.PlatformDefault = False
@@ -2392,7 +2392,7 @@ object MainForm: TMainForm
           Align = Top
           Margins.Top = 24.000000000000000000
           Position.X = 20.000000000000000000
-          Position.Y = 413.000000000000000000
+          Position.Y = 420.000000000000000000
           Size.Width = 577.000000000000000000
           Size.Height = 43.000000000000000000
           Size.PlatformDefault = False
@@ -2402,7 +2402,7 @@ object MainForm: TMainForm
             AutoSize = True
             StyledSettings = []
             Size.Width = 145.000000000000000000
-            Size.Height = 22.000000000000000000
+            Size.Height = 21.000000000000000000
             Size.PlatformDefault = False
             TextSettings.Font.Family = 'Inter'
             TextSettings.Font.Size = 15.000000000000000000
@@ -2417,7 +2417,7 @@ object MainForm: TMainForm
             StyledSettings = []
             Margins.Left = 3.000000000000000000
             Size.Width = 429.000000000000000000
-            Size.Height = 22.000000000000000000
+            Size.Height = 21.000000000000000000
             Size.PlatformDefault = False
             TextSettings.Font.Family = 'Inter'
             TextSettings.Font.Size = 15.000000000000000000
@@ -2430,9 +2430,9 @@ object MainForm: TMainForm
             AutoSize = True
             StyledSettings = []
             Margins.Top = 2.000000000000000000
-            Position.Y = 24.000000000000000000
+            Position.Y = 23.000000000000000000
             Size.Width = 577.000000000000000000
-            Size.Height = 19.000000000000000000
+            Size.Height = 20.000000000000000000
             Size.PlatformDefault = False
             TextSettings.Font.Family = 'Inter'
             TextSettings.Font.Size = 15.000000000000000000
@@ -2473,7 +2473,7 @@ object MainForm: TMainForm
         Align = Client
         Margins.Top = 50.000000000000000000
         Size.Width = 1094.000000000000000000
-        Size.Height = 849.000000000000000000
+        Size.Height = 847.000000000000000000
         Size.PlatformDefault = False
         StyleLookup = 'AuthTabControlstyle'
         TabIndex = 0
@@ -2481,9 +2481,9 @@ object MainForm: TMainForm
         TabPosition = None
         Sizes = (
           1094s
-          849s
+          847s
           1094s
-          849s)
+          847s)
         object ExporerTabItemData: TTabItem
           CustomIcon = <
             item
@@ -2513,6 +2513,7 @@ object MainForm: TMainForm
             Size.PlatformDefault = False
             TextPrompt = 'Type here to search'
             KillFocusByReturn = True
+            OnChangeTracking = SearchEditChangeTracking
             object SearchButton: TButton
               Align = Right
               Cursor = crArrow
@@ -2657,18 +2658,18 @@ object MainForm: TMainForm
             Margins.Top = 10.000000000000000000
             Margins.Bottom = 20.000000000000000000
             Size.Width = 1094.000000000000000000
-            Size.Height = 628.000000000000000000
+            Size.Height = 626.000000000000000000
             Size.PlatformDefault = False
             TabOrder = 9
             OnPaint = ExplorerVertScrollBoxPaint
             OnResized = ExplorerVertScrollBoxResized
             Viewport.Width = 1094.000000000000000000
-            Viewport.Height = 628.000000000000000000
+            Viewport.Height = 626.000000000000000000
           end
           object PaginationBottomLayout: TLayout
             Align = Bottom
             Margins.Bottom = 20.000000000000000000
-            Position.Y = 801.000000000000000000
+            Position.Y = 799.000000000000000000
             Size.Width = 1094.000000000000000000
             Size.Height = 28.000000000000000000
             Size.PlatformDefault = False
