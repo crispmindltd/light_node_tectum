@@ -26,7 +26,6 @@ type
     function GetBlocksCount: Integer; override;
     procedure WriteBlocksAsBytes(ASkipBlocks: Integer; ABytes: TBytes); override;
     procedure WriteBlock(ASkip: Integer; ABlock: TTokenBase);
-//    procedure WriteBlocks(ASkip: Integer; ABlocks: TArray<TTokenBase>);
     function TryReadBlock(ASkip: Integer; out ABlock: TTokenBase): Boolean;
     function ReadBlocksAsBytes(ASkipBlocks: Integer;
       ANumber: Integer = MaxBlocksNumber): TBytes; override;
@@ -258,26 +257,6 @@ begin
       DoClose;
   end;
 end;
-
-//procedure TBlockchainTETDynamic.WriteBlocks(ASkip: Int64;
-//  ABlocks: TArray<TTokenBase>);
-//var
-//  NeedClose: Boolean;
-//  i: Integer;
-//begin
-//  if ASkip < 0 then
-//    exit;
-//
-//  NeedClose := DoOpen;
-//  try
-//    Seek(FFile, ASkip);
-//    for i := 0 to Length(ABlocks) - 1 do
-//      Write(FFile, ABlocks[i]);
-//  finally
-//    if NeedClose then
-//      DoClose;
-//  end;
-//end;
 
 //function TBlockchainTETDynamic.TryGetTETAddress(const AOwnerID: Int64;
 //  out ATETAddress: String): Boolean;

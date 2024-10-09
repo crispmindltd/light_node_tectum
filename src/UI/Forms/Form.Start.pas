@@ -163,7 +163,7 @@ var
   Service: IFMXClipBoardService;
 begin
   if TPlatformServices.Current.SupportsPlatformService(IFMXClipBoardService, Service) then
-    Service.SetClipboard(Copy(NewLogInLabel.Text,14,Length(NewLogInLabel.Text)));
+    Service.SetClipboard(Copy(NewLogInLabel.Text, 14, Length(NewLogInLabel.Text)));
 end;
 
 procedure TStartForm.CopyPassLayoutClick(Sender: TObject);
@@ -171,7 +171,7 @@ var
   Service: IFMXClipBoardService;
 begin
   if TPlatformServices.Current.SupportsPlatformService(IFMXClipBoardService, Service) then
-    Service.SetClipboard(Copy(NewPassLabel.Text,11,Length(NewPassLabel.Text)));
+    Service.SetClipboard(Copy(NewPassLabel.Text, 11, Length(NewPassLabel.Text)));
 end;
 
 procedure TStartForm.EmailEditChangeTracking(Sender: TObject);
@@ -195,14 +195,14 @@ procedure TStartForm.EyeLayoutMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Single);
 begin
   PasswordEdit.Password := False;
-  StylesForm.OnCopyLayoutMouseDown(Sender,Button,Shift,X,Y);
+  StylesForm.OnCopyLayoutMouseDown(Sender,Button,Shift, X, Y);
 end;
 
 procedure TStartForm.EyeLayoutMouseUp(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Single);
 begin
   PasswordEdit.Password := True;
-  StylesForm.OnCopyLayoutMouseUp(Sender,Button,Shift,X,Y);
+  StylesForm.OnCopyLayoutMouseUp(Sender,Button,Shift, X, Y);
 end;
 
 procedure TStartForm.FloatAnimation3Finish(Sender: TObject);
@@ -254,7 +254,7 @@ end;
 
 procedure TStartForm.LogInAfterRegButtonClick(Sender: TObject);
 begin
-  EmailEdit.Text := Copy(NewLoginLabel.Text,14,Length(NewLoginLabel.Text));
+  EmailEdit.Text := Copy(NewLoginLabel.Text, 14, Length(NewLoginLabel.Text));
   HideLogInError;
   PasswordEdit.Text := '';
   AuthTabControl.TabIndex := 0;
@@ -269,13 +269,14 @@ begin
   LogInIndicator.Enabled := True;
 
   try
-    AppCore.DoAuth('*',EmailEdit.Text,PasswordEdit.Text,LogInCallBack);
+    AppCore.DoAuth('*', EmailEdit.Text, PasswordEdit.Text, LogInCallBack);
   except
     on E:EValidError do
       ShowLogInError(E.Message);
     on E:Exception do
     begin
-      Logs.DoLog('Unknown error during auth with message: ' + E.Message,TLogType.ERROR,tcp);
+      Logs.DoLog('Unknown error during auth with message: ' + E.Message,
+        TLogType.ERROR, tcp);
       ShowLogInError('Unknown error, try later');
     end;
   end;
@@ -305,7 +306,7 @@ begin
       else
         begin
           Logs.DoLog('Unknown error during auth with code ' +
-            Splitted[3],TLogType.ERROR,tcp);
+            Splitted[3], TLogType.ERROR, tcp);
           ShowLogInError('Unknown error, try later');
         end;
     end;
@@ -319,19 +320,21 @@ begin
   RegIndicator.Visible := True;
   RegIndicator.Enabled := True;
   try
-    AppCore.DoReg('*',FSeedPhrase,RegCallBack);
+    AppCore.DoReg('*', FSeedPhrase, RegCallBack);
   except
     on E:EValidError do
       ShowSignUpError(E.Message);
 
     on E:EUnknownError do
     begin
-      Logs.DoLog('Unknown error during auth with code ' + E.Message,TLogType.ERROR,tcp);
+      Logs.DoLog('Unknown error during auth with code ' + E.Message,
+        TLogType.ERROR, tcp);
       ShowSignUpError('Unknown error, try later');
     end;
     on E:Exception do
     begin
-      Logs.DoLog('Unknown error during auth with message: ' + E.Message,TLogType.ERROR,tcp);
+      Logs.DoLog('Unknown error during auth with message: ' + E.Message,
+        TLogType.ERROR, tcp);
       ShowSignUpError('Unknown error, try later');
     end;
   end;

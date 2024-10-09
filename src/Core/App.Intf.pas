@@ -103,13 +103,13 @@ type
 //    procedure SetDynBlock(ADynID: Integer; APos: Int64; ABytes: TOneBlockBytes);
 //
 //    function GetBlocksCount(AReqID: String): String;
-    procedure DoReg(AReqID,ASeed: string; ACallBackProc: TGetStrProc); overload;
+    procedure DoReg(AReqID, ASeed: string; ACallBackProc: TGetStrProc); overload;
     function DoReg(AReqID: string; ASeed: string; out APubKey: string;
       out APrKey: string; out ALogin: string; out APassword: string;
       out AAddress: string; out ASavingPath: string): string; overload;
-    procedure DoAuth(AReqID,ALogin,APassword: string;
+    procedure DoAuth(AReqID, ALogin, APassword: string;
       ACallBackProc: TGetStrProc); overload;
-    function DoAuth(AReqID,ALogin,APassword: string): string; overload;
+    function DoAuth(AReqID, ALogin, APassword: string): string; overload;
 //    function DoCoinsTransfer(AReqID,ASessionKey,ATo: string; AAmount: Extended): string;
 //    function DoRecoverKeys(ASeed: string; out PubKey: string;
 //      out PrKey: string): string;

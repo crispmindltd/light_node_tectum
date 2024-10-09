@@ -125,13 +125,13 @@ type
 //    procedure UpdateLists;
 
 //    function GetBlocksCount(AReqID: string): string;
-    procedure DoReg(AReqID,ASeed: string; ACallBackProc: TGetStrProc); overload;
+    procedure DoReg(AReqID, ASeed: string; ACallBackProc: TGetStrProc); overload;
     function DoReg(AReqID: string; ASeed: string; out APubKey: string;
       out APrKey: string; out ALogin: string; out APassword: string;
       out AAddress: string; out ASavingPath: string): string; overload;
-    procedure DoAuth(AReqID,ALogin,APassword: string;
+    procedure DoAuth(AReqID, ALogin, APassword: string;
       ACallBackProc: TGetStrProc); overload;
-    function DoAuth(AReqID,ALogin,APassword: string): string; overload;
+    function DoAuth(AReqID, ALogin, APassword: string): string; overload;
 //    function DoRecoverKeys(ASeed: string; out PubKey: string;
 //      out PrKey: string): string;
 //    function DoCoinsTransfer(AReqID,ASessionKey,ATo: string; AAmount: Extended): string;
@@ -239,8 +239,8 @@ begin
     var
       Response: string;
     begin
-      Response := FNodeClient.DoRequest(AReqID,Format('CheckPW * %s %s ipa',
-        [ALogin,APassword]));
+      Response := FNodeClient.DoRequest(AReqID, Format('CheckPW * %s %s ipa',
+        [ALogin, APassword]));
 
       TThread.Synchronize(nil,
       procedure
@@ -252,21 +252,22 @@ end;
 
 function TAppCore.DoAuth(AReqID, ALogin, APassword: string): string;
 var
-  splt: TArray<string>;
+  Splitted: TArray<string>;
 begin
   if not (ALogin.Contains('@') and ALogin.Contains('.')) then
     raise EValidError.Create('incorrect login');
   if APassword.IsEmpty then
     raise EValidError.Create('incorrect password');
 
-  Result := FNodeClient.DoRequest(AReqID,Format('CheckPW * %s %s ipa',[ALogin,APassword]));
+  Result := FNodeClient.DoRequest(AReqID,Format('CheckPW * %s %s ipa',
+    [ALogin, APassword]));
   if IsURKError(Result) then
   begin;
-    splt := Result.Split([' ']);
-    case splt[3].ToInteger of
+    Splitted := Result.Split([' ']);
+    case Splitted[3].ToInteger of
       93: raise EAuthError.Create('');
       816: raise EAuthError.Create('');
-      else raise EUnknownError.Create(splt[3]);
+      else raise EUnknownError.Create(Splitted[3]);
     end;
   end;
 end;
