@@ -32,11 +32,11 @@ type
     function ReadBlocks(ASkip: Integer;
       ANumber: Integer = MaxBlocksNumber): TArray<TTokenBase>;
 
-//    function TryGetTETAddress(const AOwnerID: Int64; out ATETAddress: String): Boolean;
+    function TryGetTETAddress(const AOwnerID: Integer; out ATETAddress: String): Boolean;
 //    function TryGetByUserID(AUserID: Int64; out ABlockID: Int64;
 //      var ATETDynamic: TTokenBase): Boolean;
-//    function TryGetByTETAddress(ATETAddress: string; out ABlockID: Int64;
-//      out ATETDynamic: TTokenBase): Boolean;
+    function TryGetByTETAddress(ATETAddress: string; out ABlockNum: Integer;
+      out ATETDynamic: TTokenBase): Boolean;
   end;
 
 implementation
@@ -191,30 +191,30 @@ begin
   end;
 end;
 
-//function TBlockchainTETDynamic.TryGetByTETAddress(ATETAddress: string;
-//  out ABlockID: Int64; out ATETDynamic: TTokenBase): Boolean;
-//var
-//  NeedClose: Boolean;
-//  i: Integer;
-//begin
-//  Result := False;
-//  NeedClose := DoOpen(fmOpenRead or fmShareDenyNone);
-//  try
-//    for i := 0 to (FFile.Size div GetBlockSize) - 1 do
-//    begin
-//      FFile.Seek(i * GetBlockSize, soBeginning);
-//      FFile.ReadData<TTokenBase>(ATETDynamic);
-//      if (ATETDynamic.Token = ATETAddress) and (ATETDynamic.TokenDatID = 1) then
-//      begin
-//        ABlockID := i;
-//        exit(True);
-//      end;
-//    end;
-//  finally
-//    if NeedClose then
-//      DoClose;
-//  end;
-//end;
+function TBlockchainTETDynamic.TryGetByTETAddress(ATETAddress: string;
+  out ABlockNum: Integer; out ATETDynamic: TTokenBase): Boolean;
+var
+  NeedClose: Boolean;
+  i: Integer;
+begin
+  Result := False;
+  NeedClose := DoOpen;
+  try
+    Seek(FFile, 0);
+    for i := 0 to FileSize(FFile) - 1 do
+    begin
+      Read(FFile, ATETDynamic);
+      if (ATETDynamic.Token = ATETAddress) and (ATETDynamic.TokenDatID = 1) then
+      begin
+        ABlockNum := i;
+        exit(True);
+      end;
+    end;
+  finally
+    if NeedClose then
+      DoClose;
+  end;
+end;
 
 //function TBlockchainTETDynamic.TryGetByUserID(AUserID: Int64; out ABlockID: Int64;
 //  var ATETDynamic: TTokenBase): Boolean;
@@ -258,32 +258,31 @@ begin
   end;
 end;
 
-//function TBlockchainTETDynamic.TryGetTETAddress(const AOwnerID: Int64;
-//  out ATETAddress: String): Boolean;
-//var
-//  i: Integer;
-//  tb: TTokenBase;
-//begin
-//  FLock.Enter;
-//  Result := False;
-//  AssignFile(FFile, FFullFilePath);
-//  Reset(FFile);
-//  try
-//    for i := 0 to FileSize(FFile)-1 do
-//    begin
-//      Seek(FFile,i);
-//      Read(FFile,tb);
-//      if (tb.OwnerID = AOwnerID) and (tb.TokenDatID = 1) then
-//      begin
-//        ATETAddress := tb.Token;
-//        Exit(True);
-//      end;
-//    end;
-//  finally
-//    CloseFile(FFile);
-//    FLock.Leave;
-//  end;
-//end;
+function TBlockchainTETDynamic.TryGetTETAddress(const AOwnerID: Integer;
+  out ATETAddress: String): Boolean;
+var
+  NeedClose: Boolean;
+  i: Integer;
+  TETDyn: TTokenBase;
+begin
+  Result := False;
+  NeedClose := DoOpen;
+  try
+    Seek(FFile, 0);
+    for i := 0 to FileSize(FFile) - 1 do
+    begin
+      Read(FFile, TETDyn);
+      if (TETDyn.OwnerID = AOwnerID) and (TETDyn.TokenDatID = 1) then
+      begin
+        ATETAddress := TETDyn.Token;
+        exit(True);
+      end;
+    end;
+  finally
+    if NeedClose then
+      DoClose;
+  end;
+end;
 
 //function TBlockchainTETDynamic.TryGetTokenBase(ATETAddress: String;
 //  out AID: Integer; out tb: TTokenBase): Boolean;

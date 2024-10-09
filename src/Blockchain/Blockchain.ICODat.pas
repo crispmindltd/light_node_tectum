@@ -24,7 +24,7 @@ type
     procedure WriteBlocksAsBytes(ASkipBlocks: Integer; ABytes: TBytes); override;
     procedure WriteBlock(ASkip: Integer; ABlock: TTokenICODat);
 //    procedure WriteBlocks(ASkip: Int64; ABlocks: TArray<TTokenICODat>);
-    function TryReadBlock(ASkip: Int64; out ABlock: TTokenICODat): Boolean;
+    function TryReadBlock(ASkip: Integer; out ABlock: TTokenICODat): Boolean;
     function ReadBlocksAsBytes(ASkipBlocks: Integer;
       ANumber: Integer = MaxBlocksNumber): TBytes; override;
     function ReadBlocks(ASkip: Integer;
@@ -165,14 +165,14 @@ begin
   end;
 end;
 
-function TBlockchainICODat.TryReadBlock(ASkip: Int64;
+function TBlockchainICODat.TryReadBlock(ASkip: Integer;
   out ABlock: TTokenICODat): Boolean;
 begin
   FLock.Enter;
   AssignFile(FFile, FFullFilePath);
   Reset(FFile);
   try
-    Result := (ASkip >= 0) and (ASkip < GetBlocksCount);
+    Result := (ASkip >= 0) and (ASkip < FileSize(FFile));
     if Result then
     begin
       Seek(FFile, ASkip);

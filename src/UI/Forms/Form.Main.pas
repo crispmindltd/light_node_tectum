@@ -341,15 +341,15 @@ type
   const
     TransToDrawNumber = 18;
   private
-    FBalances: TDictionary<String,Extended>;
-    chosenToken,chosenTicker: String;
-    totalPagesAmount,pageNum: Integer;
+    FBalances: TDictionary<string, Double>;
+    chosenToken, chosenTicker: string;
+    totalPagesAmount, pageNum: Integer;
 
     function DecimalsCount(const AValue: string): Integer;
     procedure RefreshTETBalance;
     procedure RefreshTETHistory;
     procedure AlignTETHeaders;
-    procedure RefreshHeaderBalance(AName: String);
+    procedure RefreshHeaderBalance(AName: string);
     procedure RefreshTokensBalances;
     procedure RefreshTokenHistory;
     procedure AlignTokensHeaders;
@@ -559,8 +559,8 @@ end;
 procedure TMainForm.AmountTokenEditChangeTracking(Sender: TObject);
 var
   isNumber: Boolean;
-  val,balance: Extended;
-  tICO:TTokenICODat;
+  val,balance: Double;
+  tICO: TTokenICODat;
 begin
 //  const isGetTokenSuccess = AppCore.TryGetTokenICO(TokenNameEdit.Text, tICO);
   FBalances.TryGetValue(TokenNameEdit.Text, balance);
@@ -819,8 +819,7 @@ end;
 procedure TMainForm.FormCreate(Sender: TObject);
 begin
   Caption := 'LNode' + ' ' + AppCore.GetVersion;
-  FBalances := TDictionary<String,Extended>.Create;
-  FBalances.Add('TET',0);
+  FBalances := TDictionary<string, Double>.Create;
 
   TETCopyLoginLayout.OnMouseEnter := StylesForm.OnCopyLayoutMouseEnter;
   TETCopyLoginLayout.OnMouseLeave := StylesForm.OnCopyLayoutMouseLeave;
@@ -864,7 +863,7 @@ begin
 
   chosenToken := '';
   chosenTicker := '';
-  AddTicker('Tectum');
+//  AddTicker('Tectum');
 
   const Digitals = '0123456789' + FormatSettings.DecimalSeparator;
   AmountTETEdit.FilterChar := Digitals;
@@ -878,8 +877,8 @@ end;
 
 procedure TMainForm.FormShow(Sender: TObject);
 begin
-  RefreshTETBalance;
   AddressTETLabel.Text := AppCore.TETAddress;
+  RefreshTETBalance;
   RefreshTokensBalances;
   RefreshTETHistory;
 end;
@@ -991,7 +990,7 @@ var
   item: TListBoxItem;
   rect: TRectangle;
   valueLabel: TLabel;
-  value: Extended;
+  value: Double;
 begin
   item := Sender as TListBoxItem;
   item.BeginUpdate;
@@ -1000,7 +999,7 @@ begin
     if Assigned(rect) then
     begin
       valueLabel := rect.FindStyleResource('TokenAmountLabelStyle') as TLabel;
-      if FBalances.TryGetValue(item.Text,value) then
+      if FBalances.TryGetValue(item.Text, value) then
         valueLabel.Text := FormatFloat('0.########',value);
     end;
   finally
@@ -1265,7 +1264,7 @@ end;
 
 procedure TMainForm.RefreshHeaderBalance(AName: String);
 var
-  value: Extended;
+  value: Double;
 begin
   if FBalances.TryGetValue(AName,value) then
     BalanceTokenValueLabel.Text :=
@@ -1348,12 +1347,12 @@ end;
 
 procedure TMainForm.RefreshTETBalance;
 var
-  val: Extended;
+  Balance: Double;
 begin
   try
-//    FBalances.AddOrSetValue('TET',AppCore.GetLocalTETBalance);
-    FBalances.TryGetValue('TET',val);
-    BalanceTETValueLabel.Text := FormatFloat('0.########',val) + ' TET';
+    Balance := AppCore.GetTETBalance;
+    FBalances.AddOrSetValue('TET', Balance);
+    BalanceTETValueLabel.Text := FormatFloat('0.########', Balance) + ' TET';
   except
     on E:ENoInfoForThisAccountError do
       BalanceTETValueLabel.Text := '<ERROR: DATA NOT FOUND>';
@@ -1603,7 +1602,7 @@ end;
 procedure TMainForm.AmountTETEditChangeTracking(Sender: TObject);
 var
   isNumber: Boolean;
-  val,balance: Extended;
+  val,balance: Double;
 begin
   FBalances.TryGetValue('TET', balance);
   isNumber := TryStrToFloat(AmountTETEdit.Text, val);

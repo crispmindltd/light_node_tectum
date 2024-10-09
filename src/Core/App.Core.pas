@@ -32,7 +32,7 @@ type
   TAppCore = class(TInterfacedObject, IAppCore)
   strict private
     FSessionKey: String;
-    FUserID: Int64;
+    FUserID: Integer;
     FTETAddress: String;
   private
     FSettings: TSettingsFile;
@@ -57,10 +57,10 @@ type
     procedure Stop;
     function GetSessionKey: string;
     function GetTETAddress: string;
-    function GetUserID: Int64;
+    function GetUserID: Integer;
     function GetLoadingStatus: Boolean;
     procedure SetSessionKey(const ASessionKey: string);
-    procedure SetUserID(const AID: Int64);
+    procedure SetUserID(const AID: Integer);
     procedure SetLoadingStatus(const AIsDone: Boolean);
 
     //TET chain methods
@@ -74,7 +74,7 @@ type
 //      var ARows: Integer): TArray<THistoryTransactionInfo>;
 //    function GetTETUserLastTransactions(AUserID: Int64;
 //      var ANumber: Integer): TArray<THistoryTransactionInfo>;
-//    function GetTETLocalBalance: Double; overload;
+    function GetTETBalance: Double; overload;
 //    function GetTETLocalBalance(ATETAddress: string): Double; overload;
 
     //TET dynamic blocks sync methods
@@ -160,7 +160,7 @@ type
 
     property SessionKey: string read GetSessionKey write SetSessionKey;
     property TETAddress: string read GetTETAddress;
-    property UserID: Int64 read GetUserID write SetUserID;
+    property UserID: Integer read GetUserID write SetUserID;
     property BlocksSyncDone: Boolean read GetLoadingStatus write SetLoadingStatus;
   end;
 
@@ -733,27 +733,6 @@ end;
 //  Result := FBlockchain.GetTETUserLastTransactions(AUserID,ANumber);
 //end;
 
-//function TAppCore.GetTETLocalBalance: Double;
-//var
-//  TETBlock: Tbc2;
-//  ICODat: TTokenICODat;
-//  TETDynamic: TTokenBase;
-//  BlockID: Int64;
-//begin
-//  if not FBlockchain.TryGetTETDynamic(FUserID,BlockID,TETDynamic) then
-//    raise EAddressNotExistsError.Create('');
-//  TETBlock := FBlockchain.GetTETChainBlock(TETDynamic.LastBlock);
-//  if not FBlockchain.TryGetICOBlock(TETDynamic.TokenDatID,ICODat) then
-//    exit;
-//
-//  if BlockID = TETBlock.Smart.tkn[1].TokenID then
-//		Result := TETBlock.Smart.tkn[1].Amount / Power(10,ICODat.FloatSize)
-//	else if BlockID = TETBlock.Smart.tkn[2].TokenID then
-//		Result := TETBlock.Smart.tkn[2].Amount / Power(10,ICODat.FloatSize)
-//	else
-//    raise EUnknownError.Create('');
-//end;
-
 function TAppCore.GetLoadingStatus: Boolean;
 begin
   Result := FStartLoadingDone;
@@ -963,6 +942,26 @@ begin
   FBlockchain.SetTETChainBlocks(ASkip, ABytes);
 end;
 
+function TAppCore.GetTETBalance: Double;
+var
+  TETBlock: Tbc2;
+  ICODat: TTokenICODat;
+  TETDynamic: TTokenBase;
+  BlockNum: Integer;
+begin
+  if not (FBlockchain.TryGetTETDynamic(GetTETAddress, BlockNum, TETDynamic) and
+          FBlockchain.TryGetICOBlock(TETDynamic.TokenDatID, ICODat)) then
+    exit(0);
+
+  TETBlock := FBlockchain.GetTETChainBlock(TETDynamic.LastBlock);
+  if BlockNum = TETBlock.Smart.tkn[1].TokenID then
+		Result := TETBlock.Smart.tkn[1].Amount / Power(10, ICODat.FloatSize)
+	else if BlockNum = TETBlock.Smart.tkn[2].TokenID then
+		Result := TETBlock.Smart.tkn[2].Amount / Power(10, ICODat.FloatSize)
+	else
+    raise EUnknownError.Create('');
+end;
+
 function TAppCore.GetDynTETChainBlockSize: Integer;
 begin
   Result := FBlockchain.GetDynTETChainBlockSize;
@@ -980,7 +979,7 @@ end;
 
 procedure TAppCore.SetDynTETChainBlocks(ASkip: Integer; ABytes: TBytes);
 begin
-  FBlockchain.SetDynBlock(ASkip, ABytes);
+  FBlockchain.SetDynTETBlocks(ASkip, ABytes);
 end;
 
 function TAppCore.GetTokenICOBlockSize: Integer;
@@ -1015,7 +1014,7 @@ end;
 //  Result := FBlockchain.GetICOsInfo(ASkip, ARows);
 //end;
 
-function TAppCore.GetUserID: Int64;
+function TAppCore.GetUserID: Integer;
 begin
   Result := FUserID;
 end;
@@ -1123,12 +1122,12 @@ end;
 //  FBlockchain.SetSmartKeyBlocks(ASkip,ABytes);
 //end;
 
-procedure TAppCore.SetUserID(const AID: Int64);
+procedure TAppCore.SetUserID(const AID: Integer);
 begin
   FUserID := AID;
 
-//  if not FBlockchain.TryGetTETAddressByOwnerID(FUserID,FTETAddress) then
-//    FTETAddress := '<address did not found>';
+  if not FBlockchain.TryGetTETAddressByOwnerID(FUserID, FTETAddress) then
+    FTETAddress := '';
 end;
 
 function TAppCore.SignTransaction(const AToSign: string; const APrivateKey: string): string;

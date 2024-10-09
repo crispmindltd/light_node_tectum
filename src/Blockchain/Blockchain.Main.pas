@@ -39,8 +39,8 @@ type
     constructor Create;
     destructor Destroy; override;
 
-//      function TryGetTETAddressByOwnerID(const AOwnerID: Int64;
-//        out ATETAddress: String): Boolean;
+    function TryGetTETAddressByOwnerID(const AOwnerID: Integer;
+      out ATETAddress: String): Boolean;
 //      function TryGetCTokenBase(ATokenID: Integer; const AOwnerID: Integer;
 //        out AID: Integer; var tb:TCTokensBase): Boolean;
 
@@ -56,20 +56,24 @@ type
     function GetDynTETChainBlockSize: Integer;
     function GetDynTETChainBlocksCount: Integer;
     function GetDynTETChainBlocks(ASkip: Integer): TBytes;
-    procedure SetDynBlock(ASkip: Integer; ABytes: TBytes);
+    procedure SetDynTETBlocks(ASkip: Integer; ABytes: TBytes);
 //      function GetOneChainDynBlock(AFrom: Integer; var AValue: TTokenBase): Boolean;
 //      function GetOneSmartDynBlock(ASmartID: Integer; AFrom: Integer;
 //        var AValue: TCTokensBase): Boolean;
 //      procedure SetDynBlock(ADynID: Integer; APos: Int64; ABytes: TOneBlockBytes);
 //      procedure SetDynBlocks(ADynID: Integer; APos: Int64; ABytes: TBytesBlocks;
 //        AAmount: Integer);
+//    function TryGetTETDynamic(const AUserID: Int64; out ABlockID: Int64;
+//      var ATETDynamic: TTokenBase): Boolean; overload;
+    function TryGetTETDynamic(const ATETAddress: String; out ABlockID: Integer;
+      var ATETDynamic: TTokenBase): Boolean; overload;
 
     function GetICOBlockSize: Integer;
     function GetICOBlocksCount: Integer;
     function GetICOBlocks(ASkip: Integer): TBytes;
     procedure SetTokenICOBlocks(ASkip: Integer; ABytes: TBytes);
 //    function GetICOsInfo(ASkip: Integer; var ARows: Integer): TArray<TTokenICODat>;
-//    function TryGetICOBlock(ASkip: Integer; var ICOBlock: TTokenICODat): Boolean;
+    function TryGetICOBlock(ASkip: Integer; var AICOBlock: TTokenICODat): Boolean;
 
 //      function GetChainTransactions(ASkip: Integer; var ARows: Integer): TArray<TExplorerTransactionInfo>;
 //      function GetLastChainTransactions(var Amount: Integer): TArray<TExplorerTransactionInfo>;
@@ -77,10 +81,6 @@ type
 //        var ARows: Integer): TArray<THistoryTransactionInfo>;
 //    function GetTETUserLastTransactions(AUserID: Int64;
 //      var ANumber: Integer): TArray<THistoryTransactionInfo>;
-//    function TryGetTETDynamic(const AUserID: Int64; out ABlockID: Int64;
-//      var ATETDynamic: TTokenBase): Boolean; overload;
-//    function TryGetTETDynamic(const ATETAddress: String; out ABlockID: Int64;
-//      var ATETDynamic: TTokenBase): Boolean; overload;
 
 //    function GetSmartKeyBlocksCount: Int64;
 //    function GetSmartKeyBlockSize: Integer;
@@ -159,6 +159,12 @@ begin
   inherited;
 end;
 
+function TBlockchain.TryGetTETAddressByOwnerID(const AOwnerID: Integer;
+  out ATETAddress: string): Boolean;
+begin
+  Result := FTETDynamic.TryGetTETAddress(AOwnerID, ATETAddress);
+end;
+
 function TBlockchain.GetTETChainBlockSize: Integer;
 begin
   Result := FTETChain.GetBlockSize;
@@ -230,9 +236,15 @@ begin
   Result := FTETDynamic.ReadBlocksAsBytes(ASkip);
 end;
 
-procedure TBlockchain.SetDynBlock(ASkip: Integer; ABytes: TBytes);
+procedure TBlockchain.SetDynTETBlocks(ASkip: Integer; ABytes: TBytes);
 begin
   FTETDynamic.WriteBlocksAsBytes(ASkip, ABytes);
+end;
+
+function TBlockchain.TryGetTETDynamic(const ATETAddress: string;
+  out ABlockID: Integer; var ATETDynamic: TTokenBase): Boolean;
+begin
+  Result := FTETDynamic.TryGetByTETAddress(ATETAddress, ABlockID, ATETDynamic);
 end;
 
 function TBlockchain.GetICOBlockSize: Integer;
@@ -253,6 +265,12 @@ end;
 procedure TBlockchain.SetTokenICOBlocks(ASkip: Integer; ABytes: TBytes);
 begin
   FTokenICO.WriteBlocksAsBytes(ASkip, ABytes);
+end;
+
+function TBlockchain.TryGetICOBlock(ASkip: Integer;
+  var AICOBlock: TTokenICODat): Boolean;
+begin
+  Result := FTokenICO.TryReadBlock(ASkip, AICOBlock);
 end;
 
 //function TBlockchain.DynamicNameByID(AID: Integer): String;
@@ -888,12 +906,6 @@ end;
 //  UI.NotifyNewTokenBlocks(NeedRefreshBalance);
 //end;
 
-//function TBlockchain.TryGetTETDynamic(const ATETAddress: string;
-//  out ABlockID: Int64; var ATETDynamic: TTokenBase): Boolean;
-//begin
-//  Result := FTETDynamic.TryGetByTETAddress(ATETAddress,ABlockID,ATETDynamic);
-//end;
-
 //procedure TBlockchain.UpdateTokensList;
 //var
 //  SmartKeyArray: TArray<TCSmartKey>;
@@ -1066,16 +1078,6 @@ end;
 //function TBlockchain.TryGetSmartKeyByAddress(const AAddress: string; var sk: TCSmartKey): Boolean;
 //begin
 //  Result := TBlockchainSmartKey(FSmartKey).TryGetSmartKeyByAddress(AAddress, sk);
-//end;
-//
-//function TBlockchain.TryGetTETAddressByOwnerID(const AOwnerID: Int64;
-//  out ATETAddress: string): Boolean;
-//var
-//  ChainFileWorker: TChainFileWorker;
-//begin
-//  FDynamicBlocks.TryGetValue(ConstStr.Token64FileName, ChainFileWorker);
-//
-//  Result := TBlockchainTETDynamic(ChainFileWorker).TryGetTETAddress(AOwnerID,ATETAddress);
 //end;
 
 end.

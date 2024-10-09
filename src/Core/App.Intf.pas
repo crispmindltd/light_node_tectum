@@ -29,10 +29,10 @@ type
     procedure Stop;
     function GetSessionKey: String;
     function GetTETAddress: String;
-    function GetUserID: Int64;
+    function GetUserID: Integer;
     function GetLoadingStatus: Boolean;
     procedure SetSessionKey(const ASessionKey: String);
-    procedure SetUserID(const AID: Int64);
+    procedure SetUserID(const AID: Integer);
     procedure SetLoadingStatus(const AIsDone: Boolean);
 //    procedure BeginSync(AChainName: String; AIsSystemChain: Boolean);
 //    procedure StopSync(AChainName: String; AIsSystemChain: Boolean);
@@ -48,7 +48,7 @@ type
 //      var ARows: Integer): TArray<THistoryTransactionInfo>;
 //    function GetTETUserLastTransactions(AUserID: Int64;
 //      var ANumber: Integer): TArray<THistoryTransactionInfo>;
-//    function GetTETLocalBalance: Double; overload;
+    function GetTETBalance: Double; overload;
 //    function GetTETLocalBalance(ATETAddress: String): Double; overload;
 
     //TET dynamic blocks sync methods
@@ -139,7 +139,7 @@ type
 
     property SessionKey: string read GetSessionKey write SetSessionKey;
     property TETAddress: string read GetTETAddress;
-    property UserID: Int64 read GetUserID write SetUserID;
+    property UserID: Integer read GetUserID write SetUserID;
     property BlocksSyncDone: Boolean read GetLoadingStatus write SetLoadingStatus;
   end;
 
