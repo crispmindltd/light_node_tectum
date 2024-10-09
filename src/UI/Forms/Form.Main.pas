@@ -355,6 +355,7 @@ type
     procedure AlignTokensHeaders;
     procedure RefreshPagesLayout;
     procedure OnPageSelected;
+    procedure DrawTransactions(ATransactions: TArray<TExplorerTransactionInfo>);
     procedure RefreshExplorer;
     procedure AlignExplorerHeaders;
     procedure CleanScrollBox(AVertScrollBox: TVertScrollBox);
@@ -368,6 +369,8 @@ type
     procedure AddOrRefreshBalance(AName: String; AValue: Extended);
     procedure ShowExplorerTransactionDetails(ATicker, ADateTime, ABlockNum, AHash,
       ATransFrom, ATransTo, AAmount: string);
+    procedure SearchByBlockNumber(const ABlockNumber: Integer);
+    procedure SearchByHash;
 
     procedure onTETHistoryFrameClick(Sender: TObject);
     procedure onTokenHistoryFrameClick(Sender: TObject);
@@ -755,6 +758,36 @@ begin
     Exit;
   end;
   Result := Length(TrimmedValue) - DecimalPos;
+end;
+
+procedure TMainForm.DrawTransactions(
+  ATransactions: TArray<TExplorerTransactionInfo>);
+var
+  NewTransFrame: TExplorerTransactionFrame;
+  i: Integer;
+  Format: string;
+begin
+  CleanScrollBox(ExplorerVertScrollBox);
+  ExplorerVertScrollBox.BeginUpdate;
+  try
+    for i := Length(ATransactions) - 1 downto 0 do
+    begin
+      Format := '0.' + string.Create('0', ATransactions[i].FloatSize);
+      NewTransFrame := TExplorerTransactionFrame.Create(ExplorerVertScrollBox,
+                                                        ATransactions[i].DateTime,
+                                                        ATransactions[i].BlockNum,
+                                                        ATransactions[i].TransFrom,
+                                                        ATransactions[i].TransTo,
+                                                        ATransactions[i].Hash,
+                                                        FormatFloat(Format,
+                                                          ATransactions[i].Amount));
+      NewTransFrame.OnClick := onExplorerFrameClick;
+      NewTransFrame.Parent := ExplorerVertScrollBox;
+    end;
+  finally
+    ExplorerVertScrollBox.EndUpdate;
+    AlignExplorerHeaders;
+  end;
 end;
 
 procedure TMainForm.ExplorerVertScrollBoxPaint(Sender: TObject; Canvas: TCanvas;
@@ -1208,14 +1241,13 @@ end;
 
 procedure TMainForm.RefreshExplorer;
 var
-  transArray: TArray<TExplorerTransactionInfo>;
-  newTransFrame: TExplorerTransactionFrame;
-  i,TransNumber,pagesAmount: Integer;
-  format: string;
-  tICO: TTokenICODat;
-  smartKey: TCSmartKey;
+  Transactions: TArray<TExplorerTransactionInfo>;
+  i,TransNumber: Integer;
+  TokenICO: TTokenICODat;
+  SmartKey: TCSmartKey;
 begin
-  if chosenTicker.IsEmpty then exit;
+  if chosenTicker.IsEmpty then
+    exit;
 
   TransNumber := TransToDrawNumber;
   if chosenTicker = 'Tectum' then
@@ -1223,44 +1255,27 @@ begin
     i := AppCore.GetChainBlocksCount - pageNum * TransNumber;
     if i < 0 then
     begin
-      Inc(TransNumber,i);
+      Inc(TransNumber, i);
       i := 0;
     end;
-    transArray := AppCore.GetChainTransations(i,TransNumber);
-    if not AppCore.TryGetTokenICO('TET',tICO) then exit;
+    Transactions := AppCore.GetChainTransations(i, TransNumber);
+    if not AppCore.TryGetTokenICO('TET', TokenICO) then
+      exit;
   end else
   begin
-    if not AppCore.TryGetTokenBase(chosenTicker,smartKey) then exit;
-    i := AppCore.GetSmartBlocksCount(smartKey.SmartID) - pageNum * TransNumber;
+    if not AppCore.TryGetTokenBase(chosenTicker, SmartKey) then exit;
+    i := AppCore.GetSmartBlocksCount(SmartKey.SmartID) - pageNum * TransNumber;
     if i < 0 then
     begin
-      Inc(TransNumber,i);
+      Inc(TransNumber, i);
       i := 0;
     end;
-    transArray := AppCore.GetSmartTransactions(chosenTicker,i,TransNumber);
-    if not AppCore.TryGetTokenICO(chosenTicker,tICO) then exit;
+    Transactions := AppCore.GetSmartTransactions(chosenTicker, i, TransNumber);
+    if not AppCore.TryGetTokenICO(chosenTicker, TokenICO) then
+      exit;
   end;
 
-  CleanScrollBox(ExplorerVertScrollBox);
-  ExplorerVertScrollBox.BeginUpdate;
-  try
-    format := '0.' + string.Create('0', tICO.FloatSize);
-    for i := TransNumber - 1 downto 0 do
-    begin
-      newTransFrame := TExplorerTransactionFrame.Create(ExplorerVertScrollBox,
-                                                        transArray[i].DateTime,
-                                                        transArray[i].BlockNum,
-                                                        transArray[i].TransFrom,
-                                                        transArray[i].TransTo,
-                                                        transArray[i].Hash,
-                                                        FormatFloat(format,transArray[i].Amount));
-      newTransFrame.OnClick := onExplorerFrameClick;
-      newTransFrame.Parent := ExplorerVertScrollBox;
-    end;
-  finally
-    ExplorerVertScrollBox.EndUpdate;
-    AlignExplorerHeaders;
-  end;
+  DrawTransactions(Transactions);
 end;
 
 procedure TMainForm.RefreshHeaderBalance(AName: String);
@@ -1532,6 +1547,43 @@ begin
 end;
 
 procedure TMainForm.SearchButtonClick(Sender: TObject);
+var
+  BlockNum: Integer;
+begin
+  if TryStrToInt(SearchEdit.Text, BlockNum) then
+    SearchByBlockNumber(BlockNum)
+  else
+    if Length(SearchEdit.Text) = 64 then
+      SearchByHash;
+//  else
+//    SearchByAddress;
+end;
+
+procedure TMainForm.SearchByBlockNumber(const ABlockNumber: Integer);
+begin
+  SearchEdit.Text := '';
+  AniIndicator1.Visible := True;
+  AniIndicator1.Enabled := True;
+
+  TThread.CreateAnonymousThread(
+  procedure
+  var
+    Transactions: TArray<TExplorerTransactionInfo>;
+  begin
+    Transactions := AppCore.SearchTransactionsByBlockNum(ABlockNumber);
+    AniIndicator1.Enabled := False;
+    AniIndicator1.Visible := False;
+    TThread.Synchronize(nil,
+    procedure
+    begin
+      onTransactionSearchingDone(Length(Transactions) > 0);
+      if Length(Transactions) > 0 then
+        DrawTransactions(Transactions);
+    end);
+  end).Start;
+end;
+
+procedure TMainForm.SearchByHash;
 var
   Hash: string;
 begin

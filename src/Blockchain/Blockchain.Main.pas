@@ -96,6 +96,8 @@ type
       function GetSmartAddress(ATicker: String): String; overload;
       function GetSmartAddress(AID: Integer): String; overload;
       function TryGetSmartID(ATickerOrAddr: String; out ASmartID: Integer): Boolean;
+      function SearchTransactionsByBlockNum(const ABlockNum: Integer):
+        TArray<TExplorerTransactionInfo>;
       function GetLastSmartUserTransactions(AUserID: Integer; ATicker: String;
         var AAmount: Integer): TArray<THistoryTransactionInfo>;
 
@@ -256,7 +258,8 @@ begin
       hashHex := hashHex + IntToHex(bc2.Hash[j],2);
     Result[i].Hash := hashHex.ToLower;
 
-    Result[i].Amount := bc2.Smart.Delta / 100000000;
+    Result[i].Amount := bc2.Smart.Delta;
+    Result[i].FloatSize := 8;
   end;
 end;
 
@@ -432,7 +435,8 @@ begin
         hashHex := hashHex + IntToHex(bc2.Hash[j],2);
       transaction.Hash := hashHex.ToLower;
 
-      transaction.Amount := bc2.Smart.Delta / 100000000;
+      transaction.Amount := bc2.Smart.Delta;
+      transaction.FloatSize := 8;
 
       Result := Result + [transaction];
     finally
@@ -537,7 +541,10 @@ begin
     Result[Amount-i-1].Hash := hashHex.ToLower;
 
     if TryGetOneICOBlock(ATicker,tICO) then
-      Result[Amount-i-1].Amount := bc4.Smart.Delta/Power(10,tICO.FloatSize);
+    begin
+      Result[Amount-i-1].Amount := bc4.Smart.Delta;
+      Result[Amount-i-1].FloatSize := tICO.FloatSize;
+    end;
   end;
 end;
 
@@ -726,7 +733,10 @@ begin
     Result[i].Hash := hashHex.ToLower;
 
     if TryGetOneICOBlock(ATicker,tICO) then
-      Result[i].Amount := bc4.Smart.Delta/Power(10,tICO.FloatSize);
+    begin
+      Result[i].Amount := bc4.Smart.Delta;
+      Result[i].FloatSize := tICO.FloatSize;
+    end;
   end;
 end;
 
@@ -890,7 +900,8 @@ begin
       ATransaction.TransTo := TokenBase.Token
     else
       ATransaction.TransTo := '';
-    ATransaction.Amount := bc2.Smart.Delta / 100000000;
+    ATransaction.Amount := bc2.Smart.Delta;
+    ATransaction.FloatSize := 8;
     ATicker := 'TET';
     Result := True;
   end else
@@ -911,10 +922,72 @@ begin
         if GetOneSmartDynBlock(dynID, bc4.Smart.tkn[2].TokenID, TCTokenBase) then
           ATransaction.TransTo := TCTokenBase.Token;
         if TryGetOneICOBlock(dynID, TokenICO) then
-          ATransaction.Amount := bc4.Smart.Delta / Power(10, TokenICO.FloatSize);
+        begin
+          ATransaction.Amount := bc4.Smart.Delta;
+          ATransaction.FloatSize := TokenICO.FloatSize;
+        end;
         ATicker := TokenICO.Abreviature;
         Result := True;
         break;
+      end
+    end;
+  end;
+end;
+
+function TBlockchain.SearchTransactionsByBlockNum(
+  const ABlockNum: Integer): TArray<TExplorerTransactionInfo>;
+var
+  bc2: Tbc2;
+  bc4: TCbc4;
+  Key: string;
+  i: Integer;
+  BlockNum, DynID: Integer;
+  TokenBase: TTokenBase;
+  TCTokenBase: TCTokensBase;
+  ChainFileWorker: TChainFileWorker;
+  TokenICO: TTokenICODat;
+  TransData: TExplorerTransactionInfo;
+begin
+  Result := [];
+  if TBlockchainTokenCHN(FTokenCHN).TryGetBlock(BlockNum, bc2) then
+  begin
+    TransData.DateTime := bc2.Smart.TimeEvent;
+    TransData.BlockNum := BlockNum;
+    TransData.Hash := '';
+    for i := 1 to TokenLength do
+      TransData.Hash := TransData.Hash + IntToHex(bc2.Hash[i],2).ToLower;
+    if GetOneChainDynBlock(bc2.Smart.tkn[1].TokenID, TokenBase) then
+      TransData.TransFrom := TokenBase.Token
+    else
+      TransData.TransFrom := '';
+    if GetOneChainDynBlock(bc2.Smart.tkn[2].TokenID, TokenBase) then
+      TransData.TransTo := TokenBase.Token
+    else
+      TransData.TransTo := '';
+    TransData.Amount := bc2.Smart.Delta;
+    TransData.FloatSize := 8;
+    Result := Result + [TransData];
+  end else
+  begin
+    for Key in FSmartcontracts.Keys do
+    begin
+      ChainFileWorker := FSmartcontracts.Items[Key];
+      if TBlockchainSmart(ChainFileWorker).TryGetBlock(BlockNum, bc4) then
+      begin
+        TransData.DateTime := bc4.Smart.TimeEvent;
+        TransData.BlockNum := BlockNum;
+        for i := 1 to CHashLength do
+          TransData.Hash := TransData.Hash + IntToHex(bc4.Hash[i],2).ToLower;
+        DynID := SmartIDByName(Key);
+        if GetOneSmartDynBlock(DynID, bc4.Smart.tkn[1].TokenID, TCTokenBase) then
+          TransData.TransFrom := TCTokenBase.Token;
+        if GetOneSmartDynBlock(dynID, bc4.Smart.tkn[2].TokenID, TCTokenBase) then
+          TransData.TransTo := TCTokenBase.Token;
+        if TryGetOneICOBlock(dynID, TokenICO) then
+        begin
+          TransData.Amount := bc4.Smart.Delta;
+          TransData.FloatSize := TokenICO.FloatSize;
+        end;
       end
     end;
   end;

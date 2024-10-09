@@ -12,6 +12,7 @@ uses
   JSON,
   IdCustomHTTPServer,
   IOUtils,
+  Math,
   Net.Data,
   server.Types,
   SyncObjs,
@@ -192,7 +193,8 @@ begin
         JSONNestedObject.AddPair('address_to', TETTransfersInfo[i].TransTo);
         JSONNestedObject.AddPair('hash', TETTransfersInfo[i].Hash);
         JSONNestedObject.AddPair('amount',
-          TJSONNumber.Create(TETTransfersInfo[i].Amount));
+          TJSONNumber.Create(TETTransfersInfo[i].Amount /
+            Power(10, TETTransfersInfo[i].FloatSize)));
         JSONNestedObject.AddPair('fee', TJSONNumber.Create(0));
       end;
       JSON.AddPair('transactions', JSONArray);
@@ -708,7 +710,8 @@ begin
         JSONNestedObject.AddPair('address_to', TETTransfersInfo[i].TransTo);
         JSONNestedObject.AddPair('hash', TETTransfersInfo[i].Hash);
         JSONNestedObject.AddPair('amount',
-          TJSONNumber.Create(TETTransfersInfo[i].Amount));
+          TJSONNumber.Create(TETTransfersInfo[i].Amount /
+            Power(10, TETTransfersInfo[i].FloatSize)));
         JSONNestedObject.AddPair('fee', TJSONNumber.Create(0));
       end;
       JSON.AddPair('transactions', JSONArray);

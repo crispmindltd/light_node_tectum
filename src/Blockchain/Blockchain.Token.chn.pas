@@ -28,6 +28,7 @@ type
 
     function TryFindBlockByHash(AHash: string; out ABlockNum: Integer;
       out ABlock: Tbc2): Boolean;
+    function TryGetBlock(ABlockNum: Integer; out ABlock: Tbc2): Boolean;
   end;
 
 implementation
@@ -155,6 +156,25 @@ begin
       Result := HashHex.ToLower = AHash.ToLower;
       if Result then
         exit;
+    end;
+  finally
+    CloseFile(FFile);
+    FLock.Leave;
+  end;
+end;
+
+function TBlockchainTokenCHN.TryGetBlock(ABlockNum: Integer;
+  out ABlock: Tbc2): Boolean;
+begin
+  FLock.Enter;
+  AssignFile(FFile, FFullFilePath);
+  Reset(FFile);
+  try
+    Result := FileSize(FFile) - 1 >= ABlockNum;
+    if Result then
+    begin
+      Seek(FFile, ABlockNum);
+      Read(FFile, ABlock);
     end;
   finally
     CloseFile(FFile);

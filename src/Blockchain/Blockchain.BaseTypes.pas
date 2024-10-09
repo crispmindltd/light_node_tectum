@@ -114,7 +114,8 @@ type
     Hash: String[CHashLength*2];
     TransFrom: String[TockenLength1];
     TransTo: String[TockenLength1];
-    Amount: Extended;
+    Amount: Int64;
+    FloatSize: Byte;
   end;
 
   THistoryTransactionInfo = record

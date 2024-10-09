@@ -152,6 +152,8 @@ type
     function GetTokensICOs(ASkip: Integer; var ARows: Integer): TArray<TTokenICODat>;
     function TryGetTokenBase(ATicker: string; var sk: TCSmartKey): Boolean;
     function TryGetTokenBaseByAddress(const AAddress: string; var sk: TCSmartKey): Boolean;
+    function SearchTransactionsByBlockNum(const ABlockNum: Integer):
+      TArray<TExplorerTransactionInfo>;
     function SearchTransactionByHash(const AHash: string; var ATicker: string;
       out ATransaction: TExplorerTransactionInfo): Boolean;
 
@@ -958,6 +960,12 @@ function TAppCore.SearchTransactionByHash(const AHash: string; var ATicker: stri
   out ATransaction: TExplorerTransactionInfo): Boolean;
 begin
   Result := FBlockchain.SearchTransactionByHash(AHash, ATicker, ATransaction);
+end;
+
+function TAppCore.SearchTransactionsByBlockNum(
+  const ABlockNum: Integer): TArray<TExplorerTransactionInfo>;
+begin
+  Result := FBlockchain.SearchTransactionsByBlockNum(ABlockNum);
 end;
 
 function TAppCore.SendToConfirm(AReqID, AToSend: String): String;
