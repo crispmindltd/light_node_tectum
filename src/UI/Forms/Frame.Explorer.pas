@@ -16,14 +16,14 @@ type
     HashLabel: TLabel;
     AmountLabel: TLabel;
     Rectangle: TRectangle;
+    TickerLabel: TLabel;
     procedure FrameResize(Sender: TObject);
     procedure FrameMouseEnter(Sender: TObject);
     procedure FrameMouseLeave(Sender: TObject);
   private
-    { Private declarations }
   public
-    constructor Create(AOwner: TComponent; ADateTime: TDateTime; ABlock: Int64;
-      AFrom, ATo, AHash: String; AAmount: String);
+    constructor Create(AOwner: TComponent; ADateTime: TDateTime; ABlock: Integer;
+      ATicker, AFrom, ATo, AHash, AAmount: string; AShowTicker: Boolean);
     destructor Destroy; override;
   end;
 
@@ -31,15 +31,19 @@ implementation
 
 {$R *.fmx}
 
-{ TFrame1 }
+{ TExplorerTransactionFrame }
 
 constructor TExplorerTransactionFrame.Create(AOwner: TComponent; ADateTime: TDateTime;
-  ABlock: Int64; AFrom, ATo, AHash: String; AAmount: String);
+  ABlock: Integer; ATicker, AFrom, ATo, AHash, AAmount: string; AShowTicker: Boolean);
 begin
   inherited Create(AOwner);
 
-  DateTimeLabel.Text := FormatDateTime('dd.mm.yyyy hh:mm:ss',ADateTime);
+  TickerLabel.Visible := AShowTicker;
+  if AShowTicker then
+    TickerLabel.Position.X := FromLabel.Position.X - 1;
+  DateTimeLabel.Text := FormatDateTime('dd.mm.yyyy hh:mm:ss', ADateTime);
   BlockLabel.Text := ABlock.ToString;
+  TickerLabel.Text := ATicker;
   FromLabel.Text := AFrom;
   ToLabel.Text := ATo;
   HashLabel.Text := AHash;
@@ -65,13 +69,17 @@ end;
 
 procedure TExplorerTransactionFrame.FrameResize(Sender: TObject);
 var
-  w: Integer;
+  Width: Integer;
 begin
-  w := Round(Self.Width - DateTimeLabel.Width - BlockLabel.Width -
-    AmountLabel.Width - 75) div 3;
-  FromLabel.Width := w;
-  ToLabel.Width := w;
-  HashLabel.Width := w;
+  if TickerLabel.Visible then
+    Width := Round(Self.Width - DateTimeLabel.Width - TickerLabel.Width -
+      BlockLabel.Width - AmountLabel.Width - 90) div 3
+  else
+    Width := Round(Self.Width - DateTimeLabel.Width - BlockLabel.Width -
+      AmountLabel.Width - 75) div 3;
+  FromLabel.Width := Width;
+  ToLabel.Width := Width;
+  HashLabel.Width := Width;
 end;
 
 end.

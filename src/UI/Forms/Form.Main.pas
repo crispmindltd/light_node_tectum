@@ -275,6 +275,7 @@ type
     FloatAnimation4: TFloatAnimation;
     HideTransactionNotFoundTimer: TTimer;
     AniIndicator1: TAniIndicator;
+    TickerExplorerHeaderLabel: TLabel;
     procedure MainRectangleMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single);
     procedure TokenItemClick(Sender: TObject);
@@ -291,6 +292,8 @@ type
     procedure FloatAnimation1Finish(Sender: TObject);
     procedure HideTokenMessageTimerTimer(Sender: TObject);
     procedure RoundRectMouseDown(Sender: TObject; Button: TMouseButton;
+      Shift: TShiftState; X, Y: Single);
+    procedure RoundRectTickerMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single);
     procedure AmountTETEditChangeTracking(Sender: TObject);
     procedure SendTETButtonClick(Sender: TObject);
@@ -341,9 +344,10 @@ type
   const
     TransToDrawNumber = 18;
   private
-    FBalances: TDictionary<String,Extended>;
-    chosenToken,chosenTicker: String;
-    totalPagesAmount,pageNum: Integer;
+    FBalances: TDictionary<string, Extended>;
+    chosenToken, chosenTicker: string;
+    totalPagesAmount, pageNum: Integer;
+    FSearchResultsFrame: TTickerFrame;
 
     function DecimalsCount(const AValue: string): Integer;
     procedure RefreshTETBalance;
@@ -355,9 +359,10 @@ type
     procedure AlignTokensHeaders;
     procedure RefreshPagesLayout;
     procedure OnPageSelected;
-    procedure DrawTransactions(ATransactions: TArray<TExplorerTransactionInfo>);
+    procedure DrawTransactions(ATransactions: TArray<TExplorerTransactionInfo>;
+      AShowTicker: Boolean = False);
     procedure RefreshExplorer;
-    procedure AlignExplorerHeaders;
+    procedure AlignExplorerHeaders(AShowTicker: Boolean);
     procedure CleanScrollBox(AVertScrollBox: TVertScrollBox);
 
     procedure AddTokenItem(AName: String; AValue: Extended);
@@ -367,10 +372,12 @@ type
     procedure ShowTokenTransferStatus(const AMessage: String; AIsError: Boolean = False);
     procedure ShowTokenCreatingStatus(const AMessage: String; AIsError: Boolean = False);
     procedure AddOrRefreshBalance(AName: String; AValue: Extended);
-    procedure ShowExplorerTransactionDetails(ATicker, ADateTime, ABlockNum, AHash,
-      ATransFrom, ATransTo, AAmount: string);
+    procedure ShowExplorerTransactionDetails(ATicker, ADateTime, ABlockNum,
+      AHash, ATransFrom, ATransTo, AAmount: string); overload;
+    procedure ShowExplorerTransactionDetails(ATransaction: TExplorerTransactionInfo); overload;
     procedure SearchByBlockNumber(const ABlockNumber: Integer);
     procedure SearchByHash;
+    procedure SearchByAddress;
 
     procedure onTETHistoryFrameClick(Sender: TObject);
     procedure onTokenHistoryFrameClick(Sender: TObject);
@@ -431,18 +438,23 @@ procedure TMainForm.AddTicker(AName: String);
 var
   ticker: TTickerFrame;
 begin
-  ticker := TTickerFrame.Create(TopExplorerHorzLayout,AName);
+  ticker := TTickerFrame.Create(TopExplorerHorzLayout, AName);
   ticker.Parent := TopExplorerHorzLayout;
   ticker.Position.X := Single.MaxValue;
-  ticker.RoundRect.OnMouseDown := RoundRectMouseDown;
+  TopExplorerHorzLayout.Width := TopExplorerHorzLayout.Width + ticker.Width +
+    ticker.Margins.Left;
 
-  if AName = 'Tectum' then
+  if AName <> 'Search result' then
   begin
-    ticker.RoundRect.OnMouseDown(ticker,TMouseButton.mbLeft,[],0,0);
-    TopExplorerHorzLayout.Width := ticker.Width;
-  end else
-    TopExplorerHorzLayout.Width := TopExplorerHorzLayout.Width + ticker.Width +
-      ticker.Margins.Left;
+    ticker.RoundRect.OnMouseDown := RoundRectTickerMouseDown;
+    if AName = 'Tectum' then
+      ticker.RoundRect.OnMouseDown(ticker,TMouseButton.mbLeft, [], 0, 0);
+  end else         
+  begin       
+    ticker.RoundRect.OnMouseDown := RoundRectMouseDown;
+    ticker.Visible := False;     
+    FSearchResultsFrame := ticker;
+  end;
 end;
 
 procedure TMainForm.AddTokenItem(AName: String; AValue: Extended);
@@ -480,7 +492,7 @@ begin
   AddTicker(AName);
 end;
 
-procedure TMainForm.AlignExplorerHeaders;
+procedure TMainForm.AlignExplorerHeaders(AShowTicker: Boolean);
 var
   frame: TExplorerTransactionFrame;
   i: Integer;
@@ -496,7 +508,11 @@ begin
       end;
     if not Assigned(frame) then exit;
 
+    TickerExplorerHeaderLabel.Visible := AShowTicker;
+    if AShowTicker then
+      TickerExplorerHeaderLabel.Position.X := FromExplorerHeaderLabel.Position.X - 1;
     DateTimeExplorerHeaderLabel.Width := frame.DateTimeLabel.Width;
+    TickerExplorerHeaderLabel.Width := frame.TickerLabel.Width;
     BlockNumExplorerHeaderLabel.Width := frame.BlockLabel.Width;
     FromExplorerHeaderLabel.Width := frame.FromLabel.Width;
     ToExplorerHeaderLabel.Width := frame.ToLabel.Width;
@@ -761,7 +777,7 @@ begin
 end;
 
 procedure TMainForm.DrawTransactions(
-  ATransactions: TArray<TExplorerTransactionInfo>);
+  ATransactions: TArray<TExplorerTransactionInfo>; AShowTicker: Boolean);
 var
   NewTransFrame: TExplorerTransactionFrame;
   i: Integer;
@@ -776,29 +792,31 @@ begin
       NewTransFrame := TExplorerTransactionFrame.Create(ExplorerVertScrollBox,
                                                         ATransactions[i].DateTime,
                                                         ATransactions[i].BlockNum,
+                                                        ATransactions[i].Ticker,
                                                         ATransactions[i].TransFrom,
                                                         ATransactions[i].TransTo,
                                                         ATransactions[i].Hash,
                                                         FormatFloat(Format,
-                                                          ATransactions[i].Amount));
+                                                          ATransactions[i].Amount),
+                                                        AShowTicker);
       NewTransFrame.OnClick := onExplorerFrameClick;
       NewTransFrame.Parent := ExplorerVertScrollBox;
     end;
   finally
     ExplorerVertScrollBox.EndUpdate;
-    AlignExplorerHeaders;
+    AlignExplorerHeaders(AShowTicker);
   end;
 end;
 
 procedure TMainForm.ExplorerVertScrollBoxPaint(Sender: TObject; Canvas: TCanvas;
   const ARect: TRectF);
 begin
-  AlignExplorerHeaders;
+  AlignExplorerHeaders(TickerExplorerHeaderLabel.Visible);
 end;
 
 procedure TMainForm.ExplorerVertScrollBoxResized(Sender: TObject);
 begin
-  AlignExplorerHeaders;
+  AlignExplorerHeaders(TickerExplorerHeaderLabel.Visible);
 end;
 
 procedure TMainForm.TokenItemClick(Sender: TObject);
@@ -897,6 +915,7 @@ begin
 
   chosenToken := '';
   chosenTicker := '';
+  AddTicker('Search result');
   AddTicker('Tectum');
 
   const Digitals = '0123456789' + FormatSettings.DecimalSeparator;
@@ -1097,7 +1116,7 @@ procedure TMainForm.onExplorerFrameClick(Sender: TObject);
 begin
   with (Sender as TExplorerTransactionFrame) do
   begin
-    ShowExplorerTransactionDetails(chosenTicker, DateTimeLabel.Text,
+    ShowExplorerTransactionDetails(TickerLabel.Text, DateTimeLabel.Text,
       BlockLabel.Text, HashLabel.Text, FromLabel.Text, ToLabel.Text,
       AmountLabel.Text);
   end;
@@ -1521,7 +1540,13 @@ begin
         child.Selected := False;
         break;
       end;
+end;
 
+procedure TMainForm.RoundRectTickerMouseDown(Sender: TObject;
+  Button: TMouseButton; Shift: TShiftState; X, Y: Single);
+begin
+  RoundRectMouseDown(Sender, Button, Shift, X, Y);  
+  FSearchResultsFrame.Visible := False;  
   pageNum := 1;
   RefreshPagesLayout;
 end;
@@ -1550,21 +1575,56 @@ procedure TMainForm.SearchButtonClick(Sender: TObject);
 var
   BlockNum: Integer;
 begin
+  SearchEdit.Enabled := False;
   if TryStrToInt(SearchEdit.Text, BlockNum) then
     SearchByBlockNumber(BlockNum)
   else
     if Length(SearchEdit.Text) = 64 then
-      SearchByHash;
-//  else
-//    SearchByAddress;
+      SearchByHash
+  else
+    SearchByAddress;
+end;
+
+procedure TMainForm.SearchByAddress;
+begin            
+  AniIndicator1.Visible := True;
+  AniIndicator1.Enabled := True;
+  SearchEdit.Enabled := True;
+  
+  TThread.CreateAnonymousThread(
+  procedure
+  var
+    Transactions: TArray<TExplorerTransactionInfo>;
+  begin
+    Transactions := AppCore.SearchTransactionsByAddress(SearchEdit.Text);
+    AniIndicator1.Enabled := False;
+    AniIndicator1.Visible := False;
+    TThread.Synchronize(nil,
+    procedure
+    begin
+      onTransactionSearchingDone(Length(Transactions) > 0);
+      if Length(Transactions) > 0 then
+      begin
+        SearchEdit.Text := '';
+        if not FSearchResultsFrame.Visible then
+        begin
+          FSearchResultsFrame.Visible := True;
+          FSearchResultsFrame.Position.X := -1;
+          FSearchResultsFrame.RoundRect.OnMouseDown(FSearchResultsFrame, 
+            TMouseButton.mbLeft, [], 0, 0);
+        end;           
+        DrawTransactions(Transactions, True);
+      end;
+    end);
+  end).Start;
 end;
 
 procedure TMainForm.SearchByBlockNumber(const ABlockNumber: Integer);
-begin
-  SearchEdit.Text := '';
+begin            
   AniIndicator1.Visible := True;
   AniIndicator1.Enabled := True;
-
+  SearchEdit.Enabled := True;
+  
   TThread.CreateAnonymousThread(
   procedure
   var
@@ -1578,7 +1638,17 @@ begin
     begin
       onTransactionSearchingDone(Length(Transactions) > 0);
       if Length(Transactions) > 0 then
-        DrawTransactions(Transactions);
+      begin
+        SearchEdit.Text := '';
+        if not FSearchResultsFrame.Visible then
+        begin
+          FSearchResultsFrame.Visible := True;
+          FSearchResultsFrame.Position.X := -1;
+          FSearchResultsFrame.RoundRect.OnMouseDown(FSearchResultsFrame, 
+            TMouseButton.mbLeft, [], 0, 0);
+        end;           
+        DrawTransactions(Transactions, True);
+      end;
     end);
   end).Start;
 end;
@@ -1588,18 +1658,17 @@ var
   Hash: string;
 begin
   Hash := SearchEdit.Text;
-  SearchEdit.Text := '';
   AniIndicator1.Visible := True;
   AniIndicator1.Enabled := True;
-
+  SearchEdit.Enabled := True;
+  
   TThread.CreateAnonymousThread(
   procedure
   var
     TransInfo: TExplorerTransactionInfo;
-    Ticker: string;
     Success: Boolean;
   begin
-    Success := AppCore.SearchTransactionByHash(Hash, Ticker, TransInfo);
+    Success := AppCore.SearchTransactionByHash(Hash, TransInfo);
     AniIndicator1.Enabled := False;
     AniIndicator1.Visible := False;
     TThread.Synchronize(nil,
@@ -1607,13 +1676,10 @@ begin
     begin
       onTransactionSearchingDone(Success);
       if Success then
-        ShowExplorerTransactionDetails(Ticker,
-                                       FormatDateTime('dd.mm.yyyy hh:mm:ss', TransInfo.DateTime),
-                                       TransInfo.BlockNum.ToString,
-                                       TransInfo.Hash,
-                                       TransInfo.TransFrom,
-                                       TransInfo.TransTo,
-                                       TransInfo.Amount.ToString);
+      begin
+        SearchEdit.Text := '';
+        ShowExplorerTransactionDetails(TransInfo);
+      end;
     end);
   end).Start;
 end;
@@ -1760,16 +1826,23 @@ begin
   end;
 end;
 
-procedure TMainForm.ShowExplorerTransactionDetails(ATicker, ADateTime, ABlockNum,
-  AHash, ATransFrom, ATransTo, AAmount: string);
-var
-  tICO: TTokenICODat;
+procedure TMainForm.ShowExplorerTransactionDetails(ATransaction:
+  TExplorerTransactionInfo);
 begin
-  if ATicker = 'Tectum' then
-    ATicker := 'TET';
-  if not AppCore.TryGetTokenICO(ATicker, tICO) then
-    exit;
+  ShowExplorerTransactionDetails(ATransaction.Ticker,
+                                 FormatDateTime('dd.mm.yyyy hh:mm:ss', ATransaction.DateTime),
+                                 ATransaction.BlockNum.ToString,
+                                 ATransaction.Hash,
+                                 ATransaction.TransFrom,
+                                 ATransaction.TransTo,
+                                 ATransaction.Amount.ToString);
+end;
 
+procedure TMainForm.ShowExplorerTransactionDetails(ATicker, ADateTime,
+  ABlockNum, AHash, ATransFrom, ATransTo, AAmount: string);
+var
+  TokenICO: TTokenICODat;
+begin
   DateTimeDetailsText.AutoSize := False;
   DateTimeDetailsText.Text := ADateTime;
   DateTimeDetailsText.AutoSize := True;
@@ -1794,12 +1867,15 @@ begin
   AmountDetailsText.Text := AAmount;
   AmountDetailsText.AutoSize := True;
 
+  AppCore.TryGetTokenICO(ATicker, TokenICO);
+
   TokenDetailsText.AutoSize := False;
-  TokenDetailsText.Text := Format('%s (%s)',[tICO.Abreviature, tICO.ShortName]);
+  TokenDetailsText.Text := Format('%s (%s)',[ATicker,
+    TokenICO.ShortName]);
   TokenDetailsText.AutoSize := True;
 
   TokenInfoDetailsLabelValue.AutoSize := False;
-  TokenInfoDetailsLabelValue.Text := tICO.FullName;
+  TokenInfoDetailsLabelValue.Text := TokenICO.FullName;
   TokenInfoDetailsLabelValue.AutoSize := True;
 
   TransactionDetailsRectangle.Height := TokenInfoDetailsLabelValue.Height + 424;

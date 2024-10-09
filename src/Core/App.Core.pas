@@ -152,10 +152,12 @@ type
     function GetTokensICOs(ASkip: Integer; var ARows: Integer): TArray<TTokenICODat>;
     function TryGetTokenBase(ATicker: string; var sk: TCSmartKey): Boolean;
     function TryGetTokenBaseByAddress(const AAddress: string; var sk: TCSmartKey): Boolean;
+    function SearchTransactionByHash(const AHash: string;
+      out ATransaction: TExplorerTransactionInfo): Boolean;
     function SearchTransactionsByBlockNum(const ABlockNum: Integer):
       TArray<TExplorerTransactionInfo>;
-    function SearchTransactionByHash(const AHash: string; var ATicker: string;
-      out ATransaction: TExplorerTransactionInfo): Boolean;
+    function SearchTransactionsByAddress(const AAddress: string):
+      TArray<TExplorerTransactionInfo>;
 
     property DownloadRemain: Int64 read GetDownloadRemain write SetDownloadRemain;
     property SessionKey: String read GetSessionKey write SetSessionKey;
@@ -956,10 +958,16 @@ begin
   TFile.AppendAllText(sPath,'private key:' + APrivateKey + #13#10);
 end;
 
-function TAppCore.SearchTransactionByHash(const AHash: string; var ATicker: string;
+function TAppCore.SearchTransactionByHash(const AHash: string;
   out ATransaction: TExplorerTransactionInfo): Boolean;
 begin
-  Result := FBlockchain.SearchTransactionByHash(AHash, ATicker, ATransaction);
+  Result := FBlockchain.SearchTransactionByHash(AHash, ATransaction);
+end;
+
+function TAppCore.SearchTransactionsByAddress(
+  const AAddress: string): TArray<TExplorerTransactionInfo>;
+begin
+  Result := FBlockchain.SearchTransactionsByAddress(AAddress);
 end;
 
 function TAppCore.SearchTransactionsByBlockNum(
