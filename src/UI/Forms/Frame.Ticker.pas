@@ -37,13 +37,10 @@ begin
   TickerText.Text := AName;
   TickerText.AutoSize := True;
   Self.Width := TickerText.Width + 20;
-  Name := 'TickerItem' + AName;
+  Name := 'TickerItem' + AName.Replace(' ','');
 
-  if AName = 'Tectum' then
-  begin
-    Margins.Left := 0;
+  if (AName = 'Search result') or (AName = 'Tectum') then
     Align := TAlignLayout.MostLeft;
-  end;
 
   FIsSelected := False;
 end;
