@@ -30,6 +30,8 @@ type
       AIsSystemChain: Boolean = False);
     destructor Destroy; override;
 
+    function DoOpen: Boolean; virtual; abstract;
+    procedure DoClose; virtual; abstract;
     function GetBlockSize: Integer; virtual; abstract;
     function GetBlocksCount: Integer; virtual; abstract;
     function ReadBlocks(AFrom: Int64; var AAmount: Integer): TBytesBlocks; overload; virtual; abstract;

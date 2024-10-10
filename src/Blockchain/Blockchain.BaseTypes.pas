@@ -114,7 +114,7 @@ type
     Hash: String[CHashLength*2];
     TransFrom: String[TockenLength1];
     TransTo: String[TockenLength1];
-    Amount: Double;
+    Amount: Int64;
     FloatSize: Byte;
     Ticker: string[8];
   end;

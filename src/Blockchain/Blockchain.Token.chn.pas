@@ -14,10 +14,13 @@ type
   TBlockchainTokenCHN = class(TChainFileWorker)
   private
     FFile: file of Tbc2;
+    FIsOpened: Boolean;
   public
     constructor Create(AFileName: String);
     destructor Destory;
 
+    function DoOpen: Boolean; override;
+    procedure DoClose; override;
     function GetBlockSize: Integer; override;
     function GetBlocksCount: Integer; override;
     function ReadBlocks(AFrom: Int64; var AAmount: Integer): TBytesBlocks; override;
@@ -39,6 +42,7 @@ constructor TBlockchainTokenCHN.Create(AFileName: String);
 begin
   inherited Create(ConstStr.DBCPath, AFileName,True);
 
+  FIsOpened := False;
 end;
 
 destructor TBlockchainTokenCHN.Destory;
@@ -47,14 +51,35 @@ begin
   inherited;
 end;
 
+procedure TBlockchainTokenCHN.DoClose;
+begin
+  if FIsOpened then
+  begin
+    CloseFile(FFile);
+    FIsOpened := False;
+    FLock.Leave;
+  end;
+end;
+
+function TBlockchainTokenCHN.DoOpen: Boolean;
+begin
+  Result := not FIsOpened;
+  if Result then
+  begin
+    FLock.Enter;
+    AssignFile(FFile, FFullFilePath);
+    Reset(FFile);
+    FIsOpened := True;
+  end;
+end;
+
 function TBlockchainTokenCHN.ReadBlocks(AFrom: Int64; var AAmount: Integer): TBytesBlocks;
 var
+  NeedClose: Boolean;
   i: Integer;
   bc2: Tbc2;
 begin
-  FLock.Enter;
-  AssignFile(FFile, FFullFilePath);
-  Reset(FFile);
+  NeedClose := DoOpen;
   try
     Seek(FFile,AFrom);
     AAmount := Min(FileSize(FFile)-AFrom,MAX_BLOCKS_REQUEST);
@@ -65,28 +90,21 @@ begin
       Move(bc2, Result[i * SizeOf(Tbc2)], SizeOf(bc2));
     end;
   finally
-    CloseFile(FFile);
-    FLock.Leave;
+    if NeedClose then
+      DoClose;
   end;
 end;
 
 function TBlockchainTokenCHN.GetBlocksCount: Integer;
+var
+  NeedClose: Boolean;
 begin
-  FLock.Enter;
+  NeedClose := DoOpen;
   try
-    try
-      AssignFile(FFile, FFullFilePath);
-      Reset(FFile);
-      try
-        Result := FileSize(FFile);
-      finally
-        CloseFile(FFile);
-      end;
-    except
-      Result := 0;
-    end;
+    Result := FileSize(FFile);
   finally
-    FLock.Leave;
+    if NeedClose then
+      DoClose;
   end;
 end;
 
@@ -97,29 +115,27 @@ end;
 
 function TBlockchainTokenCHN.GetOneBlock(AFrom: Int64): TOneBlockBytes;
 var
+  NeedClose: Boolean;
   bc2: Tbc2;
 begin
-  FLock.Enter;
-  AssignFile(FFile, FFullFilePath);
-  Reset(FFile);
+  NeedClose := DoOpen;
   try
     Seek(FFile,AFrom);
     Read(FFile,bc2);
     Move(bc2, Result[0], GetBlockSize);
   finally
-    CloseFile(FFile);
-    FLock.Leave;
+    if NeedClose then
+      DoClose;
   end;
 end;
 
 function TBlockchainTokenCHN.ReadBlocks(var AAmount: Integer): TBytesBlocks;
 var
+  NeedClose: Boolean;
   i: Integer;
   bc2: Tbc2;
 begin
-  FLock.Enter;
-  AssignFile(FFile, FFullFilePath);
-  Reset(FFile);
+  NeedClose := DoOpen;
   try
     AAmount := Max(0,Min(FileSize(FFile),Min(MAX_BLOCKS_REQUEST,AAmount)));
     Seek(FFile,FileSize(FFile)-AAmount);
@@ -129,21 +145,20 @@ begin
       Move(bc2, Result[i * SizeOf(Tbc2)], SizeOf(bc2));
     end;
   finally
-    CloseFile(FFile);
-    FLock.Leave;
+    if NeedClose then
+      DoClose;
   end;
 end;
 
 function TBlockchainTokenCHN.TryFindBlockByHash(AHash: string;
   out ABlockNum: Integer; out ABlock: Tbc2): Boolean;
 var
+  NeedClose: Boolean;
   HashHex: string;
   i, j: Integer;
 begin
   Result := False;
-  FLock.Enter;
-  AssignFile(FFile, FFullFilePath);
-  Reset(FFile);
+  NeedClose := DoOpen;
   try
     Seek(FFile, 0);
     for i := FileSize(FFile) - 1 downto 0 do
@@ -158,17 +173,17 @@ begin
         exit;
     end;
   finally
-    CloseFile(FFile);
-    FLock.Leave;
+    if NeedClose then
+      DoClose;
   end;
 end;
 
 function TBlockchainTokenCHN.TryGetBlock(ABlockNum: Integer;
   out ABlock: Tbc2): Boolean;
+var
+  NeedClose: Boolean;
 begin
-  FLock.Enter;
-  AssignFile(FFile, FFullFilePath);
-  Reset(FFile);
+  NeedClose := DoOpen;
   try
     Result := FileSize(FFile) - 1 >= ABlockNum;
     if Result then
@@ -177,21 +192,20 @@ begin
       Read(FFile, ABlock);
     end;
   finally
-    CloseFile(FFile);
-    FLock.Leave;
+    if NeedClose then
+      DoClose;
   end;
 end;
 
 procedure TBlockchainTokenCHN.WriteBlocks(APos: Int64; ABytes: TBytesBlocks;
   AAmount: Integer);
 var
+  NeedClose: Boolean;
   i: Integer;
   bc2Arr: array[0..SizeOf(Tbc2)-1] of Byte;
   bc2: Tbc2 absolute bc2Arr;
 begin
-  FLock.Enter;
-  AssignFile(FFile, FFullFilePath);
-  Reset(FFile);
+  NeedClose := DoOpen;
   try
     Seek(FFile,APos);
     AAmount := Max(AAmount,0);                  // <=0
@@ -201,27 +215,26 @@ begin
       Write(FFile,bc2);
     end;
   finally
-    CloseFile(FFile);
-    FLock.Leave;
+    if NeedClose then
+      DoClose;
   end;
 end;
 
 procedure TBlockchainTokenCHN.WriteOneBlock(APos: Int64;
   ABytes: TOneBlockBytes);
 var
+  NeedClose: Boolean;
   bc2Arr: array[0..SizeOf(Tbc2)-1] of Byte;
   bc2: Tbc2 absolute bc2Arr;
 begin
-  FLock.Enter;
-  AssignFile(FFile, FFullFilePath);
-  Reset(FFile);
+  NeedClose := DoOpen;
   try
     Seek(FFile,APos);
     Move(ABytes[0],bc2Arr[0],SizeOf(bc2));
     Write(FFile,bc2);
   finally
-    CloseFile(FFile);
-    FLock.Leave;
+    if NeedClose then
+      DoClose;
   end;
 end;
 

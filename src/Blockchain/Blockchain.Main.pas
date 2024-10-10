@@ -261,7 +261,7 @@ begin
     Result[i].Hash := hashHex.ToLower;
 
     Result[i].FloatSize := 8;
-    Result[i].Amount := bc2.Smart.Delta / Power(10, Result[i].FloatSize);
+    Result[i].Amount := bc2.Smart.Delta;
     Result[i].Ticker := 'TET'
   end;
 end;
@@ -439,7 +439,7 @@ begin
       transaction.Hash := hashHex.ToLower;
 
       transaction.FloatSize := 8;
-      transaction.Amount := bc2.Smart.Delta / Power(10, transaction.FloatSize);
+      transaction.Amount := bc2.Smart.Delta;
       transaction.Ticker := 'TET';
 
       Result := Result + [transaction];
@@ -547,8 +547,7 @@ begin
     if TryGetOneICOBlock(ATicker,tICO) then
     begin
       Result[Amount-i-1].FloatSize := tICO.FloatSize;
-      Result[Amount-i-1].Amount :=
-        bc4.Smart.Delta / Power(10, Result[Amount-i-1].FloatSize);
+      Result[Amount-i-1].Amount := bc4.Smart.Delta;
       Result[Amount-i-1].Ticker := tICO.Abreviature;
     end;
   end;
@@ -741,7 +740,7 @@ begin
     if TryGetOneICOBlock(ATicker,tICO) then
     begin
       Result[i].FloatSize := tICO.FloatSize;
-      Result[i].Amount := bc4.Smart.Delta / Power(10, Result[i].FloatSize);
+      Result[i].Amount := bc4.Smart.Delta;
       Result[i].Ticker := tICO.Abreviature;
     end;
   end;
@@ -908,7 +907,7 @@ begin
     else
       ATransaction.TransTo := '';
     ATransaction.FloatSize := 8;
-    ATransaction.Amount := bc2.Smart.Delta / Power(10, ATransaction.FloatSize);
+    ATransaction.Amount := bc2.Smart.Delta;
     ATransaction.Ticker := 'TET';
     Result := True;
   end else
@@ -931,8 +930,7 @@ begin
         if TryGetOneICOBlock(dynID, TokenICO) then
         begin
           ATransaction.FloatSize := TokenICO.FloatSize;
-          ATransaction.Amount :=
-            bc2.Smart.Delta / Power(10, ATransaction.FloatSize);
+          ATransaction.Amount := bc2.Smart.Delta;
           ATransaction.Ticker := TokenICO.Abreviature;
         end;
         Result := True;
@@ -944,8 +942,43 @@ end;
 
 function TBlockchain.SearchTransactionsByAddress(
   const AAddress: string): TArray<TExplorerTransactionInfo>;
+var
+  ChainFileWorker: TChainFileWorker;
+  i, j: Integer;
+  bc2: Tbc2;
+  TokenBaseFrom, TokenBaseTo: TTokenBase;
+  TransData: TExplorerTransactionInfo;
 begin
-
+  Result := [];
+  FTokenCHN.DoOpen;
+  FDynamicBlocks.TryGetValue(ConstStr.Token64FileName, ChainFileWorker);
+  ChainFileWorker.DoOpen;
+  try
+    for i := 0 to FTokenCHN.GetBlocksCount - 1 do
+    begin
+      TBlockchainTokenCHN(FTokenCHN).TryGetBlock(i, bc2);
+      if (GetOneChainDynBlock(bc2.Smart.tkn[1].TokenID, TokenBaseFrom) and
+        (AAddress = TokenBaseFrom.Token)) or
+        (GetOneChainDynBlock(bc2.Smart.tkn[2].TokenID, TokenBaseTo) and
+        (AAddress = TokenBaseTo.Token)) then
+      begin
+        TransData.DateTime := bc2.Smart.TimeEvent;
+        TransData.BlockNum := i;
+        TransData.Hash := '';
+        for j := 1 to TokenLength do
+          TransData.Hash := TransData.Hash + IntToHex(bc2.Hash[j], 2).ToLower;
+        TransData.TransFrom := TokenBaseFrom.Token;
+        TransData.TransTo := TokenBaseTo.Token;
+        TransData.Amount := bc2.Smart.Delta;
+        TransData.FloatSize := 8;
+        TransData.Ticker := 'TET';
+        Result := Result + [TransData];
+      end;
+    end;
+  finally
+    ChainFileWorker.DoClose;
+    FTokenCHN.DoClose;
+  end;
 end;
 
 function TBlockchain.SearchTransactionsByBlockNum(

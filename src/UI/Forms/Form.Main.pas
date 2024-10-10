@@ -797,7 +797,8 @@ begin
                                                         ATransactions[i].TransTo,
                                                         ATransactions[i].Hash,
                                                         FormatFloat(Format,
-                                                          ATransactions[i].Amount),
+                                                          ATransactions[i].Amount /
+                                                          Power(10, ATransactions[i].FloatSize)),
                                                         AShowTicker);
       NewTransFrame.OnClick := onExplorerFrameClick;
       NewTransFrame.Parent := ExplorerVertScrollBox;
@@ -1835,7 +1836,7 @@ begin
                                  ATransaction.Hash,
                                  ATransaction.TransFrom,
                                  ATransaction.TransTo,
-                                 ATransaction.Amount.ToString);
+                                 (ATransaction.Amount / Power(10, ATransaction.FloatSize)).ToString);
 end;
 
 procedure TMainForm.ShowExplorerTransactionDetails(ATicker, ADateTime,
