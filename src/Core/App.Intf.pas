@@ -126,8 +126,12 @@ type
     function GetTokensICOs(ASkip: Integer; var ARows: Integer): TArray<TTokenICODat>;
     function TryGetTokenBase(ATicker: string; var sk: TCSmartKey): Boolean;
     function TryGetTokenBaseByAddress(const AAddress: string; var sk: TCSmartKey): Boolean;
-    function SearchTransactionByHash(const AHash: string; var ATicker: string;
+    function SearchTransactionByHash(const AHash: string;
       out ATransaction: TExplorerTransactionInfo): Boolean;
+    function SearchTransactionsByBlockNum(const ABlockNum: Integer):
+      TArray<TExplorerTransactionInfo>;
+    function SearchTransactionsByAddress(const AAddress: string):
+      TArray<TExplorerTransactionInfo>;
 
     property DownloadRemain: Int64 read GetDownloadRemain write SetDownloadRemain;
     property SessionKey: String read GetSessionKey write SetSessionKey;
