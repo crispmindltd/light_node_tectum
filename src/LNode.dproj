@@ -292,7 +292,7 @@
         <DCCReference Include="Net\Net.ConnectedClient.pas"/>
         <DCCReference Include="Core\App.Logs.pas"/>
         <DCCReference Include="Web\server\server.HTTP.pas"/>
-        <DCCReference Include="Web\endpoints\endpoints.Chain.pas"/>
+        <DCCReference Include="Web\endpoints\endpoints.Node.pas"/>
         <DCCReference Include="UI\Desktop.pas"/>
         <DCCReference Include="Net\Net.CustomSocket.pas"/>
         <DCCReference Include="Net\Net.Server.pas"/>

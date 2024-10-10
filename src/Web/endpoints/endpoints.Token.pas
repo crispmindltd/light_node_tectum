@@ -12,6 +12,7 @@ uses
   JSON,
   IdCustomHTTPServer,
   IOUtils,
+  Math,
   Net.Data,
   server.Types,
   SyncObjs,
@@ -205,8 +206,8 @@ begin
         JSONNestedObject.AddPair('address_to', TETTransfersInfo[i].TransTo);
         JSONNestedObject.AddPair('hash', TETTransfersInfo[i].Hash);
         JSONNestedObject.AddPair('amount',
-          TJSONDecimal.Create(TETTransfersInfo[i].Amount, 8));
-        JSONNestedObject.AddPair('fee', TJSONDecimal.Create(0, 8));
+          TJSONDecimal.Create(TETTransfersInfo[i].Amount, TETTransfersInfo[i].FloatSize));
+        JSONNestedObject.AddPair('fee', TJSONDecimal.Create(0, TETTransfersInfo[i].FloatSize));
       end;
       JSON.AddPair('transactions', JSONArray);
       Result.Code := HTTP_SUCCESS;
@@ -753,7 +754,7 @@ begin
         JSONNestedObject.AddPair('address_to', TETTransfersInfo[i].TransTo);
         JSONNestedObject.AddPair('hash', TETTransfersInfo[i].Hash);
         JSONNestedObject.AddPair('amount',
-          TJSONDecimal.Create(TETTransfersInfo[i].Amount, TokenICODat.FloatSize));
+          TJSONDecimal.Create(TETTransfersInfo[i].Amount, TETTransfersInfo[i].FloatSize));
         JSONNestedObject.AddPair('fee', TJSONDecimal.Create(0, TokenICODat.FloatSize));
       end;
       JSON.AddPair('transactions', JSONArray);
