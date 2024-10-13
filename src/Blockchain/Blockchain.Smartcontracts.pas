@@ -13,10 +13,13 @@ type
   TBlockchainSmart = class(TChainFileWorker)
   private
     FFile: file of TCbc4;
+    FIsOpened: Boolean;
   public
     constructor Create(AFileName: String);
     destructor Destory;
 
+    function DoOpen: Boolean; override;
+    procedure DoClose; override;
     function GetBlockSize: Integer; override;
     function GetBlocksCount: Integer; override;
     function ReadBlocks(AFrom: Int64; var AAmount: Integer): TBytesBlocks; override;
@@ -38,6 +41,7 @@ constructor TBlockchainSmart.Create(AFileName: String);
 begin
   inherited Create(ConstStr.SmartCPath, AFileName);
 
+  FIsOpened := False;
 end;
 
 destructor TBlockchainSmart.Destory;
@@ -46,14 +50,35 @@ begin
   inherited;
 end;
 
+procedure TBlockchainSmart.DoClose;
+begin
+  if FIsOpened then
+  begin
+    CloseFile(FFile);
+    FIsOpened := False;
+    FLock.Leave;
+  end;
+end;
+
+function TBlockchainSmart.DoOpen: Boolean;
+begin
+  Result := not FIsOpened;
+  if Result then
+  begin
+    FLock.Enter;
+    AssignFile(FFile, FFullFilePath);
+    Reset(FFile);
+    FIsOpened := True;
+  end;
+end;
+
 function TBlockchainSmart.ReadBlocks(AFrom: Int64; var AAmount: Integer): TBytesBlocks;
 var
+  NeedClose: Boolean;
   i: Integer;
   Cbc4: TCbc4;
 begin
-  FLock.Enter;
-  AssignFile(FFile, FFullFilePath);
-  Reset(FFile);
+  NeedClose := DoOpen;
   try
     Seek(FFile,AFrom);
     AAmount := Min(FileSize(FFile)-AFrom,MAX_BLOCKS_REQUEST);
@@ -64,28 +89,21 @@ begin
       Move(Cbc4, Result[i * SizeOf(TCbc4)], SizeOf(Cbc4));
     end;
   finally
-    CloseFile(FFile);
-    FLock.Leave;
+    if NeedClose then
+      DoClose;
   end;
 end;
 
 function TBlockchainSmart.GetBlocksCount: Integer;
+var
+  NeedClose: Boolean;
 begin
-  FLock.Enter;
+  NeedClose := DoOpen;
   try
-    try
-      AssignFile(FFile, FFullFilePath);
-      Reset(FFile);
-      try
-        Result := FileSize(FFile);
-      finally
-        CloseFile(FFile);
-      end;
-    except
-      Result := 0;
-    end;
+    Result := FileSize(FFile);
   finally
-    FLock.Leave;
+    if NeedClose then
+      DoClose;
   end;
 end;
 
@@ -96,29 +114,27 @@ end;
 
 function TBlockchainSmart.GetOneBlock(AFrom: Int64): TOneBlockBytes;
 var
+  NeedClose: Boolean;
   Cbc4: TCbc4;
 begin
-  FLock.Enter;
-  AssignFile(FFile, FFullFilePath);
-  Reset(FFile);
+  NeedClose := DoOpen;
   try
     Seek(FFile,AFrom);
     Read(FFile,Cbc4);
     Move(Cbc4, Result[0], GetBlockSize);
   finally
-    CloseFile(FFile);
-    FLock.Leave;
+    if NeedClose then
+      DoClose;
   end;
 end;
 
 function TBlockchainSmart.ReadBlocks(var AAmount: Integer): TBytesBlocks;
 var
+  NeedClose: Boolean;
   i: Integer;
   Cbc4: TCbc4;
 begin
-  FLock.Enter;
-  AssignFile(FFile, FFullFilePath);
-  Reset(FFile);
+  NeedClose := DoOpen;
   try
     AAmount := Max(0,Min(FileSize(FFile),Min(MAX_BLOCKS_REQUEST,AAmount)));
     Seek(FFile,FileSize(FFile)-AAmount);
@@ -128,21 +144,20 @@ begin
       Move(Cbc4, Result[i * SizeOf(TCbc4)], SizeOf(Cbc4));
     end;
   finally
-    CloseFile(FFile);
-    FLock.Leave;
+    if NeedClose then
+      DoClose;
   end;
 end;
 
 function TBlockchainSmart.TryFindBlockByHash(AHash: string;
   out ABlockNum: Integer; out ABlock: TCbc4): Boolean;
 var
+  NeedClose: Boolean;
   HashHex: string;
   i, j: Integer;
 begin
   Result := False;
-  FLock.Enter;
-  AssignFile(FFile, FFullFilePath);
-  Reset(FFile);
+  NeedClose := DoOpen;
   try
     Seek(FFile, 0);
     for i := FileSize(FFile) - 1 downto 0 do
@@ -157,17 +172,17 @@ begin
         exit;
     end;
   finally
-    CloseFile(FFile);
-    FLock.Leave;
+    if NeedClose then
+      DoClose;
   end;
 end;
 
 function TBlockchainSmart.TryGetBlock(ABlockNum: Integer;
   out ABlock: TCbc4): Boolean;
+var
+  NeedClose: Boolean;
 begin
-  FLock.Enter;
-  AssignFile(FFile, FFullFilePath);
-  Reset(FFile);
+  NeedClose := DoOpen;
   try
     Result := FileSize(FFile) - 1 >= ABlockNum;
     if Result then
@@ -176,21 +191,20 @@ begin
       Read(FFile, ABlock);
     end;
   finally
-    CloseFile(FFile);
-    FLock.Leave;
+    if NeedClose then
+      DoClose;
   end;
 end;
 
 procedure TBlockchainSmart.WriteBlocks(APos: Int64; ABytes: TBytesBlocks;
   AAmount: Integer);
 var
+  NeedClose: Boolean;
   i: Integer;
   bc4Arr: array[0..SizeOf(TCbc4)-1] of Byte;
   bc4: TCbc4 absolute bc4Arr;
 begin
-  FLock.Enter;
-  AssignFile(FFile, FFullFilePath);
-  Reset(FFile);
+  NeedClose := DoOpen;
   try
     Seek(FFile,APos);
     AAmount := Max(AAmount,0);                  // <=0
@@ -200,26 +214,25 @@ begin
       Write(FFile,bc4);
     end;
   finally
-    CloseFile(FFile);
-    FLock.Leave;
+    if NeedClose then
+      DoClose;
   end;
 end;
 
 procedure TBlockchainSmart.WriteOneBlock(APos: Int64; ABytes: TOneBlockBytes);
 var
+  NeedClose: Boolean;
   bc4Arr: array[0..SizeOf(TCbc4)-1] of Byte;
   bc4: TCbc4 absolute bc4Arr;
 begin
-  FLock.Enter;
-  AssignFile(FFile, FFullFilePath);
-  Reset(FFile);
+  NeedClose := DoOpen;
   try
     Seek(FFile,APos);
     Move(ABytes[0],bc4Arr[0],SizeOf(bc4));
     Write(FFile,bc4);
   finally
-    CloseFile(FFile);
-    FLock.Leave;
+    if NeedClose then
+      DoClose;
   end;
 end;
 

@@ -944,9 +944,13 @@ function TBlockchain.SearchTransactionsByAddress(
   const AAddress: string): TArray<TExplorerTransactionInfo>;
 var
   ChainFileWorker: TChainFileWorker;
-  i, j: Integer;
+  Pair: TPair<string, TChainFileWorker>;
+  i, j, TokenID: Integer;
   bc2: Tbc2;
-  TokenBaseFrom, TokenBaseTo: TTokenBase;
+  bc4: TCbc4;
+  TETBaseFrom, TETBaseTo: TTokenBase;
+  TokenBaseFrom, TokenBaseTo: TCTokensBase;
+  TokenICO: TTokenICODat;
   TransData: TExplorerTransactionInfo;
 begin
   Result := [];
@@ -957,18 +961,18 @@ begin
     for i := 0 to FTokenCHN.GetBlocksCount - 1 do
     begin
       TBlockchainTokenCHN(FTokenCHN).TryGetBlock(i, bc2);
-      if (GetOneChainDynBlock(bc2.Smart.tkn[1].TokenID, TokenBaseFrom) and
-        (AAddress = TokenBaseFrom.Token)) or
-        (GetOneChainDynBlock(bc2.Smart.tkn[2].TokenID, TokenBaseTo) and
-        (AAddress = TokenBaseTo.Token)) then
+      if (GetOneChainDynBlock(bc2.Smart.tkn[1].TokenID, TETBaseFrom) and
+        (AAddress = TETBaseFrom.Token)) or
+        (GetOneChainDynBlock(bc2.Smart.tkn[2].TokenID, TETBaseTo) and
+        (AAddress = TETBaseTo.Token)) then
       begin
         TransData.DateTime := bc2.Smart.TimeEvent;
         TransData.BlockNum := i;
         TransData.Hash := '';
         for j := 1 to TokenLength do
           TransData.Hash := TransData.Hash + IntToHex(bc2.Hash[j], 2).ToLower;
-        TransData.TransFrom := TokenBaseFrom.Token;
-        TransData.TransTo := TokenBaseTo.Token;
+        TransData.TransFrom := TETBaseFrom.Token;
+        TransData.TransTo := TETBaseTo.Token;
         TransData.Amount := bc2.Smart.Delta;
         TransData.FloatSize := 8;
         TransData.Ticker := 'TET';
@@ -978,6 +982,43 @@ begin
   finally
     ChainFileWorker.DoClose;
     FTokenCHN.DoClose;
+  end;
+  for Pair in FSmartcontracts do
+  begin
+    TokenID := SmartIDByName(Pair.Key);
+    TBlockchainSmart(Pair.Value).DoOpen;
+    FDynamicBlocks.TryGetValue(DynamicNameByID(TokenID), ChainFileWorker);
+    TBlockchainTokenDynamic(ChainFileWorker).DoOpen;
+    try
+      for i := 0 to Pair.Value.GetBlocksCount - 1 do
+      begin
+        if not TBlockchainSmart(Pair.Value).TryGetBlock(i, bc4) then
+          continue;
+        if (GetOneSmartDynBlock(TokenID, bc4.Smart.tkn[1].TokenID, TokenBaseFrom) and
+          (AAddress = TokenBaseFrom.Token)) or
+          (GetOneSmartDynBlock(TokenID, bc4.Smart.tkn[2].TokenID, TokenBaseTo) and
+          (AAddress = TokenBaseTo.Token)) then
+        begin
+          TransData.DateTime := bc4.Smart.TimeEvent;
+          TransData.BlockNum := i;
+          TransData.Hash := '';
+          for j := 1 to CHashLength do
+            TransData.Hash := TransData.Hash + IntToHex(bc4.Hash[j], 2).ToLower;
+          TransData.TransFrom := TokenBaseFrom.Token;
+          TransData.TransTo := TokenBaseTo.Token;
+          if TryGetOneICOBlock(TokenID, TokenICO) then
+          begin
+            TransData.Amount := bc4.Smart.Delta;
+            TransData.FloatSize := TokenICO.FloatSize;
+            TransData.Ticker := TokenICO.Abreviature;
+          end;
+          Result := Result + [TransData];
+        end;
+      end;
+    finally
+      TBlockchainTokenDynamic(ChainFileWorker).DoClose;
+      TBlockchainSmart(Pair.Value).DoClose;
+    end;
   end;
 end;
 
@@ -1164,7 +1205,7 @@ end;
 
 function TBlockchain.SmartIDByName(AName: String): Integer;
 begin
-  Result := AName.Replace('.chn','').ToInteger;
+  Result := AName.Substring(0, Length(AName) - 4).ToInteger;
 end;
 
 function TBlockchain.SmartIDByTicker(ATicker: String): Integer;
