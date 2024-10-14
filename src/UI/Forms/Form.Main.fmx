@@ -2609,7 +2609,7 @@ object MainForm: TMainForm
               TextSettings.FontColor = xFF1E2022
               TextSettings.WordWrap = False
               Text = 'Block'
-              TabOrder = 4
+              TabOrder = 5
             end
             object DateTimeExplorerHeaderLabel: TLabel
               Align = Left
@@ -2624,7 +2624,7 @@ object MainForm: TMainForm
               TextSettings.FontColor = xFF1E2022
               TextSettings.WordWrap = False
               Text = 'Date/Time'
-              TabOrder = 5
+              TabOrder = 6
             end
             object FromExplorerHeaderLabel: TLabel
               Align = Left
@@ -2639,7 +2639,7 @@ object MainForm: TMainForm
               TextSettings.FontColor = xFF1E2022
               TextSettings.WordWrap = False
               Text = 'From'
-              TabOrder = 3
+              TabOrder = 4
             end
             object HashExplorerHeaderLabel: TLabel
               Align = Left
@@ -2654,7 +2654,7 @@ object MainForm: TMainForm
               TextSettings.FontColor = xFF1E2022
               TextSettings.WordWrap = False
               Text = 'Hash'
-              TabOrder = 1
+              TabOrder = 2
             end
             object ToExplorerHeaderLabel: TLabel
               Align = Left
@@ -2669,7 +2669,23 @@ object MainForm: TMainForm
               TextSettings.FontColor = xFF1E2022
               TextSettings.WordWrap = False
               Text = 'To'
-              TabOrder = 2
+              TabOrder = 3
+            end
+            object TickerExplorerHeaderLabel: TLabel
+              Align = Left
+              StyledSettings = [Style]
+              Margins.Left = 15.000000000000000000
+              Position.X = 247.000000000000000000
+              Size.Width = 80.000000000000000000
+              Size.Height = 28.000000000000000000
+              Size.PlatformDefault = False
+              TextSettings.Font.Family = 'Inter'
+              TextSettings.Font.Size = 14.000000000000000000
+              TextSettings.FontColor = xFF1E2022
+              TextSettings.WordWrap = False
+              Text = 'Ticker'
+              Visible = False
+              TabOrder = 1
             end
           end
           object ExplorerHorzScrollBox: THorzScrollBox
@@ -2683,7 +2699,8 @@ object MainForm: TMainForm
             Viewport.Width = 1094.000000000000000000
             Viewport.Height = 45.000000000000000000
             object TopExplorerHorzLayout: TLayout
-              Size.Width = 1094.000000000000000000
+              Padding.Left = -10.000000000000000000
+              Size.Width = 0.000000000000000000
               Size.Height = 40.000000000000000000
               Size.PlatformDefault = False
               TabOrder = 0

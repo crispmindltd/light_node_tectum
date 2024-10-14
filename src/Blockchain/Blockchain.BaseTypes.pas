@@ -110,19 +110,21 @@ type
 
   TExplorerTransactionInfo = record
     DateTime: TDateTime;
-    BlockNum: Int64;
-    Hash: string[CHashLength*2];
-    TransFrom: string[TockenLength1];
+    BlockNum: Integer;
+    Hash: String[CHashLength*2];
+    TransFrom: String[TockenLength1];
     TransTo: String[TockenLength1];
-    Value: Double;
+    Amount: Double;
+    FloatSize: Byte;
+    Ticker: string[8];
   end;
 
   THistoryTransactionInfo = record
     DateTime: TDateTime;
     BlockNum: Int64;
-    Hash: string[CHashLength*2];
-    Address: string[TockenLength1];
-    Value: Double;
+    Hash: String[CHashLength*2];
+    Address: String[TockenLength1];
+    Amount: Extended;
     Incom: Boolean;
   end;
 

@@ -240,10 +240,10 @@
         <DCCReference Include="Web\server\server.Types.pas"/>
         <DCCReference Include="Web\endpoints\endpoints.Token.pas"/>
         <DCCReference Include="Web\endpoints\endpoints.Base.pas"/>
-        <DCCReference Include="Web\endpoints\endpoints.Chain.pas"/>
         <DCCReference Include="Web\endpoints\endpoints.Account.pas"/>
         <DCCReference Include="Crypto\SeedPhrase\WordsPool.pas"/>
         <DCCReference Include="Core\App.Constants.pas"/>
+        <DCCReference Include="Web\endpoints\endpoints.Node.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
