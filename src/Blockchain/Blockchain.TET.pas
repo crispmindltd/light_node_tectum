@@ -25,7 +25,6 @@ type
     function GetBlockSize: Integer; override;
     function GetBlocksCount: Integer; override;
     procedure WriteBlocksAsBytes(ASkipBlocks: Integer; ABytes: TBytes); override;
-    procedure WriteBlock(ASkip: Integer; ABlock: Tbc2);
     function TryReadBlock(ASkip: Integer; out ABlock: Tbc2): Boolean;
     function ReadBlocksAsBytes(ASkipBlocks: Integer;
       ANumber: Integer = MaxBlocksNumber): TBytes; override;
@@ -151,23 +150,6 @@ begin
       Seek(FFile, ASkip);
       Read(FFile, ABlock);
     end;
-  finally
-    if NeedClose then
-      DoClose;
-  end;
-end;
-
-procedure TBlockchainTET.WriteBlock(ASkip: Integer; ABlock: Tbc2);
-var
-  NeedClose: Boolean;
-begin
-  if ASkip < 0 then
-    exit;
-
-  NeedClose := DoOpen;
-  try
-    Seek(FFile, ASkip);
-    Read(FFile, ABlock);
   finally
     if NeedClose then
       DoClose;

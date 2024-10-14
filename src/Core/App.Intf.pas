@@ -17,7 +17,7 @@ type
     procedure ShowMainForm;
     procedure ShowEnterPrivateKeyForm;
     function IsChainNeedSync(const AName: String): Boolean;
-    procedure ShowTotalBlocksToDownload(const ABlocksNumberToLoad: Integer);
+    procedure ShowTotalBlocksToDownload(const ABlocksNumberToLoad: UInt64);
     procedure ShowDownloadProgress;
     procedure NotifyNewTETBlocks(const ANeedRefreshBalance: Boolean);
     procedure NotifyNewTokenBlocks(const ANeedRefreshBalance: Boolean);
@@ -34,8 +34,6 @@ type
     procedure SetSessionKey(const ASessionKey: String);
     procedure SetUserID(const AID: Integer);
     procedure SetLoadingStatus(const AIsDone: Boolean);
-//    procedure BeginSync(AChainName: String; AIsSystemChain: Boolean);
-//    procedure StopSync(AChainName: String; AIsSystemChain: Boolean);
 
     //TET chain methods
     function GetTETChainBlockSize: Integer;

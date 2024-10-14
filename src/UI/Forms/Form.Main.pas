@@ -376,7 +376,7 @@ type
       Shift: TShiftState; X, Y: Single);
     procedure onTransactionSearchingDone(AIsFound: Boolean);
   public
-    procedure NewChainBlocksEvent;
+    procedure NewTETChainBlocksEvent(ANeedRefreshBalance: Boolean);
     procedure NewSmartBlocksEvent;
     procedure onKeysSaved;
     procedure onKeysSavingError;
@@ -879,8 +879,8 @@ procedure TMainForm.FormShow(Sender: TObject);
 begin
   AddressTETLabel.Text := AppCore.TETAddress;
   RefreshTETBalance;
-  RefreshTokensBalances;
-  RefreshTETHistory;
+//  RefreshTokensBalances;
+//  RefreshTETHistory;
 end;
 
 procedure TMainForm.HideCreatingMessageTimerTimer(Sender: TObject);
@@ -1014,12 +1014,15 @@ begin
   SearchTokenEdit.Text := '';
 end;
 
-procedure TMainForm.NewChainBlocksEvent;
+procedure TMainForm.NewTETChainBlocksEvent(ANeedRefreshBalance: Boolean);
 begin
-  RefreshTETBalance;
-  RefreshTETHistory;
-  RefreshPagesLayout;
-  RefreshExplorer;
+  if ANeedRefreshBalance then
+  begin
+    RefreshTETBalance;
+    RefreshTETHistory;
+  end;
+//    RefreshPagesLayout;
+//    RefreshExplorer;
 end;
 
 procedure TMainForm.OnPageSelected;

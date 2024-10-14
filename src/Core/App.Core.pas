@@ -34,13 +34,13 @@ type
     FSessionKey: String;
     FUserID: Integer;
     FTETAddress: String;
+    FStartLoadingDone: Boolean;
   private
     FSettings: TSettingsFile;
     FBlockchain: TBlockchain;
     FNodeServer: TNodeServer;
     FNodeClient: TNodeClient;
     FHTTPServer: THTTPServer;
-    FStartLoadingDone: Boolean;
 
     function GenPass(x1:LongInt = 100000000; x2:LongInt = 999999999): String;
     function CheckTickerName(const ATicker: String): Boolean;
@@ -220,7 +220,8 @@ begin
   FHTTPServer.Free;
   FNodeClient.Free;
   FSettings.Free;
-  if Assigned(FBlockchain) then FBlockchain.Free;
+  if Assigned(FBlockchain) then
+    FBlockchain.Free;
   Logs.Free;
 
   inherited;
@@ -287,12 +288,12 @@ begin
   BytesArray := (Keys.Public as IECPublicKeyParameters).Q.GetEncoded;
   APubKey := BytesToHex(BytesArray).ToLower;
 
-  AAddress := '0x' + APubKey.Substring(Length(APubKey)-40,40).ToLower;
+  AAddress := '0x' + APubKey.Substring(Length(APubKey) - 40, 40).ToLower;
   ALogin := AAddress + LOGIN_POSTFIX;
   APassword := GenPass;
 
-  Result := FNodeClient.DoRequest(AReqID,Format('RegLight * %s %s 1 %s %s',
-    [ALogin,APassword,APassword,APubKey]));
+  Result := FNodeClient.DoRequest(AReqID, Format('RegLight * %s %s 1 %s %s',
+    [ALogin, APassword, APassword, APubKey]));
   if IsURKError(Result) then
   begin;
     splt := Result.Split([' ']);
@@ -302,66 +303,66 @@ begin
     end;
   end;
 
-  SetLength(BytesArray,0);
+  SetLength(BytesArray, 0);
   BytesArray := (Keys.Private as IECPrivateKeyParameters).D.ToByteArray;
   APrKey := BytesToHex(BytesArray).ToLower;
 
-  ASavingPath := TPath.Combine(ExtractFilePath(ParamStr(0)),'keys');
+  ASavingPath := TPath.Combine(ExtractFilePath(ParamStr(0)), 'keys');
   if not DirectoryExists(ASavingPath) then TDirectory.CreateDirectory(ASavingPath);
-  ASavingPath := TPath.Combine(ASavingPath,'keys');
-  ASavingPath := Format('%s_%s.txt',[ASavingPath,Result.Split([' '])[2]]);
-  TFile.AppendAllText(ASavingPath,'public key:' + APubKey + sLineBreak);
-  TFile.AppendAllText(ASavingPath,'private key:' + APrKey + sLineBreak);
-  TFile.AppendAllText(ASavingPath,Format('seed phrase:"%s"',[ASeed]) +
+  ASavingPath := TPath.Combine(ASavingPath, 'keys');
+  ASavingPath := Format('%s_%s.txt', [ASavingPath, Result.Split([' '])[2]]);
+  TFile.AppendAllText(ASavingPath, 'public key:' + APubKey + sLineBreak);
+  TFile.AppendAllText(ASavingPath, 'private key:' + APrKey + sLineBreak);
+  TFile.AppendAllText(ASavingPath, Format('seed phrase:"%s"', [ASeed]) +
     sLineBreak, TEncoding.ANSI);
-  TFile.AppendAllText(ASavingPath,'login:' + ALogin + sLineBreak);
-  TFile.AppendAllText(ASavingPath,'password:' + APassword + sLineBreak);
-  TFile.AppendAllText(ASavingPath,'address:' + AAddress);
+  TFile.AppendAllText(ASavingPath, 'login:' + ALogin + sLineBreak);
+  TFile.AppendAllText(ASavingPath, 'password:' + APassword + sLineBreak);
+  TFile.AppendAllText(ASavingPath, 'address:' + AAddress);
 end;
 
 procedure TAppCore.DoReg(AReqID, ASeed: string; ACallBackProc: TGetStrProc);
 var
   Keys: IAsymmetricCipherKeyPair;
   BytesArray: TCryptoLibByteArray;
-  PubKey,Address,Login,Password: string;
+  PubKey, Address, Login, Password: string;
 begin
   if (Length(ASeed.Split([' '])) <> 12) then
     raise EValidError.Create('incorrect seed phrase');
 
-  GenECDSAKeysOnPhrase(ASeed,Keys);
-  SetLength(BytesArray,0);
+  GenECDSAKeysOnPhrase(ASeed, Keys);
+  SetLength(BytesArray, 0);
   BytesArray := (Keys.Public as IECPublicKeyParameters).Q.GetEncoded;
   PubKey := BytesToHex(BytesArray).ToLower;
 
-  Address := '0x' + PubKey.Substring(Length(PubKey)-40,40).ToLower;
+  Address := '0x' + PubKey.Substring(Length(PubKey) - 40, 40).ToLower;
   Login := Address + LOGIN_POSTFIX;
   Password := GenPass;
 
   TThread.CreateAnonymousThread(
     procedure
     var
-      Response,PrKey,SavingPath: string;
+      Response, PrKey, SavingPath: string;
     begin
-      Response := FNodeClient.DoRequest(AReqID,Format('RegLight * %s %s 1 %s %s',
-        [Login,Password,Password,PubKey]));
+      Response := FNodeClient.DoRequest(AReqID, Format('RegLight * %s %s 1 %s %s',
+        [Login, Password, Password, PubKey]));
       if not IsURKError(Response) then
       begin
-        SetLength(BytesArray,0);
+        SetLength(BytesArray, 0);
         BytesArray := (Keys.Private as IECPrivateKeyParameters).D.ToByteArray;
         PrKey := BytesToHex(BytesArray).ToLower;
 
-        SavingPath := TPath.Combine(ExtractFilePath(ParamStr(0)),'keys');
+        SavingPath := TPath.Combine(ExtractFilePath(ParamStr(0)), 'keys');
         if not DirectoryExists(SavingPath) then
           TDirectory.CreateDirectory(SavingPath);
-        SavingPath := TPath.Combine(SavingPath,'keys');
-        SavingPath := Format('%s_%s.txt',[SavingPath,Response.Split([' '])[2]]);
-        TFile.AppendAllText(SavingPath,'public key:' + PubKey + sLineBreak);
-        TFile.AppendAllText(SavingPath,'private key:' + PrKey + sLineBreak);
-        TFile.AppendAllText(SavingPath,Format('seed phrase:"%s"',[ASeed]) +
+        SavingPath := TPath.Combine(SavingPath, 'keys');
+        SavingPath := Format('%s_%s.txt', [SavingPath, Response.Split([' '])[2]]);
+        TFile.AppendAllText(SavingPath, 'public key:' + PubKey + sLineBreak);
+        TFile.AppendAllText(SavingPath, 'private key:' + PrKey + sLineBreak);
+        TFile.AppendAllText(SavingPath, Format('seed phrase:"%s"', [ASeed]) +
           sLineBreak, TEncoding.ANSI);
-        TFile.AppendAllText(SavingPath,'login:' + Login + sLineBreak);
-        TFile.AppendAllText(SavingPath,'password:' + Password + sLineBreak);
-        TFile.AppendAllText(SavingPath,'address:' + Address);
+        TFile.AppendAllText(SavingPath, 'login:' + Login + sLineBreak);
+        TFile.AppendAllText(SavingPath, 'password:' + Password + sLineBreak);
+        TFile.AppendAllText(SavingPath, 'address:' + Address);
 
         Response := Format('%s %s %s %s %s "%s"',[PubKey, PrKey, Login, Password,
           Address, SavingPath]);

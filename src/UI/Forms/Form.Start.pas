@@ -119,7 +119,7 @@ type
     procedure RegCallBack(const AResponse: string);
     procedure LogInCallBack(const AResponse: string);
   public
-    procedure IncProgressBarMaxValue(const ABlocksNumberToLoad: Integer);
+    procedure SetProgressBarMaxValue(const ABlocksNumberToLoad: UInt64);
     procedure ShowProgress;
   end;
 
@@ -324,16 +324,15 @@ begin
   except
     on E:EValidError do
       ShowSignUpError(E.Message);
-
     on E:EUnknownError do
     begin
-      Logs.DoLog('Unknown error during auth with code ' + E.Message,
+      Logs.DoLog('Unknown error during reg with code ' + E.Message,
         TLogType.ERROR, tcp);
       ShowSignUpError('Unknown error, try later');
     end;
     on E:Exception do
     begin
-      Logs.DoLog('Unknown error during auth with message: ' + E.Message,
+      Logs.DoLog('Unknown error during reg with message: ' + E.Message,
         TLogType.ERROR, tcp);
       ShowSignUpError('Unknown error, try later');
     end;
@@ -389,7 +388,7 @@ end;
 
 procedure TStartForm.ShowProgress;
 var
-  CurrentBlocksNumber: Integer;
+  CurrentBlocksNumber: UInt64;
 begin
   CurrentBlocksNumber := AppCore.GetTETChainBlocksCount +
     AppCore.GetDynTETChainBlocksCount;
@@ -402,22 +401,13 @@ begin
     OnDownloadingDone;
 end;
 
-procedure TStartForm.IncProgressBarMaxValue(const ABlocksNumberToLoad: Integer);
-var
-  CurrentBlocksNumber: UInt64;
+procedure TStartForm.SetProgressBarMaxValue(const ABlocksNumberToLoad: UInt64);
 begin
-  Inc(FTotalBlocksNumberToLoad, ABlocksNumberToLoad);
-  CurrentBlocksNumber := AppCore.GetTETChainBlocksCount +
-    AppCore.GetDynTETChainBlocksCount;
+  FTotalBlocksNumberToLoad := ABlocksNumberToLoad;
   DownloadProgressBar.Max := FTotalBlocksNumberToLoad;
-  ProgressLabel.Text := Format('%d of %d blocks loaded',
-    [CurrentBlocksNumber, FTotalBlocksNumberToLoad]);
-  DownloadProgressBar.Value := CurrentBlocksNumber;
-  DownloadProgressBar.Visible := True;
-
-  AppCore.BlocksSyncDone := FTotalBlocksNumberToLoad = CurrentBlocksNumber;
-  if AppCore.BlocksSyncDone then
-    OnDownloadingDone;
+  DownloadProgressBar.Visible := FTotalBlocksNumberToLoad >
+    AppCore.GetTETChainBlocksCount + AppCore.GetDynTETChainBlocksCount;
+  ShowProgress;
 end;
 
 procedure TStartForm.ShowSignUpError(const AMessage: string);

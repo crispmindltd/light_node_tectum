@@ -43,7 +43,7 @@ type
     procedure ShowMainForm;
     procedure ShowEnterPrivateKeyForm;
     procedure NullForm(var Form);
-    procedure ShowTotalBlocksToDownload(const ABlocksNumberToLoad: Integer);
+    procedure ShowTotalBlocksToDownload(const ABlocksNumberToLoad: UInt64);
     procedure ShowDownloadProgress;
     procedure NotifyNewTETBlocks(const ANeedRefreshBalance: Boolean);
     procedure NotifyNewTokenBlocks(const ANeedRefreshBalance: Boolean);
@@ -148,14 +148,14 @@ begin
   CreateAndShowForm(TMainForm, MainForm, True);
 end;
 
-procedure TUICore.ShowTotalBlocksToDownload(const ABlocksNumberToLoad: Integer);
+procedure TUICore.ShowTotalBlocksToDownload(const ABlocksNumberToLoad: UInt64);
 begin
   FStartFormCreated.WaitFor(5000);
   if Assigned(StartForm) then
     TThread.Synchronize(nil,
     procedure
     begin
-      StartForm.IncProgressBarMaxValue(ABlocksNumberToLoad);
+      StartForm.SetProgressBarMaxValue(ABlocksNumberToLoad);
     end);
 end;
 
@@ -171,12 +171,12 @@ end;
 
 procedure TUICore.NotifyNewTETBlocks(const ANeedRefreshBalance: Boolean);
 begin
-//  if Assigned(MainForm) then
-//    TThread.Synchronize(nil,
-//    procedure
-//    begin
-//      MainForm.NewTETBlocksEvent(ANeedRefreshBalance);
-//    end);
+  if Assigned(MainForm) then
+    TThread.Synchronize(nil,
+    procedure
+    begin
+      MainForm.NewTETChainBlocksEvent(ANeedRefreshBalance);
+    end);
 end;
 
 procedure TUICore.NotifyNewTokenBlocks(const ANeedRefreshBalance: Boolean);

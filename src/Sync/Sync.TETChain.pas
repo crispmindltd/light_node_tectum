@@ -23,10 +23,9 @@ type
       FTETChainTotalBlocksToLoad: Integer;
 
       procedure DoRequests;
-      procedure DoTETChainTotalNumberRequest;
+      procedure DoTETChainsTotalBlocksNumberRequest;
       procedure DoTETChainBlocksRequest;
-      procedure ReceiveTETChainBlocks(const ATETBlocksNumberNow: Integer);       
-      procedure DoDynTETChainTotalNumberRequest;
+      procedure ReceiveTETChainBlocks(const ATETBlocksNumberNow: Integer);
       procedure DoDynTETChainBlocksRequest;
       procedure ReceiveDynTETChainBlocks(const ADynTETBlocksNumberNow: Integer);       
       procedure DoTokenICORequest;
@@ -64,8 +63,7 @@ begin
       exit;
 
     try
-      DoDynTETChainTotalNumberRequest;
-      DoTETChainTotalNumberRequest;
+      DoTETChainsTotalBlocksNumberRequest;
       while (FDynTETChainTotalBlocksToLoad > AppCore.GetDynTETChainBlocksCount) and
         not Terminated do
         DoDynTETChainBlocksRequest;
@@ -108,7 +106,8 @@ begin
   Logs.DoLog(Format('<DBC>[%d]: Blocks received = %d',
     [DYN_TET_CHAIN_SYNC_COMMAND_CODE, IncomCount]), INCOM, TLogFolder.sync);
   AppCore.SetDynTETChainBlocks(ADynTETBlocksNumberNow, BytesToReceive);
-  UI.ShowDownloadProgress;
+  if not AppCore.BlocksSyncDone then
+    UI.ShowDownloadProgress;
 end;
 
 procedure TTETChainBlocksUpdater.ReceiveTETChainBlocks(
@@ -133,7 +132,8 @@ begin
   Logs.DoLog(Format('<DBC>[%d]: Blocks received = %d',
     [TET_CHAIN_SYNC_COMMAND_CODE, IncomCount]), INCOM, TLogFolder.sync);
   AppCore.SetTETChainBlocks(ATETBlocksNumberNow, BytesToReceive);
-  UI.ShowDownloadProgress;
+  if not AppCore.BlocksSyncDone then
+    UI.ShowDownloadProgress;
 end;
 
 procedure TTETChainBlocksUpdater.ReceiveTokenICOBlocks(
@@ -169,23 +169,27 @@ begin
   ReceiveTETChainBlocks(TETBlocksCount);
 end;
 
-procedure TTETChainBlocksUpdater.DoTETChainTotalNumberRequest;
+procedure TTETChainBlocksUpdater.DoTETChainsTotalBlocksNumberRequest;
 var
   IncomCountBytes: array[0..3] of Byte;
   IncomCount: Integer absolute IncomCountBytes;
+  ToLoadTotal: UInt64;
 begin
-  FSocket.Send([TET_CHAIN_TOTAL_NUMBER_COMMAND_CODE], 0, 1);
+  FSocket.Send([TET_CHAINS_TOTAL_NUMBER_COMMAND_CODE], 0, 1);
   Logs.DoLog(Format('<DBC>[%d]',
-    [TET_CHAIN_TOTAL_NUMBER_COMMAND_CODE]), OUTGO, TLogFolder.sync);
+    [TET_CHAINS_TOTAL_NUMBER_COMMAND_CODE]), OUTGO, TLogFolder.sync);
 
   GetResponse(IncomCountBytes);
   if Terminated then
     exit;
-
-  Logs.DoLog(Format('<DBC>[%d]: Blocks to receive = %d',
-    [TET_CHAIN_TOTAL_NUMBER_COMMAND_CODE,IncomCount]), INCOM, TLogFolder.sync);
+  FDynTETChainTotalBlocksToLoad := IncomCount;
+  GetResponse(IncomCountBytes);
   FTETChainTotalBlocksToLoad := IncomCount;
-  UI.ShowTotalBlocksToDownload(IncomCount);
+  ToLoadTotal := FDynTETChainTotalBlocksToLoad + FTETChainTotalBlocksToLoad;
+  Logs.DoLog(Format('<DBC>[%d]: Blocks to receive = %d',
+    [TET_CHAINS_TOTAL_NUMBER_COMMAND_CODE, ToLoadTotal]), INCOM, TLogFolder.sync);
+
+  UI.ShowTotalBlocksToDownload(ToLoadTotal);
 end;
 
 procedure TTETChainBlocksUpdater.DoDynTETChainBlocksRequest;
@@ -199,24 +203,6 @@ begin
 
   FSocket.Send(FBytesRequest, 0, 5);
   ReceiveDynTETChainBlocks(DynTETBlocksCount);
-end;
-
-procedure TTETChainBlocksUpdater.DoDynTETChainTotalNumberRequest;
-var
-  IncomCountBytes: array[0..3] of Byte;
-  IncomCount: Integer absolute IncomCountBytes;
-begin
-  FSocket.Send([TET_DYN_CHAIN_TOTAL_NUMBER_COMMAND_CODE], 0, 1);
-  Logs.DoLog(Format('<DBC>[%d]',
-    [TET_DYN_CHAIN_TOTAL_NUMBER_COMMAND_CODE]), OUTGO, TLogFolder.sync);
-  GetResponse(IncomCountBytes);
-  if Terminated then
-    exit;
-
-  Logs.DoLog(Format('<DBC>[%d]: Blocks to receive = %d',
-    [TET_DYN_CHAIN_TOTAL_NUMBER_COMMAND_CODE, IncomCount]), INCOM, TLogFolder.sync);
-  FDynTETChainTotalBlocksToLoad := IncomCount;
-  UI.ShowTotalBlocksToDownload(IncomCount);
 end;
 
 procedure TTETChainBlocksUpdater.DoRequests;

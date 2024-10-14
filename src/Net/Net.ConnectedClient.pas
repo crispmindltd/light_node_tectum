@@ -210,7 +210,7 @@ begin
     DISCONNECTING_CODE:
       begin
         FIsActual := False;
-        Logs.DoLog(Format('%s disconnected',[FID]), OUTGO);
+        Logs.DoLog(Format('%s disconnected', [FID]), OUTGO);
       end;
 
 //    VALIDATE_COMMAND_CODE:
@@ -224,22 +224,15 @@ begin
 //          tranferResult]),OUTGO,tcp);
 //      end;
 
-    TET_CHAIN_TOTAL_NUMBER_COMMAND_CODE:
-      begin
-        OutgoInt := AppCore.GetTETChainBlocksCount;
-        FSocket.Send(OutgoBytes, 0, 4);
-
-        Logs.DoLog(Format('<To %s>[%d]: Total count = %d',
-          [FID,TET_CHAIN_TOTAL_NUMBER_COMMAND_CODE, OutgoInt]), OUTGO, sync);
-      end;
-
-    TET_DYN_CHAIN_TOTAL_NUMBER_COMMAND_CODE:
+    TET_CHAINS_TOTAL_NUMBER_COMMAND_CODE:
       begin
         OutgoInt := AppCore.GetDynTETChainBlocksCount;
         FSocket.Send(OutgoBytes, 0, 4);
+        OutgoInt := AppCore.GetTETChainBlocksCount;
+        FSocket.Send(OutgoBytes, 0, 4);
 
-        Logs.DoLog(Format('<To %s>[%d]: Total count = %d',
-          [FID,TET_DYN_CHAIN_TOTAL_NUMBER_COMMAND_CODE, OutgoInt]), OUTGO, sync);
+//        Logs.DoLog(Format('<To %s>[%d]: Total count = %d',
+//          [FID, TET_CHAINS_TOTAL_NUMBER_COMMAND_CODE, OutgoInt]), OUTGO, sync);
       end;
 
     TET_CHAIN_SYNC_COMMAND_CODE:
@@ -251,7 +244,7 @@ begin
 
         FSocket.Send(ToSend, 0, Length(ToSend));
         Logs.DoLog(Format('<To %s>[%d]: Blocks sended = %d',
-          [FID,TET_CHAIN_SYNC_COMMAND_CODE, OutgoInt]), OUTGO, sync);
+          [FID, TET_CHAIN_SYNC_COMMAND_CODE, OutgoInt]), OUTGO, sync);
       end;
 
     DYN_TET_CHAIN_SYNC_COMMAND_CODE:
@@ -263,7 +256,7 @@ begin
 
         FSocket.Send(ToSend, 0, Length(ToSend));
         Logs.DoLog(Format('<To %s>[%d]: Blocks sended = %d',
-          [FID,DYN_TET_CHAIN_SYNC_COMMAND_CODE, OutgoInt]), OUTGO, sync);
+          [FID, DYN_TET_CHAIN_SYNC_COMMAND_CODE, OutgoInt]), OUTGO, sync);
       end;
 
     TOKEN_ICO_SYNC_COMMAND_CODE:
@@ -275,7 +268,7 @@ begin
 
         FSocket.Send(ToSend, 0, Length(ToSend));
         Logs.DoLog(Format('<To %s>[%d]: Blocks sended = %d',
-          [FID,TOKEN_ICO_SYNC_COMMAND_CODE, OutgoInt]), OUTGO, sync);
+          [FID, TOKEN_ICO_SYNC_COMMAND_CODE, OutgoInt]), OUTGO, sync);
       end;
 
 //    SMARTKEY_SYNC_COMMAND_CODE:

@@ -157,12 +157,12 @@ end;
 procedure TSyncChain.GetResponse(var ABytes: array of Byte);
 var
   StartTime: Cardinal;
-  ToReceiveTotal, ReceivedPart, ReceivedTotal: Integer;
+  ToReceive, ReceivedPart, ReceivedTotal: Integer;
 begin
   StartTime := GetTickCount;
   ReceivedTotal := 0;
-  ToReceiveTotal := Length(ABytes);
-  while ToReceiveTotal > 0 do
+  ToReceive := Length(ABytes);
+  while ToReceive > 0 do
   begin
     while FSocket.ReceiveLength = 0 do
     begin
@@ -173,9 +173,9 @@ begin
       Sleep(50);
     end;
 
-    ReceivedPart := Min(ToReceiveTotal, FSocket.ReceiveLength);
+    ReceivedPart := Min(ToReceive, FSocket.ReceiveLength);
     FSocket.Receive(ABytes, ReceivedTotal, ReceivedPart, [TSocketFlag.WAITALL]);
-    Dec(ToReceiveTotal, ReceivedPart);
+    Dec(ToReceive, ReceivedPart);
     Inc(ReceivedTotal, ReceivedPart);
   end;
 end;
