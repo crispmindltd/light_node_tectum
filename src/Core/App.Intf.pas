@@ -108,7 +108,10 @@ type
     procedure DoAuth(AReqID, ALogin, APassword: string;
       ACallBackProc: TGetStrProc); overload;
     function DoAuth(AReqID, ALogin, APassword: string): string; overload;
-//    function DoCoinsTransfer(AReqID,ASessionKey,ATo: string; AAmount: Extended): string;
+    function DoTETTransfer(AReqID, ASessionKey, ATo: string;
+      AAmount: Double; ACallBackProc: TGetStrProc): string; overload;
+    function DoTETTransfer(AReqID, ASessionKey, ATo: string;
+      AAmount: Double): string; overload;
 //    function DoRecoverKeys(ASeed: string; out PubKey: string;
 //      out PrKey: string): string;
 //

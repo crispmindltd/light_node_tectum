@@ -385,6 +385,8 @@ type
     procedure onPageNumFrameClick(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single);
     procedure onTransactionSearchingDone(AIsFound: Boolean);
+
+    procedure TETTransferCallBack(const AResponse: string);
   public
     procedure NewTETChainBlocksEvent(ANeedRefreshBalance: Boolean);
     procedure NewSmartBlocksEvent;
@@ -871,7 +873,6 @@ procedure TMainForm.FormCreate(Sender: TObject);
 begin
   Caption := 'LNode' + ' ' + AppCore.GetVersion;
   FBalances := TDictionary<String,Extended>.Create;
-  FBalances.Add('TET',0);
 
   TETCopyLoginLayout.OnMouseEnter := StylesForm.OnCopyLayoutMouseEnter;
   TETCopyLoginLayout.OnMouseLeave := StylesForm.OnCopyLayoutMouseLeave;
@@ -915,8 +916,8 @@ begin
 
   chosenToken := '';
   chosenTicker := '';
-  AddTicker('Search result');
-  AddTicker('Tectum');
+//  AddTicker('Search result');
+//  AddTicker('Tectum');
 
   const Digitals = '0123456789' + FormatSettings.DecimalSeparator;
   AmountTETEdit.FilterChar := Digitals;
@@ -932,8 +933,8 @@ procedure TMainForm.FormShow(Sender: TObject);
 begin
   RefreshTETBalance;
   AddressTETLabel.Text := AppCore.TETAddress;
-  RefreshTokensBalances;
-  RefreshTETHistory;
+//  RefreshTokensBalances;
+//  RefreshTETHistory;
 end;
 
 procedure TMainForm.HideCreatingMessageTimerTimer(Sender: TObject);
@@ -1014,6 +1015,27 @@ var
 begin
   if TPlatformServices.Current.SupportsPlatformService(IFMXClipBoardService, Service) then
     Service.SetClipboard(TETHashDetailsText.Text);
+end;
+
+procedure TMainForm.TETTransferCallBack(const AResponse: string);
+var
+  Splitted: TArray<string>;
+begin
+  if not AResponse.StartsWith('URKError') then
+  begin
+    SendTETToEdit.Text := '';
+    AmountTETEdit.Text := '';
+    ShowTETTransferStatus('Transaction successful');
+  end else
+  begin
+    Splitted := AResponse.Split([' ']);
+    case Splitted[3].ToInteger of
+      20: raise EKeyExpiredError.Create('');
+      55: raise EAddressNotExistsError.Create('');
+      110: raise EInsufficientFundsError.Create('');
+      else raise EUnknownError.Create(Splitted[3]);
+    end;
+  end;
 end;
 
 procedure TMainForm.TokenBackCircleMouseDown(Sender: TObject;
@@ -1758,11 +1780,8 @@ var
   response: string;
 begin
   try
-//    response := AppCore.DoCoinsTransfer('*',AppCore.SessionKey,SendTETToEdit.Text,
-//      AmountTETEdit.Text.ToExtended);
-    SendTETToEdit.Text := '';
-    AmountTETEdit.Text := '';
-    ShowTETTransferStatus('Transaction successful');
+    response := AppCore.DoTETTransfer('*', AppCore.SessionKey, SendTETToEdit.Text,
+      AmountTETEdit.Text.ToDouble, TETTransferCallBack);
   except
     on E:EValidError do
       ShowTETTransferStatus(E.Message,True);

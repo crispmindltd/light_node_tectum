@@ -132,9 +132,12 @@ type
     procedure DoAuth(AReqID, ALogin, APassword: string;
       ACallBackProc: TGetStrProc); overload;
     function DoAuth(AReqID, ALogin, APassword: string): string; overload;
+    function DoTETTransfer(AReqID, ASessionKey, ATo: string;
+      AAmount: Double; ACallBackProc: TGetStrProc): string; overload;
+    function DoTETTransfer(AReqID, ASessionKey, ATo: string;
+      AAmount: Double): string; overload;
 //    function DoRecoverKeys(ASeed: string; out PubKey: string;
 //      out PrKey: string): string;
-//    function DoCoinsTransfer(AReqID,ASessionKey,ATo: string; AAmount: Extended): string;
 //    function DoNewToken(AReqID,ASessionKey,AFullName,AShortName,ATicker: string;
 //      AAmount: Int64; ADecimals: Integer): string;
 //    function GetNewTokenFee(AAmount: Int64; ADecimals: Integer): Integer;
@@ -278,7 +281,7 @@ function TAppCore.DoReg(AReqID, ASeed: string; out APubKey, APrKey, ALogin,
 var
   Keys: IAsymmetricCipherKeyPair;
   BytesArray: TCryptoLibByteArray;
-  splt: TArray<string>;
+  Splitted: TArray<string>;
 begin
   if (Length(ASeed.Split([' '])) <> 12) then
     raise EValidError.Create('incorrect seed phrase');
@@ -296,10 +299,10 @@ begin
     [ALogin, APassword, APassword, APubKey]));
   if IsURKError(Result) then
   begin;
-    splt := Result.Split([' ']);
-    case splt[3].ToInteger of
+    Splitted := Result.Split([' ']);
+    case Splitted[3].ToInteger of
       829: raise EAccAlreadyExistsError.Create('');
-      else raise EUnknownError.Create(splt[3]);
+      else raise EUnknownError.Create(Splitted[3]);
     end;
   end;
 
@@ -318,6 +321,44 @@ begin
   TFile.AppendAllText(ASavingPath, 'login:' + ALogin + sLineBreak);
   TFile.AppendAllText(ASavingPath, 'password:' + APassword + sLineBreak);
   TFile.AppendAllText(ASavingPath, 'address:' + AAddress);
+end;
+
+function TAppCore.DoTETTransfer(AReqID, ASessionKey, ATo: string;
+  AAmount: Double): string;
+begin
+
+end;
+
+function TAppCore.DoTETTransfer(AReqID, ASessionKey, ATo: string;
+  AAmount: Double; ACallBackProc: TGetStrProc): string;
+var
+  Splitted: TArray<string>;
+  AmountStr: string;
+begin
+  if not(ASessionKey.StartsWith('ipa') and (Length(ASessionKey) = 34)) then
+    raise EValidError.Create('incorrect session key');
+  if (AAmount <= 0) or (AAmount > 999999999999999999) then
+    raise EValidError.Create('incorrect amount');
+
+  AmountStr := FormatFloat('0.########', AAmount);
+  if (Length(AmountStr.Replace(',','')) > 18) or
+     (Length(Copy(AmountStr, AmountStr.IndexOf(',') + 2, 10)) > 8) then
+    raise EValidError.Create('incorrect amount');
+
+  TThread.CreateAnonymousThread(
+    procedure
+    var
+      Response: string;
+    begin
+      Response := FNodeClient.DoRequest(AReqID, Format('TokenTransfer * %s * %s %s %s',
+        [ASessionKey, ATo, AmountStr, AmountStr]));
+
+      TThread.Synchronize(nil,
+      procedure
+      begin
+        ACallBackProc(Response);
+      end);
+    end).Start;
 end;
 
 procedure TAppCore.DoReg(AReqID, ASeed: string; ACallBackProc: TGetStrProc);
@@ -622,36 +663,6 @@ begin
       break;
   end;
 end;
-
-//function TAppCore.DoCoinsTransfer(AReqID, ASessionKey, ATo: string;
-//  AAmount: Extended): string;
-//var
-//  splt: TArray<string>;
-//  AmountStr: string;
-//begin
-//  if not(ASessionKey.StartsWith('ipa') and (Length(ASessionKey) = 34)) then
-//    raise EValidError.Create('incorrect session key');
-//  if (AAmount <= 0) or (AAmount > 999999999999999999) then
-//    raise EValidError.Create('incorrect amount');
-//
-//  AmountStr := FormatFloat('0.########', AAmount);
-//  if (Length(AmountStr.Replace(',','')) > 18) or
-//     (Length(Copy(AmountStr,AmountStr.IndexOf(',')+2,10)) > 8) then
-//    raise EValidError.Create('incorrect amount');
-//
-//  Result := FNodeClient.DoRequest(AReqID,Format('TokenTransfer * %s * %s %s %s',
-//    [ASessionKey,ATo,AmountStr,AmountStr]));
-//  if IsURKError(Result) then
-//  begin;
-//    splt := Result.Split([' ']);
-//    case splt[3].ToInteger of
-//      20: raise EKeyExpiredError.Create('');
-//      55: raise EAddressNotExistsError.Create('');
-//      110: raise EInsufficientFundsError.Create('');
-//      else raise EUnknownError.Create(splt[3]);
-//    end;
-//  end;
-//end;
 
 function TAppCore.GenPass(x1, x2: longint): string;
 const

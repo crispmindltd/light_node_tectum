@@ -17,9 +17,9 @@ uses
 type
   TConsoleCore = class(TInterfacedObject, IUI)
   private
-    CS:TCriticalSection;
-    function IsChainNeedSync(const AName: String): Boolean;
+    FCS: TCriticalSection;
 
+    function IsChainNeedSync(const AName: String): Boolean;
   public
     constructor Create;
     destructor Destroy; override;
@@ -76,7 +76,7 @@ end;
 
 constructor TConsoleCore.Create;
 begin
-  CS := TCriticalSection.Create;
+  FCS := TCriticalSection.Create;
 {$IF Defined(MSWINDOWS)}
   SetConsoleCtrlHandler(@CtrlHandler, True);
 {$ELSE}
@@ -90,18 +90,18 @@ begin
   try
     DoMessage('');
   finally
-    CS.Free;
+    FCS.Free;
     inherited;
   end;
 end;
 
 procedure TConsoleCore.DoMessage(const AMessage: String);
 begin
-  CS.Enter;
+  FCS.Enter;
   try
     Write(#13#10 + AMessage);
   finally
-    CS.Leave;
+    FCS.Leave;
   end;
 end;
 
@@ -123,7 +123,8 @@ end;
 
 procedure TConsoleCore.Run;
 begin
-   DoMessage(Format('Tectum Light Node version %s. Copyright (c) 2024 CrispMind.',[AppCore.GetVersion]));
+   DoMessage(Format('Tectum Light Node version %s. Copyright (c) 2024 CrispMind.',
+    [AppCore.GetVersion]));
    DoMessage('Lite node is running. Press Ctrl-C to stop.');
    while not ExitFlag do begin
      Sleep(100);
@@ -135,11 +136,11 @@ procedure TConsoleCore.ShowDownloadProgress;
 begin
   const Remain = AppCore.DownloadRemain;
 
-  CS.Enter;
+  FCS.Enter;
   try
     Write(Format('Downloading blocks ... %d left    '#13, [Remain]));
   finally
-    CS.Leave;
+    FCS.Leave;
   end;
 end;
 
