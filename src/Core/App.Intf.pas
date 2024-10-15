@@ -47,7 +47,7 @@ type
 
 //    function GetTETUserLastTransactions(AUserID: Int64;
 //      var ANumber: Integer): TArray<THistoryTransactionInfo>;
-    function GetTETBalance: Double; overload;
+    function GetTETBalance(ATETAddress: string): Double; overload;
 //    function GetTETLocalBalance(ATETAddress: String): Double; overload;
 
     //TET dynamic blocks sync methods

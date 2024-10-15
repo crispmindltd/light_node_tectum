@@ -31,9 +31,9 @@ uses
 type
   TAppCore = class(TInterfacedObject, IAppCore)
   strict private
-    FSessionKey: String;
+    FSessionKey: string;
     FUserID: Integer;
-    FTETAddress: String;
+    FTETAddress: string;
     FStartLoadingDone: Boolean;
   private
     FSettings: TSettingsFile;
@@ -42,11 +42,11 @@ type
     FNodeClient: TNodeClient;
     FHTTPServer: THTTPServer;
 
-    function GenPass(x1:LongInt = 100000000; x2:LongInt = 999999999): String;
-    function CheckTickerName(const ATicker: String): Boolean;
-    function CheckShortName(const AShortName: String): Boolean;
-    function Remove0x(AAddress: String): String;
-    function SignTransaction(const AToSign: String; const APrivateKey: String): String;
+    function GenPass(x1:LongInt = 100000000; x2:LongInt = 999999999): string;
+    function CheckTickerName(const ATicker: string): Boolean;
+    function CheckShortName(const AShortName: string): Boolean;
+    function Remove0x(AAddress: string): string;
+    function SignTransaction(const AToSign: string; const APrivateKey: string): string;
     function IsURKError(const ATest: string): Boolean;
   public
     constructor Create;
@@ -74,8 +74,7 @@ type
       ARows: Integer; ALast: Boolean = False): TArray<THistoryTransactionInfo>;
 //    function GetTETUserLastTransactions(AUserID: Int64;
 //      var ANumber: Integer): TArray<THistoryTransactionInfo>;
-    function GetTETBalance: Double; overload;
-//    function GetTETLocalBalance(ATETAddress: string): Double; overload;
+    function GetTETBalance(ATETAddress: string): Double;
 
     //TET dynamic blocks sync methods
     function GetDynTETChainBlockSize: Integer;
@@ -326,8 +325,31 @@ end;
 
 function TAppCore.DoTETTransfer(AReqID, ASessionKey, ATo: string;
   AAmount: Double): string;
+var
+  Splitted: TArray<string>;
+  AmountStr: string;
 begin
+  if not(ASessionKey.StartsWith('ipa') and (Length(ASessionKey) = 34)) then
+    raise EValidError.Create('incorrect session key');
+  if (AAmount <= 0) or (AAmount > 999999999999999999) then
+    raise EValidError.Create('incorrect amount');
+  AmountStr := FormatFloat('0.########', AAmount);
+  if (Length(AmountStr.Replace(',', '')) > 18) or
+     (Length(Copy(AmountStr, AmountStr.IndexOf(',') + 2, 10)) > 8) then
+    raise EValidError.Create('incorrect amount');
 
+  Result := FNodeClient.DoRequest(AReqID, Format('TokenTransfer * %s * %s %s %s',
+    [ASessionKey, ATo, AmountStr, AmountStr]));
+  if IsURKError(Result) then
+  begin;
+    Splitted := Result.Split([' ']);
+    case Splitted[3].ToInteger of
+      20: raise EKeyExpiredError.Create('');
+      55: raise EAddressNotExistsError.Create('');
+      110: raise EInsufficientFundsError.Create('');
+      else raise EUnknownError.Create(Splitted[3]);
+    end;
+  end;
 end;
 
 function TAppCore.DoTETTransfer(AReqID, ASessionKey, ATo: string;
@@ -340,7 +362,6 @@ begin
     raise EValidError.Create('incorrect session key');
   if (AAmount <= 0) or (AAmount > 999999999999999999) then
     raise EValidError.Create('incorrect amount');
-
   AmountStr := FormatFloat('0.########', AAmount);
   if (Length(AmountStr.Replace(',', '')) > 18) or
      (Length(Copy(AmountStr, AmountStr.IndexOf(',') + 2, 10)) > 8) then
@@ -719,27 +740,6 @@ begin
   Result := FSettings.GetTokensToSynchronize;
 end;
 
-//function TAppCore.GetTETLocalBalance(ATETAddress: string): Double;
-//var
-//  TETBlock: Tbc2;
-//  ICODat: TTokenICODat;
-//  TETDynamic: TTokenBase;
-//  BlockID: Int64;
-//begin
-//  if not FBlockchain.TryGetTETDynamic(ATETAddress,BlockID,TETDynamic) then
-//    raise EAddressNotExistsError.Create('');
-//  TETBlock := FBlockchain.GetTETChainBlock(TETDynamic.LastBlock);
-//  if not FBlockchain.TryGetICOBlock(TETDynamic.TokenDatID,ICODat) then
-//    exit;
-//
-//  if BlockID = TETBlock.Smart.tkn[1].TokenID then
-//		Result := TETBlock.Smart.tkn[1].Amount / Power(10,ICODat.FloatSize)
-//	else if BlockID = TETBlock.Smart.tkn[2].TokenID then
-//		Result := TETBlock.Smart.tkn[2].Amount / Power(10,ICODat.FloatSize)
-//	else
-//    raise EUnknownError.Create('');
-//end;
-
 //function TAppCore.GetTETUserLastTransactions(AUserID: Int64;
 //  var ANumber: Integer): TArray<THistoryTransactionInfo>;
 //begin
@@ -956,14 +956,15 @@ begin
   FBlockchain.SetTETChainBlocks(ASkip, ABytes);
 end;
 
-function TAppCore.GetTETBalance: Double;
+
+function TAppCore.GetTETBalance(ATETAddress: string): Double;
 var
   TETBlock: Tbc2;
   ICODat: TTokenICODat;
   TETDynamic: TTokenBase;
   BlockNum: Integer;
 begin
-  if not (FBlockchain.TryGetTETDynamic(GetTETAddress, BlockNum, TETDynamic) and
+  if not (FBlockchain.TryGetTETDynamic(ATETAddress, BlockNum, TETDynamic) and
           FBlockchain.TryGetICOBlock(TETDynamic.TokenDatID, ICODat)) then
     exit(0);
 

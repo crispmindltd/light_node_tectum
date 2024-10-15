@@ -1381,7 +1381,7 @@ var
   val: Double;
 begin
   try
-    val := AppCore.GetTETBalance;
+    val := AppCore.GetTETBalance(AppCore.TETAddress);
     FBalances.AddOrSetValue('TET', val);
     BalanceTETValueLabel.Text := FormatFloat('0.########', val) + ' TET';
   except

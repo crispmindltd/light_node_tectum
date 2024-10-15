@@ -136,21 +136,20 @@ begin
 
     JSON := TJSONObject.ParseJSONValue(ABody, False, True) as TJSONObject;
     try
-      if not(JSON.TryGetValue('session_key', SessionKey) and
-             JSON.TryGetValue('to', TransTo) and
-             JSON.TryGetValue('amount', Amount)) then
+      if not (JSON.TryGetValue('session_key', SessionKey) and
+              JSON.TryGetValue('to', TransTo) and
+              JSON.TryGetValue('amount', Amount)) then
         raise EValidError.Create('request parameters error');
 
       const TETsDecimals = 8;
       const AmountStr = JSON.GetValue<string>('amount', '');
       if not AmountStr.IsEmpty and (DecimalsCount(AmountStr) > TETsDecimals) then
         raise EValidError.Create('too much decimals');
-
     finally
       JSON.Free;
     end;
 
-//    Response := AppCore.DoCoinsTransfer(AReqID, SessionKey, TransTo, Amount);
+    Response := AppCore.DoTETTransfer(AReqID, SessionKey, TransTo, Amount);
     JSON := TJSONObject.Create;
     try
       JSON.AddPair('hash', Response.Split([' '])[3].ToLower);
@@ -190,7 +189,7 @@ begin
     else if not TryStrToInt(Params.Values['skip'], Skip) then
       raise EValidError.Create('request parameters error');
 
-//    TETTransfersInfo := AppCore.GetChainTransations(Skip, Rows);
+//    TETTransfersInfo := AppCore.GetTETTransations(Skip, Rows);
     JSON := TJSONObject.Create;
     try
       JSONArray := TJSONArray.Create;
@@ -566,7 +565,7 @@ begin
     if Params.Values['tet_address'].IsEmpty then
       raise EValidError.Create('request parameters error');
 
-//    Response := AppCore.GetLocalTETBalance(Params.Values['tet_address']);
+    Response := AppCore.GetTETBalance(Params.Values['tet_address']);
     JSON := TJSONObject.Create;
     try
       JSON.AddPair('tet_balance', TJSONDecimal.Create(Response, 8 {tet_decimals}));
