@@ -241,8 +241,7 @@ begin
   Tabs.TabIndex := 0;
   AuthTabControl.TabIndex := 0;
   DownloadProgressBar.StyleLookup := 'DownloadProgressBarStyle';
-  DownloadProgressBar.NeedStyleLookup;
-  DownloadProgressBar.ApplyStyleLookup;
+  EmailEdit.SetFocus;
 end;
 
 procedure TStartForm.HideLogInError;
@@ -301,8 +300,8 @@ begin
     Splitted := AResponse.Split([' ']);
     case Splitted[3].ToInteger of
       15: ShowLogInError('Server did not respond, try later');
-      93: ShowLogInError(LOGIN_ERROR_TEXT);
-      816: ShowLogInError(LOGIN_ERROR_TEXT);
+      93: ShowLogInError(LogInErrorText);
+      816: ShowLogInError(SignUpErrorText);
       else
         begin
           Logs.DoLog('Unknown error during auth with code ' +
@@ -371,7 +370,7 @@ begin
       else
         begin
           Logs.DoLog('Unknown error during reg with code ' + Splitted[3],
-            TLogType.ERROR,tcp);
+            TLogType.ERROR, tcp);
           ShowSignUpError('Unknown error, try later');
         end;
     end;

@@ -25,11 +25,12 @@ type
     function GetBlockSize: Integer; override;
     function GetBlocksCount: Integer; override;
     procedure WriteBlocksAsBytes(ASkipBlocks: Integer; ABytes: TBytes); override;
-    function TryReadBlock(ASkip: Integer; out ABlock: Tbc2): Boolean;
     function ReadBlocksAsBytes(ASkipBlocks: Integer;
       ANumber: Integer = MaxBlocksNumber): TBytes; override;
     function ReadBlocks(ASkip: Integer;
       ANumber: Integer = MaxBlocksNumber): TArray<Tbc2>;
+
+    function TryGet(ASkip: Integer; out ATETBlock: Tbc2): Boolean;
   end;
 
 implementation
@@ -138,7 +139,7 @@ begin
   end;
 end;
 
-function TBlockchainTET.TryReadBlock(ASkip: Integer; out ABlock: Tbc2): Boolean;
+function TBlockchainTET.TryGet(ASkip: Integer; out ATETBlock: Tbc2): Boolean;
 var
   NeedClose: Boolean;
 begin
@@ -148,7 +149,7 @@ begin
     if Result then
     begin
       Seek(FFile, ASkip);
-      Read(FFile, ABlock);
+      Read(FFile, ATETBlock);
     end;
   finally
     if NeedClose then

@@ -24,7 +24,7 @@ object StartForm: TStartForm
     Position.X = 300.000000000000000000
     Position.Y = 203.000000000000000000
     Size.Width = 600.000000000000000000
-    Size.Height = 39.000000000000000000
+    Size.Height = 43.000000000000000000
     Size.PlatformDefault = False
     TextSettings.Font.Family = 'Inter'
     TextSettings.Font.Size = 32.000000000000000000
@@ -82,9 +82,9 @@ object StartForm: TStartForm
           OnChange = AuthTabControlChange
           Sizes = (
             600s
-            470s
+            468s
             600s
-            470s)
+            468s)
           object LogInTabItem: TTabItem
             CustomIcon = <
               item
@@ -119,7 +119,7 @@ object StartForm: TStartForm
                 TextSettings.Font.Family = 'Inter'
                 TextSettings.Font.Size = 14.000000000000000000
                 TextSettings.FontColor = xFF323130
-                Position.Y = 183.000000000000000000
+                Position.Y = 184.000000000000000000
                 Margins.Top = 12.000000000000000000
                 Size.Width = 600.000000000000000000
                 Size.Height = 42.000000000000000000
@@ -177,12 +177,13 @@ object StartForm: TStartForm
                       07EB91400200000011478D410D6CC7400200000011478D4150C2054102000000
                       11478D4170CE274102000000ECC07F41F38E424102000000A9A45D41F38E4241
                       03000000A9A45D41F38E4241}
-                    Fill.Color = xFFBDBDBD
+                    Fill.Color = xFF5A6773
                     HitTest = False
                     Size.Width = 26.000000000000000000
                     Size.Height = 18.000000000000000000
                     Size.PlatformDefault = False
                     Stroke.Kind = None
+                    Stroke.Thickness = 0.000000000000000000
                   end
                 end
               end
@@ -195,7 +196,7 @@ object StartForm: TStartForm
                 TextSettings.Font.Family = 'Inter'
                 TextSettings.Font.Size = 14.000000000000000000
                 TextSettings.FontColor = xFF323130
-                Position.Y = 90.000000000000000000
+                Position.Y = 91.000000000000000000
                 Margins.Top = 12.000000000000000000
                 Size.Width = 600.000000000000000000
                 Size.Height = 42.000000000000000000
@@ -257,7 +258,7 @@ object StartForm: TStartForm
                 Margins.Top = 20.000000000000000000
                 Position.Y = 20.000000000000000000
                 Size.Width = 600.000000000000000000
-                Size.Height = 19.000000000000000000
+                Size.Height = 20.000000000000000000
                 Size.PlatformDefault = False
                 TextSettings.Font.Family = 'Inter'
                 TextSettings.Font.Size = 15.000000000000000000
@@ -270,7 +271,7 @@ object StartForm: TStartForm
                 Align = Top
                 StyledSettings = [Style]
                 Margins.Top = 22.000000000000000000
-                Position.Y = 61.000000000000000000
+                Position.Y = 62.000000000000000000
                 Size.Width = 600.000000000000000000
                 Size.Height = 17.000000000000000000
                 Size.PlatformDefault = False
@@ -284,7 +285,7 @@ object StartForm: TStartForm
                 Align = Top
                 StyledSettings = [Style]
                 Margins.Top = 22.000000000000000000
-                Position.Y = 154.000000000000000000
+                Position.Y = 155.000000000000000000
                 Size.Width = 600.000000000000000000
                 Size.Height = 17.000000000000000000
                 Size.PlatformDefault = False
@@ -388,7 +389,7 @@ object StartForm: TStartForm
             object WordsLayout: TLayout
               Align = Top
               Margins.Top = 20.000000000000000000
-              Position.Y = 142.000000000000000000
+              Position.Y = 150.000000000000000000
               Size.Width = 600.000000000000000000
               Size.Height = 257.000000000000000000
               Size.PlatformDefault = False
@@ -853,7 +854,7 @@ object StartForm: TStartForm
                 Margins.Bottom = 10.000000000000000000
                 Position.Y = 190.000000000000000000
                 Size.Width = 600.000000000000000000
-                Size.Height = 17.000000000000000000
+                Size.Height = 19.000000000000000000
                 Size.PlatformDefault = False
                 TextSettings.Font.Family = 'Inter'
                 TextSettings.Font.Size = 14.000000000000000000
@@ -876,7 +877,7 @@ object StartForm: TStartForm
               Margins.Top = 30.000000000000000000
               Position.Y = 30.000000000000000000
               Size.Width = 600.000000000000000000
-              Size.Height = 20.000000000000000000
+              Size.Height = 22.000000000000000000
               Size.PlatformDefault = False
               TextSettings.Font.Family = 'Inter'
               TextSettings.Font.Size = 16.000000000000000000
@@ -892,9 +893,9 @@ object StartForm: TStartForm
               StyledSettings = [Style]
               Padding.Top = 20.000000000000000000
               Margins.Top = 4.000000000000000000
-              Position.Y = 54.000000000000000000
+              Position.Y = 56.000000000000000000
               Size.Width = 600.000000000000000000
-              Size.Height = 20.000000000000000000
+              Size.Height = 22.000000000000000000
               Size.PlatformDefault = False
               TextSettings.Font.Family = 'Inter'
               TextSettings.Font.Size = 16.000000000000000000
@@ -908,9 +909,9 @@ object StartForm: TStartForm
               StyledSettings = []
               Padding.Top = 20.000000000000000000
               Margins.Top = 4.000000000000000000
-              Position.Y = 78.000000000000000000
+              Position.Y = 82.000000000000000000
               Size.Width = 600.000000000000000000
-              Size.Height = 20.000000000000000000
+              Size.Height = 22.000000000000000000
               Size.PlatformDefault = False
               TextSettings.Font.Family = 'Inter'
               TextSettings.Font.Size = 16.000000000000000000
@@ -927,9 +928,9 @@ object StartForm: TStartForm
               StyledSettings = []
               Padding.Top = 20.000000000000000000
               Margins.Top = 4.000000000000000000
-              Position.Y = 102.000000000000000000
+              Position.Y = 108.000000000000000000
               Size.Width = 600.000000000000000000
-              Size.Height = 20.000000000000000000
+              Size.Height = 22.000000000000000000
               Size.PlatformDefault = False
               TextSettings.Font.Family = 'Inter'
               TextSettings.Font.Size = 16.000000000000000000
@@ -967,7 +968,7 @@ object StartForm: TStartForm
           StyledSettings = []
           Margins.Right = 50.000000000000000000
           Size.Width = 550.000000000000000000
-          Size.Height = 32.000000000000000000
+          Size.Height = 35.000000000000000000
           Size.PlatformDefault = False
           TextSettings.Font.Family = 'Inter'
           TextSettings.Font.Size = 26.000000000000000000
@@ -982,7 +983,7 @@ object StartForm: TStartForm
             Margins.Right = -40.000000000000000000
             Position.X = 558.000000000000000000
             Size.Width = 32.000000000000000000
-            Size.Height = 32.000000000000000000
+            Size.Height = 35.000000000000000000
             Size.PlatformDefault = False
             TabOrder = 4
             OnClick = CopyLoginLayoutClick
@@ -1011,6 +1012,7 @@ object StartForm: TStartForm
                 0000C841020000000000A8410000C841030000000000A8410000C841}
               Fill.Kind = None
               HitTest = False
+              Position.Y = 1.000000000000000000
               Size.Width = 32.000000000000000000
               Size.Height = 32.000000000000000000
               Size.PlatformDefault = False
@@ -1025,9 +1027,9 @@ object StartForm: TStartForm
           StyledSettings = []
           Margins.Top = 20.000000000000000000
           Margins.Right = 50.000000000000000000
-          Position.Y = 52.000000000000000000
+          Position.Y = 55.000000000000000000
           Size.Width = 550.000000000000000000
-          Size.Height = 32.000000000000000000
+          Size.Height = 35.000000000000000000
           Size.PlatformDefault = False
           TextSettings.Font.Family = 'Inter'
           TextSettings.Font.Size = 26.000000000000000000
@@ -1042,7 +1044,7 @@ object StartForm: TStartForm
             Margins.Right = -40.000000000000000000
             Position.X = 558.000000000000000000
             Size.Width = 32.000000000000000000
-            Size.Height = 32.000000000000000000
+            Size.Height = 35.000000000000000000
             Size.PlatformDefault = False
             TabOrder = 4
             OnClick = CopyPassLayoutClick
@@ -1071,6 +1073,7 @@ object StartForm: TStartForm
                 0000C841020000000000A8410000C841030000000000A8410000C841}
               Fill.Kind = None
               HitTest = False
+              Position.Y = 1.000000000000000000
               Size.Width = 32.000000000000000000
               Size.Height = 32.000000000000000000
               Size.PlatformDefault = False
@@ -1083,7 +1086,7 @@ object StartForm: TStartForm
           Align = Top
           StyledSettings = []
           Margins.Top = 10.000000000000000000
-          Position.Y = 245.000000000000000000
+          Position.Y = 253.000000000000000000
           Size.Width = 600.000000000000000000
           Size.Height = 59.000000000000000000
           Size.PlatformDefault = False
@@ -1101,9 +1104,9 @@ object StartForm: TStartForm
           AutoSize = True
           StyledSettings = []
           Margins.Top = 25.000000000000000000
-          Position.Y = 109.000000000000000000
+          Position.Y = 115.000000000000000000
           Size.Width = 600.000000000000000000
-          Size.Height = 25.000000000000000000
+          Size.Height = 27.000000000000000000
           Size.PlatformDefault = False
           TextSettings.Font.Family = 'Inter'
           TextSettings.Font.Size = 20.000000000000000000
@@ -1126,7 +1129,7 @@ object StartForm: TStartForm
           Align = Top
           DisableFocusEffect = True
           Margins.Top = 10.000000000000000000
-          Position.Y = 144.000000000000000000
+          Position.Y = 152.000000000000000000
           Size.Width = 600.000000000000000000
           Size.Height = 91.000000000000000000
           Size.PlatformDefault = False

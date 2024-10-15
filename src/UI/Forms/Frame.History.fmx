@@ -1,10 +1,10 @@
 object HistoryTransactionFrame: THistoryTransactionFrame
   Align = Top
   Cursor = crHandPoint
-  Margins.Top = 6.000000000000000000
-  Margins.Right = 6.000000000000000000
-  Position.Y = 6.000000000000000000
-  Size.Width = 1117.000000000000000000
+  Margins.Top = 5.000000000000000000
+  Margins.Right = 5.000000000000000000
+  Position.Y = 5.000000000000000000
+  Size.Width = 1063.000000000000000000
   Size.Height = 30.000000000000000000
   Size.PlatformDefault = False
   OnMouseEnter = FrameMouseEnter
@@ -14,7 +14,7 @@ object HistoryTransactionFrame: THistoryTransactionFrame
     Align = Contents
     Fill.Kind = None
     HitTest = False
-    Size.Width = 1117.000000000000000000
+    Size.Width = 1063.000000000000000000
     Size.Height = 30.000000000000000000
     Size.PlatformDefault = False
     Stroke.Kind = None
@@ -23,8 +23,6 @@ object HistoryTransactionFrame: THistoryTransactionFrame
     object DateTimeLabel: TLabel
       Align = Left
       StyledSettings = [Style]
-      Margins.Left = 5.000000000000000000
-      Position.X = 5.000000000000000000
       Size.Width = 150.000000000000000000
       Size.Height = 30.000000000000000000
       Size.PlatformDefault = False
@@ -39,7 +37,7 @@ object HistoryTransactionFrame: THistoryTransactionFrame
       Align = Left
       StyledSettings = [Style]
       Margins.Left = 15.000000000000000000
-      Position.X = 170.000000000000000000
+      Position.X = 165.000000000000000000
       Size.Width = 72.000000000000000000
       Size.Height = 30.000000000000000000
       Size.PlatformDefault = False
@@ -54,7 +52,7 @@ object HistoryTransactionFrame: THistoryTransactionFrame
       Align = Left
       StyledSettings = [Style]
       Margins.Left = 15.000000000000000000
-      Position.X = 257.000000000000000000
+      Position.X = 252.000000000000000000
       Size.Width = 290.000000000000000000
       Size.Height = 30.000000000000000000
       Size.PlatformDefault = False
@@ -69,7 +67,7 @@ object HistoryTransactionFrame: THistoryTransactionFrame
       Align = Left
       StyledSettings = [Style]
       Margins.Left = 15.000000000000000000
-      Position.X = 562.000000000000000000
+      Position.X = 557.000000000000000000
       Size.Width = 290.000000000000000000
       Size.Height = 30.000000000000000000
       Size.PlatformDefault = False
@@ -80,19 +78,19 @@ object HistoryTransactionFrame: THistoryTransactionFrame
       Text = 'Hash'
       TabOrder = 0
     end
-    object AmountLabel: TLabel
+    object ValueLabel: TLabel
       Align = Left
       StyledSettings = [Style]
       Margins.Left = 15.000000000000000000
-      Position.X = 867.000000000000000000
-      Size.Width = 150.000000000000000000
+      Position.X = 862.000000000000000000
+      Size.Width = 100.000000000000000000
       Size.Height = 30.000000000000000000
       Size.PlatformDefault = False
       TextSettings.Font.Family = 'Inter'
       TextSettings.Font.Size = 14.000000000000000000
       TextSettings.FontColor = xFF5A6773
       TextSettings.WordWrap = False
-      Text = 'Amount'
+      Text = 'Value'
       TabOrder = 3
     end
     object IncomRectangle: TRectangle
@@ -101,21 +99,18 @@ object HistoryTransactionFrame: THistoryTransactionFrame
       HitTest = False
       Margins.Left = 15.000000000000000000
       Margins.Top = 2.000000000000000000
-      Margins.Right = 5.000000000000000000
       Margins.Bottom = 2.000000000000000000
-      Position.X = 1032.000000000000000000
+      Position.X = 977.000000000000000000
       Position.Y = 2.000000000000000000
       Size.Width = 70.000000000000000000
       Size.Height = 26.000000000000000000
       Size.PlatformDefault = False
       Stroke.Kind = None
       object IncomText: TText
-        Align = Center
+        Align = Client
         HitTest = False
-        Margins.Left = 15.000000000000000000
-        Margins.Right = 5.000000000000000000
-        Size.Width = 60.000000000000000000
-        Size.Height = 30.000000000000000000
+        Size.Width = 70.000000000000000000
+        Size.Height = 26.000000000000000000
         Size.PlatformDefault = False
         Text = 'IN'
         TextSettings.Font.Family = 'Inter'

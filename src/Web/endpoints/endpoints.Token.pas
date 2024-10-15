@@ -270,7 +270,7 @@ begin
           TJSONBool.Create(TETTransfersInfo[i].Incom));
         JSONNestedObject.AddPair('hash', TETTransfersInfo[i].Hash);
         JSONNestedObject.AddPair('amount',
-          TJSONDecimal.Create(TETTransfersInfo[i].Amount, 8 {tet_decimals}));
+          TJSONDecimal.Create(TETTransfersInfo[i].Value, 8 {tet_decimals}));
         JSONNestedObject.AddPair('fee', TJSONDecimal.Create(0, 8 {tet_decimals}));
       end;
       JSON.AddPair('transactions', JSONArray);

@@ -29,14 +29,13 @@ type
     function TryReadBlock(ASkip: Integer; out ABlock: TTokenBase): Boolean;
     function ReadBlocksAsBytes(ASkipBlocks: Integer;
       ANumber: Integer = MaxBlocksNumber): TBytes; override;
-    function ReadBlocks(ASkip: Integer;
-      ANumber: Integer = MaxBlocksNumber): TArray<TTokenBase>;
+//    function ReadBlocks(ASkip: Integer;
+//      ANumber: Integer = MaxBlocksNumber): TArray<TTokenBase>;
 
-    function TryGetTETAddress(const AOwnerID: Integer; out ATETAddress: String): Boolean;
-//    function TryGetByUserID(AUserID: Int64; out ABlockID: Int64;
-//      var ATETDynamic: TTokenBase): Boolean;
-    function TryGetByTETAddress(ATETAddress: string; out ABlockNum: Integer;
-      out ATETDynamic: TTokenBase): Boolean;
+    function TryGet(AUserID: Integer; out ABlockNum: Integer;
+      var ATETDyn: TTokenBase): Boolean; overload;
+    function TryGet(ATETAddress: string; out ABlockNum: Integer;
+      out ATETDyn: TTokenBase): Boolean; overload;
   end;
 
 implementation
@@ -98,26 +97,26 @@ begin
   Result := SizeOf(TTokenBase);
 end;
 
-function TBlockchainTETDynamic.ReadBlocks(ASkip,
-  ANumber: Integer): TArray<TTokenBase>;
-var
-  NeedClose: Boolean;
-  i: Integer;
-begin
-  Result := [];
-  NeedClose := DoOpen;
-  try
-    if (ASkip < 0) or (ASkip >= FileSize(FFile)) then
-      exit;
-    Seek(FFile, ASkip);
-    SetLength(Result, Min(ANumber, FileSize(FFile) - ASkip));
-    for i := 0 to Length(Result) - 1 do
-      Read(FFile, Result[i]);
-  finally
-    if NeedClose then
-      DoClose;
-  end;
-end;
+//function TBlockchainTETDynamic.ReadBlocks(ASkip,
+//  ANumber: Integer): TArray<TTokenBase>;
+//var
+//  NeedClose: Boolean;
+//  i: Integer;
+//begin
+//  Result := [];
+//  NeedClose := DoOpen;
+//  try
+//    if (ASkip < 0) or (ASkip >= FileSize(FFile)) then
+//      exit;
+//    Seek(FFile, ASkip);
+//    SetLength(Result, Min(ANumber, FileSize(FFile) - ASkip));
+//    for i := 0 to Length(Result) - 1 do
+//      Read(FFile, Result[i]);
+//  finally
+//    if NeedClose then
+//      DoClose;
+//  end;
+//end;
 
 function TBlockchainTETDynamic.ReadBlocksAsBytes(ASkipBlocks,
   ANumber: Integer): TBytes;
@@ -191,8 +190,8 @@ begin
   end;
 end;
 
-function TBlockchainTETDynamic.TryGetByTETAddress(ATETAddress: string;
-  out ABlockNum: Integer; out ATETDynamic: TTokenBase): Boolean;
+function TBlockchainTETDynamic.TryGet(ATETAddress: string;
+  out ABlockNum: Integer; out ATETDyn: TTokenBase): Boolean;
 var
   NeedClose: Boolean;
   i: Integer;
@@ -203,8 +202,8 @@ begin
     Seek(FFile, 0);
     for i := 0 to FileSize(FFile) - 1 do
     begin
-      Read(FFile, ATETDynamic);
-      if (ATETDynamic.Token = ATETAddress) and (ATETDynamic.TokenDatID = 1) then
+      Read(FFile, ATETDyn);
+      if (ATETDyn.Token = ATETAddress) and (ATETDyn.TokenDatID = 1) then
       begin
         ABlockNum := i;
         exit(True);
@@ -251,19 +250,18 @@ begin
   NeedClose := DoOpen;
   try
     Seek(FFile, ASkip);
-    Read(FFile, ABlock);
+    Write(FFile, ABlock);
   finally
     if NeedClose then
       DoClose;
   end;
 end;
 
-function TBlockchainTETDynamic.TryGetTETAddress(const AOwnerID: Integer;
-  out ATETAddress: String): Boolean;
+function TBlockchainTETDynamic.TryGet(AUserID: Integer; out ABlockNum: Integer;
+  var ATETDyn: TTokenBase): Boolean;
 var
   NeedClose: Boolean;
   i: Integer;
-  TETDyn: TTokenBase;
 begin
   Result := False;
   NeedClose := DoOpen;
@@ -271,10 +269,10 @@ begin
     Seek(FFile, 0);
     for i := 0 to FileSize(FFile) - 1 do
     begin
-      Read(FFile, TETDyn);
-      if (TETDyn.OwnerID = AOwnerID) and (TETDyn.TokenDatID = 1) then
+      Read(FFile, ATETDyn);
+      if (ATETDyn.OwnerID = AUserID) and (ATETDyn.TokenDatID = 1) then
       begin
-        ATETAddress := TETDyn.Token;
+        ABlockNum := i;
         exit(True);
       end;
     end;
@@ -283,31 +281,5 @@ begin
       DoClose;
   end;
 end;
-
-//function TBlockchainTETDynamic.TryGetTokenBase(ATETAddress: String;
-//  out AID: Integer; out tb: TTokenBase): Boolean;
-//var
-//  i: Integer;
-//begin
-//  FLock.Enter;
-//  Result := False;
-//  AssignFile(FFile, FFullFilePath);
-//  Reset(FFile);
-//  try
-//    for i := 0 to FileSize(FFile)-1 do
-//    begin
-//      Seek(FFile,i);
-//      Read(FFile,tb);
-//      if (tb.Token = ATETAddress) and (tb.TokenDatID = 1) then
-//      begin
-//        AID := i;
-//        Exit(True);
-//      end;
-//    end;
-//  finally
-//    CloseFile(FFile);
-//    FLock.Leave;
-//  end;
-//end;
 
 end.

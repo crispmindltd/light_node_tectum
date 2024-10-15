@@ -28,8 +28,11 @@ type
   ERequestInProgressError = class(Exception);
 
 const
-  LOGIN_ERROR_TEXT = 'Incorrect login or password';
-  SIGN_UP_ERROR_TEXT = 'Registration error. Try later';
+  LogInErrorText = 'Incorrect login or password';
+  SignUpErrorText = 'Registration error. Try later';
+  KeyExpiredErrorText = 'Session key expired. Please relogin';
+  AddressNotExistsErrorText = 'Address does not exists';
+  InsufficientFundsErrorText = 'Insufficient funds';
 
 implementation
 

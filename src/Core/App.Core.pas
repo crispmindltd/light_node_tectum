@@ -70,8 +70,8 @@ type
     procedure SetTETChainBlocks(ASkip: Integer; ABytes: TBytes);
 //    function GetChainTransations(ASkip: Integer; var ARows: Integer): TArray<TExplorerTransactionInfo>;
 //    function GetChainLastTransactions(var Amount: Integer): TArray<TExplorerTransactionInfo>;
-//    function GetChainUserTransactions(AUserID: Integer; ASkip: Integer;
-//      var ARows: Integer): TArray<THistoryTransactionInfo>;
+    function GetTETUserTransactions(AUserID: Integer; ASkip: Integer;
+      ARows: Integer; ALast: Boolean = False): TArray<THistoryTransactionInfo>;
 //    function GetTETUserLastTransactions(AUserID: Int64;
 //      var ANumber: Integer): TArray<THistoryTransactionInfo>;
     function GetTETBalance: Double; overload;
@@ -89,6 +89,7 @@ type
     function GetTokenICOBlocksCount: Integer;
     function GetTokenICOBlocks(ASkip: Integer): TBytes;
     procedure SetTokenICOBlocks(ASkip: Integer; ABytes: TBytes);
+    function TryGetTokenICO(ATicker: string; out ATokenICO: TTokenICODat): Boolean;
 
     //SmartKey blocks sync methods
 //    function GetSmartKeyBlocksCount: Int64;
@@ -341,7 +342,7 @@ begin
     raise EValidError.Create('incorrect amount');
 
   AmountStr := FormatFloat('0.########', AAmount);
-  if (Length(AmountStr.Replace(',','')) > 18) or
+  if (Length(AmountStr.Replace(',', '')) > 18) or
      (Length(Copy(AmountStr, AmountStr.IndexOf(',') + 2, 10)) > 8) then
     raise EValidError.Create('incorrect amount');
 
@@ -876,20 +877,21 @@ end;
 //  Result := FBlockchain.GetChainTransactions(ASkip,ARows);
 //end;
 
-//function TAppCore.GetChainUserTransactions(AUserID, ASkip: Integer;
-//  var ARows: Integer): TArray<THistoryTransactionInfo>;
-//begin
-//  if AUserID < 0 then
-//    raise EValidError.Create('invalid "user id" value');
-//  if ASkip < 0 then
-//    raise EValidError.Create('invalid "skip" value');
-//  if ARows <= 0 then
-//    raise EValidError.Create('invalid "rows" value');
-//  if ARows > 50 then
-//    raise EValidError.Create('"rows" value can''t be more than 50');
-//
-//  Result := FBlockchain.GetChainUserTransactions(AUserID,ASkip,ARows);
-//end;
+function TAppCore.GetTETUserTransactions(AUserID, ASkip: Integer;
+  ARows: Integer; ALast: Boolean): TArray<THistoryTransactionInfo>;
+begin
+  if AUserID < 0 then
+    raise EValidError.Create('invalid "user id" value');
+  if ASkip < 0 then
+    raise EValidError.Create('invalid "skip" value');
+  if ARows <= 0 then
+    raise EValidError.Create('invalid "rows" value');
+  if ARows > 50 then
+    raise EValidError.Create('"rows" value can''t be more than 50');
+
+  if ALast then
+    Result := FBlockchain.GetTETUserLastTransactions(AUserID, ARows);
+end;
 
 function TAppCore.GetSessionKey: string;
 begin
@@ -1011,7 +1013,13 @@ end;
 
 procedure TAppCore.SetTokenICOBlocks(ASkip: Integer; ABytes: TBytes);
 begin
-  FBlockchain.SetTokenICOBlocks(ASkip, ABytes);
+  FBlockchain.SetICOBlocks(ASkip, ABytes);
+end;
+
+function TAppCore.TryGetTokenICO(ATicker: string;
+  out ATokenICO: TTokenICODat): Boolean;
+begin
+  Result := FBlockchain.TryGetICOBlock(ATicker, ATokenICO);
 end;
 
 //function TAppCore.GetTokensICOs(ASkip: Integer; var ARows: Integer): TArray<TTokenICODat>;

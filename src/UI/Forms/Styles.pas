@@ -5,7 +5,7 @@ interface
 uses
   System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants,
   FMX.Types, FMX.Controls, FMX.Forms, FMX.ListBox, FMX.Layouts, FMX.Graphics,
-  FMX.Dialogs, FMX.Objects;
+  FMX.Dialogs, FMX.Objects, FMX.StdCtrls;
 
 const
   MOUSE_ENTER_COLOR = $FF323232;
@@ -35,6 +35,9 @@ type
       Shift: TShiftState; X, Y: Single);
   end;
 
+  procedure SetText(ATextComponent: TText; const AText: string); overload;
+  procedure SetText(ATextComponent: TLabel; const AText: string); overload;
+
 var
   StylesForm: TStylesForm;
 
@@ -42,78 +45,92 @@ implementation
 
 {$R *.fmx}
 
+procedure SetText(ATextComponent: TText; const AText: string);
+begin
+  ATextComponent.AutoSize := False;
+  ATextComponent.Text := AText;
+  ATextComponent.AutoSize := True;
+end;
+
+procedure SetText(ATextComponent: TLabel; const AText: string);
+begin
+  ATextComponent.AutoSize := False;
+  ATextComponent.Text := AText;
+  ATextComponent.AutoSize := True;
+end;
+
 { TStylesForm }
 
 procedure TStylesForm.OnCopyLayoutMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Single);
 var
-  layout: TLayout;
-  svg: TPath;
-  c: TComponent;
+  Layout: TLayout;
+  Svg: TPath;
   i: Integer;
 begin
-  if not(Sender is TLayout) then exit;
+  if not (Sender is TLayout) then
+    exit;
 
-  layout := Sender as TLayout;
-  svg := nil;
-  for i := 0 to layout.ChildrenCount-1 do
-    if layout.Children[i] is TPath then
+  Layout := Sender as TLayout;
+  Svg := nil;
+  for i := 0 to Layout.ChildrenCount - 1 do
+    if Layout.Children[i] is TPath then
     begin
-      svg := layout.Children[i] as TPath;
+      Svg := Layout.Children[i] as TPath;
       break;
     end;
-  if Assigned(svg) then
+  if Assigned(Svg) then
   begin
-    svg.Fill.Color := MOUSE_DOWN_COLOR;
-    svg.Stroke.Color := MOUSE_DOWN_COLOR;
+    Svg.Fill.Color := MOUSE_DOWN_COLOR;
+    Svg.Stroke.Color := MOUSE_DOWN_COLOR;
   end;
 end;
 
 procedure TStylesForm.OnCopyLayoutMouseEnter(Sender: TObject);
 var
-  layout: TLayout;
-  svg: TPath;
-  c: TComponent;
+  Layout: TLayout;
+  Svg: TPath;
   i: Integer;
 begin
-  if not(Sender is TLayout) then exit;
+  if not (Sender is TLayout) then
+    exit;
 
-  layout := Sender as TLayout;
-  svg := nil;
-  for i := 0 to layout.ChildrenCount-1 do
-    if layout.Children[i] is TPath then
+  Layout := Sender as TLayout;
+  Svg := nil;
+  for i := 0 to Layout.ChildrenCount - 1 do
+    if Layout.Children[i] is TPath then
     begin
-      svg := layout.Children[i] as TPath;
+      Svg := Layout.Children[i] as TPath;
       break;
     end;
-  if Assigned(svg) then
+  if Assigned(Svg) then
   begin
-    svg.Fill.Color := MOUSE_ENTER_COLOR;
-    svg.Stroke.Color := MOUSE_ENTER_COLOR;
+    Svg.Fill.Color := MOUSE_ENTER_COLOR;
+    Svg.Stroke.Color := MOUSE_ENTER_COLOR;
   end;
 end;
 
 procedure TStylesForm.OnCopyLayoutMouseLeave(Sender: TObject);
 var
-  layout: TLayout;
-  svg: TPath;
-  c: TComponent;
+  Layout: TLayout;
+  Svg: TPath;
   i: Integer;
 begin
-  if not(Sender is TLayout) then exit;
+  if not (Sender is TLayout) then
+    exit;
 
-  layout := Sender as TLayout;
-  svg := nil;
-  for i := 0 to layout.ChildrenCount-1 do
-    if layout.Children[i] is TPath then
+  Layout := Sender as TLayout;
+  Svg := nil;
+  for i := 0 to Layout.ChildrenCount - 1 do
+    if Layout.Children[i] is TPath then
     begin
-      svg := layout.Children[i] as TPath;
+      Svg := Layout.Children[i] as TPath;
       break;
     end;
-  if Assigned(svg) then
+  if Assigned(Svg) then
   begin
-    svg.Fill.Color := MOUSE_LEAVE_COLOR;
-    svg.Stroke.Color := MOUSE_LEAVE_COLOR;
+    Svg.Fill.Color := MOUSE_LEAVE_COLOR;
+    Svg.Stroke.Color := MOUSE_LEAVE_COLOR;
   end;
 end;
 
@@ -126,35 +143,38 @@ end;
 procedure TStylesForm.OnTokenItemMouseDown(Sender: TObject;
   Button: TMouseButton; Shift: TShiftState; X, Y: Single);
 var
-  obj: TRectangle;
+  Obj: TRectangle;
 begin
-  if not (Sender is TListBoxItem) then exit;
-  obj := nil;
-  obj := (Sender as TListBoxItem).FindStyleResource('RectangleStyle') as TRectangle;
-  if Assigned(obj) then
-    obj.Fill.Color := $994285F4;
+  if not (Sender is TListBoxItem) then
+    exit;
+  Obj := nil;
+  Obj := (Sender as TListBoxItem).FindStyleResource('RectangleStyle') as TRectangle;
+  if Assigned(Obj) then
+    Obj.Fill.Color := $994285F4;
 end;
 
 procedure TStylesForm.OnTokenItemMouseEnter(Sender: TObject);
 var
-  obj: TRectangle;
+  Obj: TRectangle;
 begin
-  if not (Sender is TListBoxItem) then exit;
-  obj := nil;
-  obj := (Sender as TListBoxItem).FindStyleResource('RectangleStyle') as TRectangle;
-  if Assigned(obj) then
-    obj.Fill.Color := $99E0E0E0;
+  if not (Sender is TListBoxItem) then
+    exit;
+  Obj := nil;
+  Obj := (Sender as TListBoxItem).FindStyleResource('RectangleStyle') as TRectangle;
+  if Assigned(Obj) then
+    Obj.Fill.Color := $99E0E0E0;
 end;
 
 procedure TStylesForm.OnTokenItemMouseLeave(Sender: TObject);
 var
-  obj: TRectangle;
+  Obj: TRectangle;
 begin
-  if not (Sender is TListBoxItem) then exit;
-  obj := nil;
-  obj := (Sender as TListBoxItem).FindStyleResource('RectangleStyle') as TRectangle;
-  if Assigned(obj) then
-    obj.Fill.Color := $FFFFFFFF;
+  if not (Sender is TListBoxItem) then
+    exit;
+  Obj := nil;
+  Obj := (Sender as TListBoxItem).FindStyleResource('RectangleStyle') as TRectangle;
+  if Assigned(Obj) then
+    Obj.Fill.Color := $FFFFFFFF;
 end;
 
 procedure TStylesForm.OnTokenItemMouseUp(Sender: TObject; Button: TMouseButton;

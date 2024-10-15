@@ -40,10 +40,11 @@ type
     function GetTETChainBlocksCount: Integer;
     function GetTETChainBlocks(ASkip: Integer): TBytes;
     procedure SetTETChainBlocks(ASkip: Integer; ABytes: TBytes);
+    function GetTETUserTransactions(AUserID: Integer; ASkip: Integer;
+      ARows: Integer; ALast: Boolean = False): TArray<THistoryTransactionInfo>;
 //    function GetChainTransations(ASkip: Integer; var ARows: Integer): TArray<TExplorerTransactionInfo>;
 //    function GetChainLastTransactions(var Amount: Integer): TArray<TExplorerTransactionInfo>;
-//    function GetChainUserTransactions(AUserID: Integer; ASkip: Integer;
-//      var ARows: Integer): TArray<THistoryTransactionInfo>;
+
 //    function GetTETUserLastTransactions(AUserID: Int64;
 //      var ANumber: Integer): TArray<THistoryTransactionInfo>;
     function GetTETBalance: Double; overload;
@@ -60,6 +61,7 @@ type
     function GetTokenICOBlocksCount: Integer;
     function GetTokenICOBlocks(ASkip: Integer): TBytes;
     procedure SetTokenICOBlocks(ASkip: Integer; ABytes: TBytes);
+    function TryGetTokenICO(ATicker: string; out ATokenICO: TTokenICODat): Boolean;
 
     //SmartKey blocks sync methods
 //    function GetSmartKeyBlocksCount: Int64;

@@ -7,6 +7,12 @@ uses
   FMX.Types, FMX.Graphics, FMX.Controls, FMX.Forms, FMX.Dialogs, FMX.StdCtrls,
   FMX.Controls.Presentation, FMX.Objects;
 
+const
+  DateTimeLabelWidth = 150;
+  BlockLabelWidth = 72;
+  ValueLabelWidth = 100;
+  IncomRectWidth = 70;
+
 type
   THistoryTransactionFrame = class(TFrame)
     Rectangle: TRectangle;
@@ -14,7 +20,7 @@ type
     BlockLabel: TLabel;
     AddressLabel: TLabel;
     HashLabel: TLabel;
-    AmountLabel: TLabel;
+    ValueLabel: TLabel;
     IncomRectangle: TRectangle;
     IncomText: TText;
     procedure FrameMouseLeave(Sender: TObject);
@@ -23,8 +29,8 @@ type
   private
     { Private declarations }
   public
-    constructor Create(AOwner: TComponent; ADateTime: TDateTime; ABlock: Int64;
-      AAddress, AHash: String; AAmount: String; AIncom: Boolean);
+    constructor Create(AOwner: TComponent; ADateTime: TDateTime; ABlock: Integer;
+      AAddress, AHash, AValue: string; AIncom: Boolean);
     destructor Destroy; override;
   end;
 
@@ -32,25 +38,24 @@ implementation
 
 {$R *.fmx}
 
-{ TFrame1 }
+{ THistoryTransactionFrame }
 
 constructor THistoryTransactionFrame.Create(AOwner: TComponent; ADateTime: TDateTime;
-  ABlock: Int64; AAddress, AHash: String; AAmount: String; AIncom: Boolean);
+  ABlock: Integer; AAddress, AHash, AValue: string; AIncom: Boolean);
 begin
   inherited Create(AOwner);
 
-  DateTimeLabel.Text := FormatDateTime('dd.mm.yyyy hh:mm:ss',ADateTime);
+  DateTimeLabel.Text := FormatDateTime('dd.mm.yyyy hh:mm:ss', ADateTime);
   BlockLabel.Text := ABlock.ToString;
   AddressLabel.Text := AAddress;
   HashLabel.Text := AHash;
-  AmountLabel.Text := AAmount;
+  ValueLabel.Text := AValue;
   Name := AOwner.Name + AOwner.ComponentCount.ToString;
   if not AIncom then
   begin
     IncomRectangle.Fill.Color := $FFE85D42;
     IncomText.Text := 'OUT';
   end;
-  IncomText.AutoSize := True;
 end;
 
 destructor THistoryTransactionFrame.Destroy;
@@ -71,12 +76,12 @@ end;
 
 procedure THistoryTransactionFrame.FrameResize(Sender: TObject);
 var
-  w: Integer;
+  Width: Single;
 begin
-  w := Round(Self.Width - DateTimeLabel.Width - BlockLabel.Width -
-    AmountLabel.Width - IncomRectangle.Width - 85) div 2;
-  AddressLabel.Width := w;
-  HashLabel.Width := w;
+  Width := Self.Width - DateTimeLabelWidth - BlockLabelWidth -
+    ValueLabelWidth - IncomRectWidth - 80;
+  AddressLabel.Width := Width * 0.4;
+  HashLabel.Width := Width * 0.6;
 end;
 
 end.
