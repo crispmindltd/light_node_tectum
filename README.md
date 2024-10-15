@@ -20,10 +20,9 @@ The Light Node supports the following types of requests:
 
 ### Token operations: ###
 
--   GET /tokens: Retrieve a list of all tokens
+-   **[GET /tokens](docs/tokens_list_request.md)**: Retrieve a list of all tokens with detailed information such as owner, name, ticker, amount, and more
 -   **[POST /tokens](docs/create_token_request.md)**: Create a new token
--   GET /tokens/fee: Retrieve fee of creating token
--   GET /tokens/ticker: Retrieve information about a specific token
+-   **[GET /tokens/fee](docs/token_fee_request.md)**: Retrieve fee of creating token
 -   **[POST /tokens/transfer](docs/create_token_request.md)**: To transfer tokens between two addresses
 -   GET /tokens/transfer/fee: Retrieve fee of token transfer
 -   GET /tokens/transfers: Retrieve token transfer history
@@ -35,10 +34,10 @@ The Light Node supports the following types of requests:
 ### TET operations: ###
 
 -   **[GET /coins/balances](docs/tet_coin_balance_request.md)**: Retrieve balances for multiple tokens
--   **[POST /coins/transfer](docs/tet_transfer_request.md)**: Transfer TET coins from one wallet to another.
--   GET /coins/transfer/fee: Retrieve fee for transfer
+-   **[POST /coins/transfer](docs/tet_transfer_request.md)**: Transfer TET coins from one wallet to another
+-   **[GET /coins/transfer/fee](docs/coin_transfer_fee.md)**: Retrieve the fee required for a coin transfer transaction
 -   **[GET /coins/transfers](docs/coin_transfer_transactions.md)**: Retrieve TET transfer history
--   GET /coins/transfers/user: Retrieve TET transfer history for user
+-   **[GET /coins/transfers/user](docs/tet_transfer_history_user.md)**: Retrieve the TET transfer history for a specific user
 
 
 ### User management: ###
@@ -54,7 +53,7 @@ The Light Node supports the following types of requests:
 
 ### Blocks: ###
 
--   GET /blockscount: Retrieve count of blocks
+-   **[GET /blockscount](docs/block_count.md)**: Retrieve the total count of blocks in the blockchain
 
 
 ### Additional functions: ###
