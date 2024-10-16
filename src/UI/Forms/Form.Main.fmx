@@ -42,6 +42,7 @@ object MainForm: TMainForm
       1094s
       897s)
     object TectumTabItem: TTabItem
+      Cursor = crHandPoint
       CustomIcon = <
         item
         end>
@@ -159,6 +160,7 @@ object MainForm: TMainForm
             Size.Height = 28.000000000000000000
             Size.PlatformDefault = False
             TabOrder = 1
+            OnPaint = HistoryTETHeaderLayoutPaint
             object DateTimeTETHeaderLabel: TLabel
               Align = Left
               StyledSettings = [Style]
@@ -296,6 +298,7 @@ object MainForm: TMainForm
               Size.PlatformDefault = False
               TextPrompt = 'Enter TET amount'
               OnChangeTracking = AmountTETEditChangeTracking
+              OnKeyDown = SendTETToEditKeyDown
               object ShadowEffect7: TShadowEffect
                 Distance = 3.000000000000000000
                 Direction = 70.000000000000000000
@@ -344,7 +347,7 @@ object MainForm: TMainForm
                 TextSettings.Font.Size = 14.000000000000000000
                 TextSettings.FontColor = xFFFC4949
                 Text = 'TET transfer status adsxd axdas assxd'
-                TabOrder = 6
+                TabOrder = 3
                 object FloatAnimation2: TFloatAnimation
                   Duration = 0.200000002980232200
                   OnFinish = FloatAnimation2Finish
@@ -369,6 +372,7 @@ object MainForm: TMainForm
               TextPrompt = 'Enter the recipient address'
               StyledSettings = [Style]
               OnChangeTracking = AmountTETEditChangeTracking
+              OnKeyDown = SendTETToEditKeyDown
               object ShadowEffect6: TShadowEffect
                 Distance = 3.000000000000000000
                 Direction = 70.000000000000000000
@@ -870,6 +874,7 @@ object MainForm: TMainForm
       end
     end
     object TokensTabItem: TTabItem
+      Cursor = crHandPoint
       CustomIcon = <
         item
         end>
@@ -1807,6 +1812,7 @@ object MainForm: TMainForm
       end
     end
     object CreateTokenTabItem: TTabItem
+      Cursor = crHandPoint
       CustomIcon = <
         item
         end>
@@ -1871,6 +1877,7 @@ object MainForm: TMainForm
           Size.PlatformDefault = False
           TextPrompt = 'e.g. My Token Name'
           OnChangeTracking = CreateTokenEditChangeTracking
+          OnKeyDown = CreateTokenShortNameEditKeyDown
           object ShadowEffect8: TShadowEffect
             Distance = 3.000000000000000000
             Direction = 70.000000000000000000
@@ -1889,7 +1896,7 @@ object MainForm: TMainForm
           TextSettings.Font.Size = 14.000000000000000000
           TextSettings.FontColor = xFF152536
           Text = 'Token name (3 - 32 characters)'
-          TabOrder = 12
+          TabOrder = 11
         end
         object CreateTokenSymbolEdit: TEdit
           Touch.InteractiveGestures = [LongTap, DoubleTap]
@@ -1909,6 +1916,7 @@ object MainForm: TMainForm
           TextPrompt = 'e.g. MTN'
           CharCase = ecUpperCase
           OnChangeTracking = CreateTokenSymbolEditChangeTracking
+          OnKeyDown = CreateTokenShortNameEditKeyDown
           object ShadowEffect9: TShadowEffect
             Distance = 3.000000000000000000
             Direction = 70.000000000000000000
@@ -1929,7 +1937,7 @@ object MainForm: TMainForm
           TextSettings.Font.Size = 14.000000000000000000
           TextSettings.FontColor = xFF152536
           Text = 'Ticker Symbol (3 - 8 characters)'
-          TabOrder = 11
+          TabOrder = 10
         end
         object CreateTokenAmountEdit: TEdit
           Touch.InteractiveGestures = [LongTap, DoubleTap]
@@ -1949,6 +1957,7 @@ object MainForm: TMainForm
           TextPrompt = '1000 - 9 999 999 999 999 999'
           OnChange = CreateTokenAmountEditChange
           OnChangeTracking = CreateTokenEditChangeTracking
+          OnKeyDown = CreateTokenShortNameEditKeyDown
           object ShadowEffect10: TShadowEffect
             Distance = 3.000000000000000000
             Direction = 70.000000000000000000
@@ -1969,7 +1978,7 @@ object MainForm: TMainForm
           TextSettings.Font.Size = 14.000000000000000000
           TextSettings.FontColor = xFF152536
           Text = 'Amount'
-          TabOrder = 10
+          TabOrder = 9
         end
         object DecimalsEdit: TEdit
           Touch.InteractiveGestures = [LongTap, DoubleTap]
@@ -1988,6 +1997,7 @@ object MainForm: TMainForm
           Size.PlatformDefault = False
           TextPrompt = '2 - 8'
           OnChangeTracking = CreateTokenEditChangeTracking
+          OnKeyDown = CreateTokenShortNameEditKeyDown
           object ShadowEffect11: TShadowEffect
             Distance = 3.000000000000000000
             Direction = 70.000000000000000000
@@ -2008,7 +2018,7 @@ object MainForm: TMainForm
           TextSettings.Font.Size = 14.000000000000000000
           TextSettings.FontColor = xFF152536
           Text = 'Decimals'
-          TabOrder = 9
+          TabOrder = 8
         end
         object CreateTokenInformationLabel: TLabel
           Align = Top
@@ -2022,7 +2032,7 @@ object MainForm: TMainForm
           TextSettings.Font.Size = 14.000000000000000000
           TextSettings.FontColor = xFF152536
           Text = 'Token information (10 - 255 characters)'
-          TabOrder = 7
+          TabOrder = 6
         end
         object CreateTokenInformationMemo: TMemo
           Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
@@ -2042,6 +2052,7 @@ object MainForm: TMainForm
           Size.PlatformDefault = False
           StyleLookup = 'TokenInfoMemostyle'
           TabOrder = 4
+          OnKeyDown = CreateTokenShortNameEditKeyDown
           Viewport.Width = 382.000000000000000000
           Viewport.Height = 126.000000000000000000
           object ShadowEffect12: TShadowEffect
@@ -2072,40 +2083,53 @@ object MainForm: TMainForm
           Enabled = False
           StyledSettings = []
           Margins.Top = 40.000000000000000000
-          Margins.Right = 170.000000000000000000
+          Margins.Right = 180.000000000000000000
           Position.Y = 634.000000000000000000
-          Size.Width = 240.000000000000000000
+          Size.Width = 230.000000000000000000
           Size.Height = 35.000000000000000000
           Size.PlatformDefault = False
           StyleLookup = 'Buttonstyle'
-          TabOrder = 8
+          TabOrder = 7
           Text = 'Create Token'
           TextSettings.Font.Family = 'Inter'
           TextSettings.Font.Size = 14.000000000000000000
           TextSettings.FontColor = claWhite
           TextSettings.Trimming = None
           OnClick = CreateTokenButtonClick
-        end
-        object TokenCreatingStatusLabel: TLabel
-          StyledSettings = [Style]
-          Opacity = 0.000000000000000000
-          Position.X = 258.000000000000000000
-          Position.Y = 634.000000000000000000
-          Size.Width = 327.000000000000000000
-          Size.Height = 71.000000000000000000
-          Size.PlatformDefault = False
-          TextSettings.Font.Family = 'Inter'
-          TextSettings.Font.Size = 14.000000000000000000
-          TextSettings.FontColor = xFFFF7070
-          TextSettings.VertAlign = Leading
-          Text = 'Token creating status'
-          TabOrder = 6
-          object FloatAnimation3: TFloatAnimation
-            Duration = 0.200000002980232200
-            OnFinish = FloatAnimation3Finish
-            PropertyName = 'Opacity'
-            StartValue = 0.000000000000000000
-            StopValue = 1.000000000000000000
+          object CreateTokenAniIndicator: TAniIndicator
+            Align = Right
+            Margins.Right = -40.000000000000000000
+            Position.X = 245.000000000000000000
+            Size.Width = 35.000000000000000000
+            Size.Height = 35.000000000000000000
+            Size.PlatformDefault = False
+            Visible = False
+          end
+          object TokenCreatingStatusLabel: TLabel
+            Align = Right
+            StyledSettings = [Style]
+            Opacity = 0.000000000000000000
+            Margins.Top = -1.000000000000000000
+            Margins.Right = -310.000000000000000000
+            Margins.Bottom = -2.000000000000000000
+            Position.X = 240.000000000000000000
+            Position.Y = -1.000000000000000000
+            Size.Width = 300.000000000000000000
+            Size.Height = 38.000000000000000000
+            Size.PlatformDefault = False
+            TextSettings.Font.Family = 'Inter'
+            TextSettings.Font.Size = 14.000000000000000000
+            TextSettings.FontColor = xFFFF7070
+            TextSettings.VertAlign = Leading
+            Text = 'Token creating status'
+            TabOrder = 6
+            object FloatAnimation3: TFloatAnimation
+              Duration = 0.200000002980232200
+              OnFinish = FloatAnimation3Finish
+              PropertyName = 'Opacity'
+              StartValue = 0.000000000000000000
+              StopValue = 1.000000000000000000
+            end
           end
         end
       end
@@ -2114,8 +2138,8 @@ object MainForm: TMainForm
         Padding.Left = 20.000000000000000000
         Padding.Top = 24.000000000000000000
         Padding.Right = 20.000000000000000000
-        Position.X = 496.000000000000000000
-        Position.Y = 87.000000000000000000
+        Position.X = 488.000000000000000000
+        Position.Y = 88.000000000000000000
         Size.Width = 617.000000000000000000
         Size.Height = 482.000000000000000000
         Size.PlatformDefault = False
@@ -2460,6 +2484,7 @@ object MainForm: TMainForm
     end
     object ExplorerTabItem: TTabItem
       AutoSize = False
+      Cursor = crHandPoint
       CustomIcon = <
         item
         end>

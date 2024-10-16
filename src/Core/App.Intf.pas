@@ -61,13 +61,15 @@ type
     function GetTokenICOBlocksCount: Integer;
     function GetTokenICOBlocks(ASkip: Integer): TBytes;
     procedure SetTokenICOBlocks(ASkip: Integer; ABytes: TBytes);
+    function GetTokensICOs(ASkip, ARows: Integer): TArray<TTokenICODat>;
     function TryGetTokenICO(ATicker: string; out ATokenICO: TTokenICODat): Boolean;
 
     //SmartKey blocks sync methods
-//    function GetSmartKeyBlocksCount: Int64;
-//    function GetSmartKeyBlockSize: Integer;
-//    function GetSmartKeyBlocks(ASkip: Int64): TBytes;
-//    procedure SetSmartKeyBlocks(ASkip: Int64; ABytes: TBytes);
+    function GetSmartKeyBlocksCount: Integer;
+    function GetSmartKeyBlockSize: Integer;
+    function GetSmartKeyBlocks(ASkip: Integer): TBytes;
+    procedure SetSmartKeyBlocks(ASkip: Integer; ABytes: TBytes);
+    function TryGetSmartKey(ATicker: string; out ASmartKey: TCSmartKey): Boolean;
 
     //Tokens chains methods
 //    procedure UpdateTokensList;
@@ -110,15 +112,17 @@ type
     procedure DoAuth(AReqID, ALogin, APassword: string;
       ACallBackProc: TGetStrProc); overload;
     function DoAuth(AReqID, ALogin, APassword: string): string; overload;
-    function DoTETTransfer(AReqID, ASessionKey, ATo: string;
-      AAmount: Double; ACallBackProc: TGetStrProc): string; overload;
+    procedure DoTETTransfer(AReqID, ASessionKey, ATo: string;
+      AAmount: Double; ACallBackProc: TGetStrProc); overload;
     function DoTETTransfer(AReqID, ASessionKey, ATo: string;
       AAmount: Double): string; overload;
 //    function DoRecoverKeys(ASeed: string; out PubKey: string;
 //      out PrKey: string): string;
-//
-//    function DoNewToken(AReqID,ASessionKey,AFullName,AShortName,ATicker: string;
-//      AAmount: Int64; ADecimals: Integer): string;
+    procedure DoNewToken(AReqID, ASessionKey, AFullName, AShortName,
+      ATicker: string; AAmount: Int64; ADecimals: Integer;
+      ACallBackProc: TGetStrProc); overload;
+    function DoNewToken(AReqID, ASessionKey, AFullName, AShortName,
+      ATicker: string; AAmount: Int64; ADecimals: Integer): string; overload;
 //    function GetNewTokenFee(AAmount: Int64; ADecimals: Integer): Integer;
 //    function DoTokenTransfer(AReqID,AAddrTETFrom,AAddrTETTo,ASmartAddr: string;
 //      AAmount: Extended; APrKey,APubKey: string): string;
@@ -136,7 +140,6 @@ type
     function TryExtractPrivateKeyFromFile(out PrKey: string;
       out PubKey: string): Boolean;
 
-//    function GetTokensICOs(ASkip: Integer; var ARows: Integer): TArray<TTokenICODat>;
 //    function TryGetTokenBase(ATicker: string; var sk: TCSmartKey): Boolean;
 //    function TryGetTokenBaseByAddress(const AAddress: string; var sk: TCSmartKey): Boolean;
 

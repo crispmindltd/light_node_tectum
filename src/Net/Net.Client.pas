@@ -14,12 +14,12 @@ uses
   Net.Data,
   Sync.Base,
   Sync.TETChain,
-//  Sync.Tokens,
+  Sync.TokensChains,
   SyncObjs,
   SysUtils;
 
 type
-  TServerStatus = (ssStarted,ssShuttingDown,ssStoped);
+  TServerStatus = (ssStarted, ssShuttingDown, ssStoped);
 
   TNodeClient = class
   const
@@ -28,25 +28,23 @@ type
     FStatus: TServerStatus;
   private
     FTETChainBlocksUpdater: TTETChainBlocksUpdater;
-//    FTokensChainsBlocksUpdater: TTokensChainsBlocksUpdater;
+    FTokensChainsBlocksUpdater: TTokensChainsBlocksUpdater;
     FTETChainSyncDone: TEvent;
-//    FTokensSyncDone: TEvent;
+    FTokensSyncDone: TEvent;
     FRemoteServer: TCustomSocket;
 
     procedure StartTETChainSync(AAddress: string);
     procedure OnTETChainUpdaterTerminate(Sender: TObject);
     procedure KillTETChainUpdater;
-//    procedure StartTokensChainsSync(AAddress: string);
-//    procedure onTokensChainsUpdaterTerminate(Sender: TObject);
-//    procedure KillTokensChainsUpdater;
+    procedure StartTokensChainsSync(AAddress: string);
+    procedure OnTokensChainsUpdaterTerminate(Sender: TObject);
+    procedure KillTokensChainsUpdater;
   public
     constructor Create;
     destructor Destroy; override;
 
     procedure Start;
-//    procedure BeginSync(const AChainName: string; AIsSystemChain: Boolean);
-//    procedure StopSync(const AChainName: string; AIsSystemChain: Boolean);
-    function DoRequest(AReqID,ARequest: string): string;
+    function DoRequest(AReqID, ARequest: string): string;
     function DoRequestToValidator(ARequest: string): string;
     procedure Stop;
 end;
@@ -57,31 +55,33 @@ implementation
 
 procedure TNodeClient.StartTETChainSync(AAddress: string);
 var
-  splt: TArray<string>;
+  Splitted: TArray<string>;
 begin
-  if Assigned(FTETChainBlocksUpdater) then exit;
+  if Assigned(FTETChainBlocksUpdater) then
+    exit;
 
-  splt := AAddress.Split([' ',':']);
-  FTETChainBlocksUpdater := TTETChainBlocksUpdater.Create(splt[0],
-    splt[1].ToInteger);
+  Splitted := AAddress.Split([' ', ':']);
+  FTETChainBlocksUpdater := TTETChainBlocksUpdater.Create(Splitted[0],
+    Splitted[1].ToInteger);
   FTETChainBlocksUpdater.SyncDoneEvent := FTETChainSyncDone;
   FTETChainBlocksUpdater.OnTerminate := onTETChainUpdaterTerminate;
   FTETChainBlocksUpdater.Resume;
 end;
 
-//procedure TNodeClient.StartTokensChainsSync(AAddress: string);
-//var
-//  splt: TArray<string>;
-//begin
-//  if Assigned(FTokensChainsBlocksUpdater) then exit;
-//
-//  splt := AAddress.Split([' ',':']);
-//  FTokensChainsBlocksUpdater := TTokensChainsBlocksUpdater.Create(splt[0],
-//    splt[1].ToInteger);
-//  FTokensChainsBlocksUpdater.SyncDoneEvent := FTokensSyncDone;
-//  FTokensChainsBlocksUpdater.OnTerminate := onTokensChainsUpdaterTerminate;
-//  FTokensChainsBlocksUpdater.Resume;
-//end;
+procedure TNodeClient.StartTokensChainsSync(AAddress: string);
+var
+  Splitted: TArray<string>;
+begin
+  if Assigned(FTokensChainsBlocksUpdater) then
+    exit;
+
+  Splitted := AAddress.Split([' ', ':']);
+  FTokensChainsBlocksUpdater := TTokensChainsBlocksUpdater.Create(Splitted[0],
+    Splitted[1].ToInteger);
+  FTokensChainsBlocksUpdater.SyncDoneEvent := FTokensSyncDone;
+  FTokensChainsBlocksUpdater.OnTerminate := onTokensChainsUpdaterTerminate;
+  FTokensChainsBlocksUpdater.Resume;
+end;
 
 constructor TNodeClient.Create;
 begin
@@ -90,26 +90,15 @@ begin
   FRemoteServer := TCustomSocket.Create;
   FStatus := ssStoped;
   FTETChainSyncDone := TEvent.Create;
-//  FTokensSyncDone := TEvent.Create;
+  FTokensSyncDone := TEvent.Create;
 end;
-
-//procedure TNodeClient.BeginSync(const AChainName: string; AIsSystemChain: Boolean);
-//var
-//  BU: TChainBlocksUpdater;
-//begin
-//  if AIsSystemChain then
-//  begin
-//    if not FChainBlocksUpdater.TryGetValue(AChainName,BU) then
-//      StartChainSync(AChainName,Nodes.GetNodeToConnect);
-//  end;
-//end;
 
 destructor TNodeClient.Destroy;
 begin
   Stop;
   FRemoteServer.Free;
+  FTokensSyncDone.Free;
   FTETChainSyncDone.Free;
-//  FTokensSyncDone.Free;
 
   inherited;
 end;
@@ -119,14 +108,14 @@ begin
   try
     FRemoteServer.Connect;
     try
-      Result := FRemoteServer.DoRequest(AReqID,ARequest);
+      Result := FRemoteServer.DoRequest(AReqID, ARequest);
     finally
       FRemoteServer.Disconnect;
     end;
   except
     on E:ESocketError do
     begin
-      Logs.DoLog('Server did not respond',ERROR,tcp);
+      Logs.DoLog('Server did not respond', ERROR, tcp);
       FRemoteServer.Disconnect;
       Result := 'URKError * * 15'
     end;
@@ -135,37 +124,37 @@ end;
 
 function TNodeClient.DoRequestToValidator(ARequest: string): string;
 var
-  addr: string;
-  splt: TArray<string>;
-  attemptsCount: Integer;
-  FValidator: TLightSocket;
+  Address: string;
+  Splitted: TArray<string>;
+  AttemptsCount: Integer;
+  Validator: TLightSocket;
 begin
   Result := '';
-  attemptsCount := 0;
-  FValidator := TLightSocket.Create;
+  AttemptsCount := 0;
+  Validator := TLightSocket.Create;
   try
     repeat
-      addr := '';
+      Address := '';
       repeat
-        addr := Nodes.GetAnotherNodeToConnect(addr);
-        splt := addr.Split([':']);
-      until FValidator.Connect(splt[0],splt[1].ToInteger);
+        Address := Nodes.GetAnotherNodeToConnect(Address);
+        Splitted := Address.Split([':']);
+      until Validator.Connect(Splitted[0], Splitted[1].ToInteger);
 
       try
-        Result := FValidator.DoRequest(VALIDATE_COMMAND_CODE,ARequest);
+        Result := Validator.DoRequest(ValidateCommandCode, ARequest);
       except
         on E:ESocketError do
         begin
-          Logs.DoLog('Changing validator...',ERROR);
+          Logs.DoLog('Changing validator...', ERROR);
           Result := '';
         end;
       end;
-      Inc(attemptsCount);
-      if attemptsCount = 3 then
+      Inc(AttemptsCount);
+      if AttemptsCount = 3 then
         raise EValidatorDidNotAnswerError.Create('');
     until not Result.IsEmpty;
   finally
-    FValidator.Free;
+    Validator.Free;
   end;
 end;
 
@@ -175,72 +164,63 @@ begin
     FTETChainBlocksUpdater.Terminate;
 end;
 
-//procedure TNodeClient.KillTokensChainsUpdater;
-//begin
-//  if Assigned(FTokensChainsBlocksUpdater) then
-//    FTokensChainsBlocksUpdater.Terminate;
-//end;
+procedure TNodeClient.KillTokensChainsUpdater;
+begin
+  if Assigned(FTokensChainsBlocksUpdater) then
+    FTokensChainsBlocksUpdater.Terminate;
+end;
 
 procedure TNodeClient.OnTETChainUpdaterTerminate(Sender: TObject);
 var
-  chUpdater: TTETChainBlocksUpdater;
-  anotherAddr: string;
+  Updater: TTETChainBlocksUpdater;
+  AnotherAddress: string;
 begin
-  chUpdater := Sender as TTETChainBlocksUpdater;
-  if chUpdater.IsError and (FStatus = ssStarted) then
+  Updater := Sender as TTETChainBlocksUpdater;
+  if Updater.IsError and (FStatus = ssStarted) then
   begin
-    anotherAddr := Nodes.GetAnotherNodeToConnect(chUpdater.Address);
+    AnotherAddress := Nodes.GetAnotherNodeToConnect(Updater.Address);
     FTETChainBlocksUpdater := nil;
-    StartTETChainSync(anotherAddr);
+    StartTETChainSync(AnotherAddress);
   end else
     FTETChainBlocksUpdater := nil;
 end;
 
-//procedure TNodeClient.onTokensChainsUpdaterTerminate(Sender: TObject);
-//var
-//  smUpdater: TTokensChainsBlocksUpdater;
-//  anotherAddr: string;
-//begin
-//  smUpdater := Sender as TTokensChainsBlocksUpdater;
-//  if smUpdater.IsError and (FStatus = ssStarted) then
-//  begin
-//    anotherAddr := Nodes.GetAnotherNodeToConnect(smUpdater.Address);
-//    FTokensChainsBlocksUpdater := nil;
-//    StartTokensChainsSync(anotherAddr);
-//  end else
-//    FTokensChainsBlocksUpdater := nil;
-//end;
+procedure TNodeClient.OnTokensChainsUpdaterTerminate(Sender: TObject);
+var
+  Updater: TTokensChainsBlocksUpdater;
+  AnotherAddress: string;
+begin
+  Updater := Sender as TTokensChainsBlocksUpdater;
+  if Updater.IsError and (FStatus = ssStarted) then
+  begin
+    AnotherAddress := Nodes.GetAnotherNodeToConnect(Updater.Address);
+    FTokensChainsBlocksUpdater := nil;
+    StartTokensChainsSync(AnotherAddress);
+  end else
+    FTokensChainsBlocksUpdater := nil;
+end;
 
 procedure TNodeClient.Start;
 begin
-  if FStatus <> ssStoped then exit;
+  if FStatus <> ssStoped then
+    exit;
 
   StartTETChainSync(Nodes.GetNodeToConnect);
-//  StartTokensChainsSync(Nodes.GetNodeToConnect);
+  StartTokensChainsSync(Nodes.GetNodeToConnect);
   FStatus := ssStarted;
 end;
 
 procedure TNodeClient.Stop;
 begin
-  if FStatus <> ssStarted then exit;
+  if FStatus <> ssStarted then
+    exit;
 
   FStatus := ssShuttingDown;
   KillTETChainUpdater;
-//  KillTokensChainsUpdater;
+  KillTokensChainsUpdater;
   FTETChainSyncDone.WaitFor(ShuttingDownTimeout);
-//  FTokensSyncDone.WaitFor(ShuttingDownTimeout);
+  FTokensSyncDone.WaitFor(ShuttingDownTimeout);
   FStatus := ssStoped;
 end;
-
-//procedure TNodeClient.StopSync(const AChainName: string; AIsSystemChain: Boolean);
-//var
-//  BU: TChainBlocksUpdater;
-//begin
-//  if AIsSystemChain then
-//  begin
-//    if FChainsBlocksUpdaters.TryGetValue(AChainName,BU) then
-//      KillChainUpdater(AChainName);
-//  end;
-//end;
 
 end.

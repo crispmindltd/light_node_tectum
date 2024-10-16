@@ -88,13 +88,15 @@ type
     function GetTokenICOBlocksCount: Integer;
     function GetTokenICOBlocks(ASkip: Integer): TBytes;
     procedure SetTokenICOBlocks(ASkip: Integer; ABytes: TBytes);
+    function GetTokensICOs(ASkip, ARows: Integer): TArray<TTokenICODat>;
     function TryGetTokenICO(ATicker: string; out ATokenICO: TTokenICODat): Boolean;
 
     //SmartKey blocks sync methods
-//    function GetSmartKeyBlocksCount: Int64;
-//    function GetSmartKeyBlockSize: Integer;
-//    function GetSmartKeyBlocks(ASkip: Int64): TBytes;
-//    procedure SetSmartKeyBlocks(ASkip: Int64; ABytes: TBytes);
+    function GetSmartKeyBlocksCount: Integer;
+    function GetSmartKeyBlockSize: Integer;
+    function GetSmartKeyBlocks(ASkip: Integer): TBytes;
+    procedure SetSmartKeyBlocks(ASkip: Integer; ABytes: TBytes);
+    function TryGetSmartKey(ATicker: string; out ASmartKey: TCSmartKey): Boolean;
 
     //Tokens chains methods
 //    procedure UpdateTokensList;
@@ -132,14 +134,17 @@ type
     procedure DoAuth(AReqID, ALogin, APassword: string;
       ACallBackProc: TGetStrProc); overload;
     function DoAuth(AReqID, ALogin, APassword: string): string; overload;
-    function DoTETTransfer(AReqID, ASessionKey, ATo: string;
-      AAmount: Double; ACallBackProc: TGetStrProc): string; overload;
+    procedure DoTETTransfer(AReqID, ASessionKey, ATo: string;
+      AAmount: Double; ACallBackProc: TGetStrProc); overload;
     function DoTETTransfer(AReqID, ASessionKey, ATo: string;
       AAmount: Double): string; overload;
 //    function DoRecoverKeys(ASeed: string; out PubKey: string;
 //      out PrKey: string): string;
-//    function DoNewToken(AReqID,ASessionKey,AFullName,AShortName,ATicker: string;
-//      AAmount: Int64; ADecimals: Integer): string;
+    procedure DoNewToken(AReqID, ASessionKey, AFullName, AShortName,
+      ATicker: string; AAmount: Int64; ADecimals: Integer;
+      ACallBackProc: TGetStrProc); overload;
+    function DoNewToken(AReqID, ASessionKey, AFullName, AShortName,
+      ATicker: string; AAmount: Int64; ADecimals: Integer): string; overload;
 //    function GetNewTokenFee(AAmount: Int64; ADecimals: Integer): Integer;
 //    function DoTokenTransfer(AReqID,AAddrTETFrom,AAddrTETTo,ASmartAddr: string;
 //      AAmount: Extended; APrKey,APubKey: string): string;
@@ -157,7 +162,7 @@ type
     function TryExtractPrivateKeyFromFile(out PrKey: string;
       out PubKey: string): Boolean;
 
-//    function GetTokensICOs(ASkip: Integer; var ARows: Integer): TArray<TTokenICODat>;
+
 //    function TryGetTokenBase(ATicker: string; var sk: TCSmartKey): Boolean;
 //    function TryGetTokenBaseByAddress(const AAddress: string; var sk: TCSmartKey): Boolean;
 
@@ -183,9 +188,11 @@ var
   i: Integer;
 begin
   Result := False;
-  if (Length(AShortName) < 3) or (Length(AShortName) > 32) then exit;
+  if (Length(AShortName) < 3) or (Length(AShortName) > 32) then
+    exit;
   for i := 1 to Length(AShortName) do
-    if Acceptable.IndexOf(AShortName[i]) = -1 then exit;
+    if Acceptable.IndexOf(AShortName[i]) = -1 then
+      exit;
   Result := True;
 end;
 
@@ -196,10 +203,11 @@ var
   i: Integer;
 begin
   Result := False;
-  if (Length(ATicker) < 3) or (Length(ATicker) > 8) then exit;
-  if TryStrToInt(ATicker[1],i) then exit;
+  if (Length(ATicker) < 3) or (Length(ATicker) > 8) or TryStrToInt(ATicker[1], i) then
+    exit;
   for i := 1 to Length(ATicker) do
-    if Acceptable.IndexOf(ATicker[i]) = -1 then exit;
+    if Acceptable.IndexOf(ATicker[i]) = -1 then
+      exit;
   Result := True;
 end;
 
@@ -276,6 +284,107 @@ begin
   end;
 end;
 
+function TAppCore.DoNewToken(AReqID, ASessionKey, AFullName, AShortName,
+  ATicker: string; AAmount: Int64; ADecimals: Integer): string;
+var
+  Splitted: TArray<string>;
+  SmartKeyBlock: TCSmartKey;
+  DateTime: string;
+begin
+  if not(ASessionKey.StartsWith('ipa') and (Length(ASessionKey) = 34)) then
+    raise EValidError.Create('incorrect session key');
+
+  AFullName := Trim(AFullName.Replace('<', '',
+    [rfReplaceAll]).Replace('>', '', [rfReplaceAll]));
+  if (Length(AFullName) < 10) or (Length(AFullName) > 255) then
+    raise EValidError.Create('invalid token information');
+  AShortName := Trim(AShortName.Replace('<', '',
+    [rfReplaceAll]).Replace('>', '', [rfReplaceAll]));
+  if not CheckShortName(AShortName) then
+    raise EValidError.Create('invalid token name');
+
+  ATicker := Trim(ATicker).ToUpper;
+  if not CheckTickerName(ATicker) then
+      raise EValidError.Create('invalid ticker');
+  if FBlockchain.TryGetSmartKey(ATicker, SmartKeyBlock) then
+    raise ETokenAlreadyExists.Create('');
+
+  if (AAmount < 1000) or (AAmount > 9999999999999999) then
+    raise EValidError.Create('invalid amount value');
+  if (ADecimals < 2) or (ADecimals > 8) then
+    raise EValidError.Create('invalid decimals value');
+  if Length(AAmount.ToString) + ADecimals > 18 then
+    raise EValidError.Create('invalid decimals value');
+
+  DateTime := FormatDateTime('dd.mm.yyyy hh:mm:ss', Now);
+  Result := FNodeCLient.DoRequest(AReqID,
+    Format('AddNewIcoToken %s <%s> <0> <%s> <%s> <%s> <%d> <%d> <6> <2> <%s> <%s> <3>',
+    [AReqID, ASessionKey, AFullName, AShortName, ATicker.ToUpper, AAmount,
+     ADecimals, DateTime, DateTime]));
+  if IsURKError(Result) then
+  begin;
+    Splitted := Result.Split([' ']);
+    case Splitted[3].ToInteger of
+      20: raise EKeyExpiredError.Create('');
+      44: raise ETokenAlreadyExists.Create('');
+      3203: raise EInsufficientFundsError.Create('');
+      else raise EUnknownError.Create(Splitted[3]);
+    end;
+  end;
+end;
+
+procedure TAppCore.DoNewToken(AReqID, ASessionKey, AFullName, AShortName,
+  ATicker: string; AAmount: Int64; ADecimals: Integer;
+  ACallBackProc: TGetStrProc);
+var
+  Splitted: TArray<string>;
+  SmartKeyBlock: TCSmartKey;
+  DateTime: string;
+begin
+  if not(ASessionKey.StartsWith('ipa') and (Length(ASessionKey) = 34)) then
+    raise EValidError.Create('incorrect session key');
+  DateTime := FormatDateTime('dd.mm.yyyy hh:mm:ss', Now);
+
+  AFullName := Trim(AFullName.Replace('<', '',
+    [rfReplaceAll]).Replace('>', '', [rfReplaceAll]));
+  if (Length(AFullName) < 10) or (Length(AFullName) > 255) then
+    raise EValidError.Create('invalid token information');
+  AShortName := Trim(AShortName.Replace('<', '',
+    [rfReplaceAll]).Replace('>', '', [rfReplaceAll]));
+  if not CheckShortName(AShortName) then
+    raise EValidError.Create('invalid token name');
+
+  ATicker := Trim(ATicker).ToUpper;
+  if not CheckTickerName(ATicker) then
+      raise EValidError.Create('invalid ticker');
+  if FBlockchain.TryGetSmartKey(ATicker, SmartKeyBlock) then
+    raise ETokenAlreadyExists.Create('');
+
+  if (AAmount < 1000) or (AAmount > 9999999999999999) then
+    raise EValidError.Create('invalid amount value');
+  if (ADecimals < 2) or (ADecimals > 8) then
+    raise EValidError.Create('invalid decimals value');
+  if Length(AAmount.ToString) + ADecimals > 18 then
+    raise EValidError.Create('invalid decimals value');
+
+  TThread.CreateAnonymousThread(
+  procedure
+  var
+    Response: string;
+  begin
+    Response := FNodeCLient.DoRequest(AReqID,
+      Format('AddNewIcoToken %s <%s> <0> <%s> <%s> <%s> <%d> <%d> <6> <2> <%s> <%s> <3>',
+      [AReqID, ASessionKey, AFullName, AShortName, ATicker.ToUpper, AAmount,
+       ADecimals, DateTime, DateTime]));
+
+    TThread.Synchronize(nil,
+    procedure
+    begin
+      ACallBackProc(Response);
+    end);
+  end).Start;
+end;
+
 function TAppCore.DoReg(AReqID, ASeed: string; out APubKey, APrKey, ALogin,
   APassword, AAddress, ASavingPath: string): string;
 var
@@ -347,13 +456,14 @@ begin
       20: raise EKeyExpiredError.Create('');
       55: raise EAddressNotExistsError.Create('');
       110: raise EInsufficientFundsError.Create('');
+      4042: raise ESameAddressesError.Create('');
       else raise EUnknownError.Create(Splitted[3]);
     end;
   end;
 end;
 
-function TAppCore.DoTETTransfer(AReqID, ASessionKey, ATo: string;
-  AAmount: Double; ACallBackProc: TGetStrProc): string;
+procedure TAppCore.DoTETTransfer(AReqID, ASessionKey, ATo: string;
+  AAmount: Double; ACallBackProc: TGetStrProc);
 var
   Splitted: TArray<string>;
   AmountStr: string;
@@ -523,50 +633,6 @@ end;
 //
 //  smartAddr := GetSmartAddressByTicker(ATicker.ToUpper);
 //  Result := DoGetTokenBalanceWithSmartAddress(AReqID,AAddressTET,smartAddr);
-//end;
-
-//function TAppCore.DoNewToken(AReqID, ASessionKey, AFullName, AShortName, ATicker: string;
-//  AAmount: Int64; ADecimals: Integer): string;
-//var
-//  splt: TArray<string>;
-//  dateTime: string;
-//begin
-//  if not(ASessionKey.StartsWith('ipa') and (Length(ASessionKey) = 34)) then
-//    raise EValidError.Create('incorrect session key');
-//
-//  AFullName := Trim(AFullName.Replace('<','',[rfReplaceAll]).Replace('>','',[rfReplaceAll]));
-//  if (Length(AFullName) < 10) or (Length(AFullName) > 255) then
-//    raise EValidError.Create('invalid token information');
-//  AShortName := Trim(AShortName.Replace('<','',[rfReplaceAll]).Replace('>','',[rfReplaceAll]));
-//  if not CheckShortName(AShortName) then
-//    raise EValidError.Create('invalid token name');
-//
-//  ATicker := Trim(ATicker).ToUpper;
-//  if not CheckTickerName(ATicker) then
-//      raise EValidError.Create('invalid ticker');
-//  if FBlockchain.IsSmartExists(ATicker) then
-//    raise ETokenAlreadyExists.Create('');
-//
-//  if (AAmount < 1000) or (AAmount > 9999999999999999) then
-//    raise EValidError.Create('invalid amount value');
-//  if (ADecimals < 2) or (ADecimals > 8) then
-//    raise EValidError.Create('invalid decimals value');
-//  if Length(AAmount.ToString) + ADecimals > 18 then
-//    raise EValidError.Create('invalid decimals value');
-//
-//  dateTime := FormatDateTime('dd.mm.yyyy hh:mm:ss',Now);
-//  Result := FNodeCLient.DoRequest(AReqID,Format('AddNewIcoToken %s <%s> <0> <%s> <%s> <%s> <%d> <%d> <6> <2> <%s> <%s> <3>',
-//    [AReqID,ASessionKey,AFullName,AShortName,ATicker.ToUpper,AAmount,ADecimals,dateTime,dateTime]));
-//  if IsURKError(Result) then
-//  begin;
-//    splt := Result.Split([' ']);
-//    case splt[3].ToInteger of
-//      20: raise EKeyExpiredError.Create('');
-//      44: raise ETokenAlreadyExists.Create('');
-//      3203: raise EInsufficientFundsError.Create('');
-//      else raise EUnknownError.Create(splt[3]);
-//    end;
-//  end;
 //end;
 
 //function TAppCore.DoRecoverKeys(ASeed: string; out PubKey: string;
@@ -898,21 +964,6 @@ begin
   Result := FSessionKey;
 end;
 
-//function TAppCore.GetSmartKeyBlocks(ASkip: Int64): TBytes;
-//begin
-//  Result := FBlockchain.GetSmartKeyBlocks(ASkip);
-//end;
-
-//function TAppCore.GetSmartKeyBlocksCount: Int64;
-//begin
-//  Result := FBlockchain.GetSmartKeyBlocksCount;
-//end;
-
-//function TAppCore.GetSmartKeyBlockSize: Integer;
-//begin
-//  Result := FBlockchain.GetSmartKeyBlockSize;
-//end;
-
 //function TAppCore.GetSmartAddressByID(AID: Int64): string;
 //begin
 //  if AID < 0 then
@@ -961,14 +1012,14 @@ function TAppCore.GetTETBalance(ATETAddress: string): Double;
 var
   TETBlock: Tbc2;
   ICODat: TTokenICODat;
-  TETDynamic: TTokenBase;
+  TETDyn: TTokenBase;
   BlockNum: Integer;
 begin
-  if not (FBlockchain.TryGetTETDynamic(ATETAddress, BlockNum, TETDynamic) and
-          FBlockchain.TryGetICOBlock(TETDynamic.TokenDatID, ICODat)) then
+  if not (FBlockchain.TryGetTETDyn(ATETAddress, BlockNum, TETDyn) and
+          FBlockchain.TryGetICOBlock(TETDyn.TokenDatID, ICODat) and
+          FBlockchain.TryGetTETChainBlock(TETDyn.LastBlock, TETBlock)) then
     exit(0);
 
-  TETBlock := FBlockchain.GetTETChainBlock(TETDynamic.LastBlock);
   if BlockNum = TETBlock.Smart.tkn[1].TokenID then
 		Result := TETBlock.Smart.tkn[1].Amount / Power(10, ICODat.FloatSize)
 	else if BlockNum = TETBlock.Smart.tkn[2].TokenID then
@@ -1017,23 +1068,49 @@ begin
   FBlockchain.SetICOBlocks(ASkip, ABytes);
 end;
 
+function TAppCore.GetTokensICOs(ASkip, ARows: Integer): TArray<TTokenICODat>;
+begin
+  if ASkip < 0 then
+    raise EValidError.Create('invalid "skip" value');
+  if ARows <= 0 then
+    raise EValidError.Create('invalid "rows" value');
+  if ARows > 50 then
+    raise EValidError.Create('"rows" value can''t be more than 50');
+
+  Result := FBlockchain.GetTokenICOs(ASkip, ARows);
+end;
+
 function TAppCore.TryGetTokenICO(ATicker: string;
   out ATokenICO: TTokenICODat): Boolean;
 begin
   Result := FBlockchain.TryGetICOBlock(ATicker, ATokenICO);
 end;
 
-//function TAppCore.GetTokensICOs(ASkip: Integer; var ARows: Integer): TArray<TTokenICODat>;
-//begin
-//  if ASkip < 0 then
-//    raise EValidError.Create('invalid "skip" value');
-//  if ARows <= 0 then
-//    raise EValidError.Create('invalid "rows" value');
-//  if ARows > 50 then
-//    raise EValidError.Create('"rows" value can''t be more than 50');
-//
-//  Result := FBlockchain.GetICOsInfo(ASkip, ARows);
-//end;
+function TAppCore.GetSmartKeyBlocksCount: Integer;
+begin
+  Result := FBlockchain.GetSmartKeyBlocksCount;
+end;
+
+function TAppCore.GetSmartKeyBlockSize: Integer;
+begin
+  Result := FBlockchain.GetSmartKeyBlockSize;
+end;
+
+function TAppCore.GetSmartKeyBlocks(ASkip: Integer): TBytes;
+begin
+  Result := FBlockchain.GetSmartKeyBlocks(ASkip);
+end;
+
+procedure TAppCore.SetSmartKeyBlocks(ASkip: Integer; ABytes: TBytes);
+begin
+  FBlockchain.SetSmartKeyBlocks(ASkip, ABytes);
+end;
+
+function TAppCore.TryGetSmartKey(ATicker: string;
+  out ASmartKey: TCSmartKey): Boolean;
+begin
+  Result := FBlockchain.TryGetSmartKey(ATicker, ASmartKey);
+end;
 
 function TAppCore.GetUserID: Integer;
 begin
@@ -1137,11 +1214,6 @@ procedure TAppCore.SetSessionKey(const ASessionKey: string);
 begin
   FSessionKey := ASessionKey;
 end;
-
-//procedure TAppCore.SetSmartKeyBlocks(ASkip: Int64; ABytes: TBytes);
-//begin
-//  FBlockchain.SetSmartKeyBlocks(ASkip,ABytes);
-//end;
 
 procedure TAppCore.SetUserID(const AID: Integer);
 begin

@@ -306,7 +306,7 @@ begin
         begin
           Logs.DoLog('Unknown error during auth with code ' +
             Splitted[3], TLogType.ERROR, tcp);
-          ShowLogInError('Unknown error, try later');
+          ShowLogInError('Unknown error with code ' + Splitted[3]);
         end;
     end;
   end;
@@ -354,7 +354,7 @@ begin
   NextButton.Enabled := True;
   NextButton.Text := 'Next';
 
-  Splitted := AResponse.Split([' '],'"');
+  Splitted := AResponse.Split([' '], '"');
   if not (AResponse.StartsWith('URKError')) then
   begin
     NewLoginLabel.Text := 'Your Log In: ' + Splitted[2];
@@ -371,7 +371,7 @@ begin
         begin
           Logs.DoLog('Unknown error during reg with code ' + Splitted[3],
             TLogType.ERROR, tcp);
-          ShowSignUpError('Unknown error, try later');
+          ShowSignUpError('Unknown error eith code ' + Splitted[3]);
         end;
     end;
   end;

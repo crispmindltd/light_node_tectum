@@ -32,7 +32,7 @@ type
       function GetTETChainBlocksToSend(out ABlocksNumber: Integer): TBytes;
       function GetDynTETChainBlocksToSend(out ABlocksNumber: Integer): TBytes;
       function GetTokenICOBlocksToSend(out ABlocksNumber: Integer): TBytes;
-//      function GetSmartKeyBlocksToSend(out ABlocksNumber: Integer): TBytes;
+      function GetSmartKeyBlocksToSend(out ABlocksNumber: Integer): TBytes;
 //      function GetTokenChainBlocksToSend(out ATokenID: Integer;
 //        out ABlocksNumber: Integer): TBytes;
     protected
@@ -160,16 +160,16 @@ begin
     FSocket.Endpoint.Port]);
 end;
 
-//function TConnectedClient.GetSmartKeyBlocksToSend(
-//  out ABlocksNumber: Integer): TBytes;
-//var
-//  IncomCountBytes: array[0..7] of Byte;
-//  IncomCount: Int64 absolute IncomCountBytes;
-//begin
-//  FSocket.Receive(IncomCountBytes,0,8,[TSocketFlag.WAITALL]);
-//  Result := AppCore.GetSmartKeyBlocks(IncomCount);
-//  ABlocksNumber := Length(Result) div AppCore.GetSmartKeyBlockSize;
-//end;
+function TConnectedClient.GetSmartKeyBlocksToSend(
+  out ABlocksNumber: Integer): TBytes;
+var
+  IncomCountBytes: array[0..3] of Byte;
+  IncomCount: Integer absolute IncomCountBytes;
+begin
+  FSocket.Receive(IncomCountBytes, 0, 4, [TSocketFlag.WAITALL]);
+  Result := AppCore.GetSmartKeyBlocks(IncomCount);
+  ABlocksNumber := Length(Result) div AppCore.GetSmartKeyBlockSize;
+end;
 
 function TConnectedClient.GetTokenICOBlocksToSend(out ABlocksNumber: Integer): TBytes;
 var
@@ -207,7 +207,7 @@ var
 begin
   FSocket.Receive(Command, 0, 1, [TSocketFlag.WAITALL]);
   case Command of
-    DISCONNECTING_CODE:
+    DisconnectingCode:
       begin
         FIsActual := False;
         Logs.DoLog(Format('%s disconnected', [FID]), OUTGO);
@@ -224,7 +224,7 @@ begin
 //          tranferResult]),OUTGO,tcp);
 //      end;
 
-    TET_CHAINS_TOTAL_NUMBER_COMMAND_CODE:
+    TETChainsTotalNumberCode:
       begin
         OutgoInt := AppCore.GetDynTETChainBlocksCount;
         FSocket.Send(OutgoBytes, 0, 4);
@@ -235,7 +235,7 @@ begin
 //          [FID, TET_CHAINS_TOTAL_NUMBER_COMMAND_CODE, OutgoInt]), OUTGO, sync);
       end;
 
-    TET_CHAIN_SYNC_COMMAND_CODE:
+    TETChainSyncCommandCode:
       begin
         ToSend := GetTETChainBlocksToSend(OutgoInt);
         FSocket.Send(OutgoBytes, 0, 4);
@@ -243,11 +243,11 @@ begin
           exit;
 
         FSocket.Send(ToSend, 0, Length(ToSend));
-        Logs.DoLog(Format('<To %s>[%d]: Blocks sended = %d',
-          [FID, TET_CHAIN_SYNC_COMMAND_CODE, OutgoInt]), OUTGO, sync);
+//        Logs.DoLog(Format('<To %s>[%d]: Blocks sended = %d',
+//          [FID, TET_CHAIN_SYNC_COMMAND_CODE, OutgoInt]), OUTGO, sync);
       end;
 
-    DYN_TET_CHAIN_SYNC_COMMAND_CODE:
+    DynTETChainSyncCommandCode:
       begin
         ToSend := GetDynTETChainBlocksToSend(OutgoInt);
         FSocket.Send(OutgoBytes, 0, 4);
@@ -255,11 +255,11 @@ begin
           exit;
 
         FSocket.Send(ToSend, 0, Length(ToSend));
-        Logs.DoLog(Format('<To %s>[%d]: Blocks sended = %d',
-          [FID, DYN_TET_CHAIN_SYNC_COMMAND_CODE, OutgoInt]), OUTGO, sync);
+//        Logs.DoLog(Format('<To %s>[%d]: Blocks sended = %d',
+//          [FID, DYN_TET_CHAIN_SYNC_COMMAND_CODE, OutgoInt]), OUTGO, sync);
       end;
 
-    TOKEN_ICO_SYNC_COMMAND_CODE:
+    TokenICOSyncCommandCode:
       begin
         ToSend := GetTokenICOBlocksToSend(OutgoInt);
         FSocket.Send(OutgoBytes, 0, 4);
@@ -267,21 +267,21 @@ begin
           exit;
 
         FSocket.Send(ToSend, 0, Length(ToSend));
-        Logs.DoLog(Format('<To %s>[%d]: Blocks sended = %d',
-          [FID, TOKEN_ICO_SYNC_COMMAND_CODE, OutgoInt]), OUTGO, sync);
+//        Logs.DoLog(Format('<To %s>[%d]: Blocks sended = %d',
+//          [FID, TOKEN_ICO_SYNC_COMMAND_CODE, OutgoInt]), OUTGO, sync);
       end;
 
-//    SMARTKEY_SYNC_COMMAND_CODE:
-//      begin
-//        ToSend := GetSmartKeyBlocksToSend(OutgoInt);
-//        FSocket.Send(OutgoBytes,0,4);
-//        if OutgoInt = 0 then
-//          exit;
+    SmartKeySyncCommandCode:
+      begin
+        ToSend := GetSmartKeyBlocksToSend(OutgoInt);
+        FSocket.Send(OutgoBytes, 0, 4);
+        if OutgoInt = 0 then
+          exit;
 //
-//        FSocket.Send(ToSend,0,Length(ToSend));
+        FSocket.Send(ToSend, 0, Length(ToSend));
 //        Logs.DoLog(Format('<To %s>[%d]: Blocks sended = %d',
 //          [FID,SMARTKEY_SYNC_COMMAND_CODE,OutgoInt]),OUTGO,sync);
-//      end;
+      end;
 
 //    TOKEN_SYNC_COMMAND_CODE:
 //      begin

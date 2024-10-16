@@ -16,10 +16,11 @@ uses
 type
   TSyncChain = class(TThread)
     const
-      RequestLongDelay = 4000;
+      RequestLongDelay = 3000;
+      RequestTokenDelay = 1500;
       RequestShortDelay = 100;
-      RECEIVE_TIMEOUT = 10000;
-      RECONNECT_ATTEMPTS = 3;
+      ReceiveTimeout = 10000;
+      ReconnectAttempts = 3;
     private
       FIsError: Boolean;
 
@@ -129,7 +130,7 @@ begin
       Logs.DoLog(Format('<%s> Connection restored', [Name]), NONE);
 
     Inc(i);
-  until Result or (i = RECONNECT_ATTEMPTS + 1);
+  until Result or (i = ReconnectAttempts + 1);
 end;
 
 procedure TSyncChain.Execute;
@@ -168,7 +169,7 @@ begin
     begin
       if Terminated then
         exit;
-      if IsTimeout(StartTime, RECEIVE_TIMEOUT) then
+      if IsTimeout(StartTime, ReceiveTimeout) then
         raise EReceiveTimeout.Create('');
       Sleep(50);
     end;

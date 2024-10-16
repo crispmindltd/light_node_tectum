@@ -277,6 +277,7 @@ type
     AniIndicator1: TAniIndicator;
     TickerExplorerHeaderLabel: TLabel;
     TransTETAniIndicator: TAniIndicator;
+    CreateTokenAniIndicator: TAniIndicator;
     procedure MainRectangleMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single);
     procedure TokenItemClick(Sender: TObject);
@@ -340,6 +341,12 @@ type
     procedure FloatAnimation4Finish(Sender: TObject);
     procedure HideTransactionNotFoundTimerTimer(Sender: TObject);
     procedure TabsChange(Sender: TObject);
+    procedure HistoryTETHeaderLayoutPaint(Sender: TObject; Canvas: TCanvas;
+      const ARect: TRectF);
+    procedure SendTETToEditKeyDown(Sender: TObject; var Key: Word;
+      var KeyChar: WideChar; Shift: TShiftState);
+    procedure CreateTokenShortNameEditKeyDown(Sender: TObject; var Key: Word;
+      var KeyChar: WideChar; Shift: TShiftState);
   const
     TransToDrawNumber = 18;
   private
@@ -386,6 +393,7 @@ type
     procedure onTransactionSearchingDone(AIsFound: Boolean);
 
     procedure TETTransferCallBack(const AResponse: string);
+    procedure TokenCreatingCallBack(const AResponse: string);
   public
     procedure NewTETChainBlocksEvent(ANeedRefreshBalance: Boolean);
     procedure NewSmartBlocksEvent;
@@ -400,7 +408,7 @@ implementation
 
 function CustomSortCompare(Left, Right: TFmxObject): Integer;
 begin
-  Result := CompareStr((Left as TListBoxItem).Text,(Right as TListBoxItem).Text);
+  Result := CompareStr((Left as TListBoxItem).Text, (Right as TListBoxItem).Text);
 end;
 
 {$R *.fmx}
@@ -671,39 +679,56 @@ begin
 end;
 
 procedure TMainForm.CreateTokenButtonClick(Sender: TObject);
-var
-  response: string;
 begin
-  try
-//    response := AppCore.DoNewToken('*',AppCore.SessionKey,
-//      CreateTokenInformationMemo.Text, CreateTokenShortNameEdit.Text,
-//      CreateTokenSymbolEdit.Text, CreateTokenAmountEdit.Text.ToInt64,
-//      DecimalsEdit.Text.ToInteger);
+  CreateTokenButton.Enabled := False;
+  CreateTokenAniIndicator.Visible := True;
+  CreateTokenAniIndicator.Enabled := True;
 
+  try
+    AppCore.DoNewToken('*', AppCore.SessionKey,
+      CreateTokenInformationMemo.Text, CreateTokenShortNameEdit.Text,
+      CreateTokenSymbolEdit.Text, CreateTokenAmountEdit.Text.ToInt64,
+      DecimalsEdit.Text.ToInteger, TokenCreatingCallBack);
+  except
+    on E:EValidError do
+      ShowTokenCreatingStatus(E.Message, True);
+    on E:Exception do
+    begin
+      ShowTokenCreatingStatus('Unknown error', True);
+      Logs.DoLog('Unknown error during token creating with message: '
+        + E.Message, ERROR, tcp);
+    end;
+  end;
+end;
+
+procedure TMainForm.TokenCreatingCallBack(const AResponse: string);
+var
+  Splitted: TArray<string>;
+begin
+  CreateTokenAniIndicator.Enabled := False;
+  CreateTokenAniIndicator.Visible := False;
+
+  if not AResponse.StartsWith('URKError') then
+  begin
     CreateTokenShortNameEdit.Text := '';
     CreateTokenSymbolEdit.Text := '';
     CreateTokenAmountEdit.Text := '';
     DecimalsEdit.Text := '';
     CreateTokenInformationMemo.Text := '';
     ShowTokenCreatingStatus('Token successfully created');
-  except
-    on E:EValidError do
-      ShowTokenCreatingStatus(E.Message,True);
-    on E:EKeyExpiredError do
-      ShowTokenCreatingStatus('Session key expired, please relogin',True);
-    on E:ETokenAlreadyExists do
-      ShowTokenCreatingStatus('Token already exists',True);
-    on E:EInsufficientFundsError do
-      ShowTokenCreatingStatus('Insufficient funds to pay the fee',True);
-    on E:EUnknownError do
-    begin
-      ShowTokenCreatingStatus('Unknown error with code ' + E.Message,True);
-      Logs.DoLog('Unknown error during token creating with code ' + E.Message,ERROR,tcp);
-    end;
-    on E:Exception do
-    begin
-      ShowTokenCreatingStatus('Unknown error',True);
-      Logs.DoLog('Unknown error during token creating  with message: ' + E.Message,ERROR,tcp);
+  end else
+  begin
+    Splitted := AResponse.Split([' ']);
+    case Splitted[3].ToInteger of
+      20: ShowTokenCreatingStatus(KeyExpiredErrorText, True);
+      44: ShowTokenCreatingStatus(TokenAlreadyExistsErrorText, True);
+      3203: ShowTokenCreatingStatus(InsufficientFundsErrorText, True);
+      else
+        begin
+          Logs.DoLog('Unknown error during token creating with code ' +
+            Splitted[3], TLogType.ERROR, tcp);
+          ShowTokenCreatingStatus('Unknown error with code ' + Splitted[3], True);
+        end;
     end;
   end;
 end;
@@ -739,6 +764,13 @@ begin
 //      [AppCore.GetNewTokenFee(l,k)])
 //  else
     TokenCreationFeeLabel.Text := 'Creation token fee: 0 TET';
+end;
+
+procedure TMainForm.CreateTokenShortNameEditKeyDown(Sender: TObject;
+  var Key: Word; var KeyChar: WideChar; Shift: TShiftState);
+begin
+  if CreateTokenButton.Enabled and (Key = 13) then
+    CreateTokenButtonClick(Self);
 end;
 
 procedure TMainForm.CreateTokenSymbolEditChangeTracking(Sender: TObject);
@@ -915,8 +947,8 @@ end;
 
 procedure TMainForm.FormShow(Sender: TObject);
 begin
-  RefreshTETBalance;
   AddressTETLabel.Text := AppCore.TETAddress;
+  Tabs.TabIndex := 0;
   Tabs.OnChange(nil);
 //  RefreshTokensBalances;
 //  RefreshTETHistory;
@@ -946,6 +978,12 @@ begin
   FloatAnimation4.Enabled := True;
 end;
 
+procedure TMainForm.HistoryTETHeaderLayoutPaint(Sender: TObject;
+  Canvas: TCanvas; const ARect: TRectF);
+begin
+  AlignTETHeaders;
+end;
+
 procedure TMainForm.HistoryTETVertScrollBoxResized(Sender: TObject);
 begin
   AlignTETHeaders;
@@ -972,8 +1010,8 @@ begin
   case Tabs.TabIndex of
     0:
       begin
+        RefreshTETBalance;
         RefreshTETHistory;
-        HistoryTETVertScrollBoxResized(nil);
         SendTETToEdit.SetFocus;
       end;
     1: RecepientAddressEdit.SetFocus;
@@ -1005,7 +1043,6 @@ procedure TMainForm.TETTransferCallBack(const AResponse: string);
 var
   Splitted: TArray<string>;
 begin
-  SendTETButton.Enabled := True;
   TransTETAniIndicator.Enabled := False;
   TransTETAniIndicator.Visible := False;
 
@@ -1021,11 +1058,12 @@ begin
       20: ShowTETTransferStatus(KeyExpiredErrorText, True);
       55: ShowTETTransferStatus(AddressNotExistsErrorText, True);
       110: ShowTETTransferStatus(InsufficientFundsErrorText, True);
+      4042: ShowTETTransferStatus(UnableSendToTyourselfErrorText, True);
       else
         begin
           Logs.DoLog('Unknown error during TET transfer with code ' +
             Splitted[3], TLogType.ERROR, tcp);
-          ShowTETTransferStatus('Unknown error, try later', True);
+          ShowTETTransferStatus('Unknown error with code ' + Splitted[3], True);
         end;
     end;
   end;
@@ -1084,7 +1122,7 @@ end;
 
 procedure TMainForm.NewTETChainBlocksEvent(ANeedRefreshBalance: Boolean);
 begin
-  if ANeedRefreshBalance then
+  if ANeedRefreshBalance and (Tabs.TabIndex = 0) then
   begin
     RefreshTETBalance;
     RefreshTETHistory;
@@ -1746,15 +1784,13 @@ begin
 end;
 
 procedure TMainForm.SendTETButtonClick(Sender: TObject);
-var
-  Response: string;
 begin
   SendTETButton.Enabled := False;
   TransTETAniIndicator.Visible := True;
   TransTETAniIndicator.Enabled := True;
 
   try
-    Response := AppCore.DoTETTransfer('*', AppCore.SessionKey, SendTETToEdit.Text,
+    AppCore.DoTETTransfer('*', AppCore.SessionKey, SendTETToEdit.Text,
       AmountTETEdit.Text.ToDouble, TETTransferCallBack);
   except
     on E:EValidError do
@@ -1766,6 +1802,13 @@ begin
       ShowTETTransferStatus('Unknown error', True);
     end;
   end;
+end;
+
+procedure TMainForm.SendTETToEditKeyDown(Sender: TObject; var Key: Word;
+  var KeyChar: WideChar; Shift: TShiftState);
+begin
+  if SendTETButton.Enabled and (Key = 13) then
+    SendTETButtonClick(Self);
 end;
 
 procedure TMainForm.SendTokenButtonClick(Sender: TObject);

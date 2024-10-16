@@ -24,8 +24,7 @@ type
     procedure WriteBlocksAsBytes(ASkipBlocks: Integer; ABytes: TBytes); override;
     function ReadBlocksAsBytes(ASkipBlocks: Integer;
       ANumber: Integer = MaxBlocksNumber): TBytes; override;
-    function ReadBlocks(ASkip: Integer;
-      ANumber: Integer = MaxBlocksNumber): TArray<TTokenICODat>;
+    function ReadBlocks(ASkip, ANumber: Integer): TArray<TTokenICODat>;
 
     function TryGet(ASkip: Integer; out AICOBlock: TTokenICODat): Boolean; overload;
     function TryGet(ATicker: string; out AICOBlock: TTokenICODat): Boolean; overload;
@@ -77,10 +76,11 @@ begin
   AssignFile(FFile, FFullFilePath);
   Reset(FFile);
   try
-    if (ASkip < 0) or (ASkip >= FileSize(FFile)) then
+    if (ASkip >= FileSize(FFile) - 2) or (ASkip < 0) then
       exit;
-    Seek(FFile, ASkip);
-    SetLength(Result, Min(ANumber, FileSize(FFile) - ASkip));
+
+    Seek(FFile, ASkip + 2);
+    SetLength(Result, Min(ANumber, FileSize(FFile) - ASkip - 2));
     for i := 0 to Length(Result) - 1 do
       Read(FFile, Result[i]);
   finally

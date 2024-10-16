@@ -463,7 +463,7 @@ var
   TokensICOs: TArray<TTokenICODat>;
   Params: TStringList;
   SmartKey: TCSmartKey;
-  i,Rows,Skip: Integer;
+  Rows, Skip, i: Integer;
 begin
   Params := TStringList.Create(dupIgnore, True, False);
   try
@@ -477,14 +477,14 @@ begin
     else if not TryStrToInt(Params.Values['skip'], Skip) then
       raise EValidError.Create('request parameters error');
 
-//    TokensICOs := AppCore.GetTokensICOs(Skip, Rows);
+    TokensICOs := AppCore.GetTokensICOs(Skip, Rows);
     JSON := TJSONObject.Create;
     try
       JSONArray := TJSONArray.Create;
-      for i := 0 to Rows - 1 do
+      for i := 0 to Length(TokensICOs) - 1 do
       begin
-//        if not AppCore.TryGetTokenBase(Trim(TokensICOs[i].Abreviature),SmartKey) then
-//          continue;
+        if not AppCore.TryGetSmartKey(Trim(TokensICOs[i].Abreviature), SmartKey) then
+          continue;
 
         JSONArray.AddElement(TJSONObject.Create);
         JSONNestedObject := JSONArray.Items[pred(JSONArray.Count)] as TJSONObject;
@@ -647,7 +647,7 @@ function TTokenEndpoints.DoNewToken(AReqID: string; ABody: string)
   : TEndpointResponse;
 var
   JSON: TJSONObject;
-  SplittedResponse: TArray<string>;
+  Splitted: TArray<string>;
   FullName, ShortName, Ticker, Response, SessionKey: string;
   TokenNumber: Int64;
   Decimals: Integer;
@@ -656,23 +656,23 @@ begin
 
   JSON := TJSONObject.ParseJSONValue(ABody, False, True) as TJSONObject;
   try
-    if not(JSON.TryGetValue('session_key', SessionKey) and
+    if not (JSON.TryGetValue('session_key', SessionKey) and
       JSON.TryGetValue('full_name', FullName) and JSON.TryGetValue('short_name',
       ShortName) and JSON.TryGetValue('ticker', Ticker) and
       JSON.TryGetValue('token_amount', TokenNumber) and JSON.TryGetValue('decimals',
       Decimals)) then
-      raise EValidError.Create('request parameters error');
+        raise EValidError.Create('request parameters error');
   finally
     JSON.Free;
   end;
 
-//  Response := AppCore.DoNewToken(AReqID, SessionKey, FullName, ShortName,
-//    Ticker.ToUpper, TokenNumber, Decimals);
-  SplittedResponse := Response.Split([' ']);
+  Response := AppCore.DoNewToken(AReqID, SessionKey, FullName, ShortName,
+    Ticker.ToUpper, TokenNumber, Decimals);
+  Splitted := Response.Split([' ']);
   JSON := TJSONObject.Create;
   try
-    JSON.AddPair('transaction_hash', SplittedResponse[2]);
-    JSON.AddPair('smartcontract_ID', TJSONNumber.Create(SplittedResponse[3].ToInt64));
+    JSON.AddPair('transaction_hash', Splitted[2]);
+    JSON.AddPair('smartcontract_ID', TJSONNumber.Create(Splitted[3].ToInt64));
     Result.Code := HTTP_SUCCESS;
     Result.Response := JSON.ToString;
   finally

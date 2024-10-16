@@ -33,6 +33,8 @@ const
   KeyExpiredErrorText = 'Session key expired. Please relogin';
   AddressNotExistsErrorText = 'Address does not exists';
   InsufficientFundsErrorText = 'Insufficient funds';
+  UnableSendToTyourselfErrorText = 'Unable to send to yourself';
+  TokenAlreadyExistsErrorText = 'Token already exists';
 
 implementation
 

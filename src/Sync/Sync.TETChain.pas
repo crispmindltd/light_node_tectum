@@ -39,7 +39,7 @@ type
 
 implementation
 
-{ TBLocksUpdater }
+{ TTETChainBlocksUpdater }
 
 constructor TTETChainBlocksUpdater.Create(AAddress: string; APort: Word);
 begin
@@ -74,7 +74,7 @@ begin
       while not (Terminated or IsError) do
         DoRequests;
       if not IsError then
-        FSocket.Send([DISCONNECTING_CODE], 0, 1);
+        FSocket.Send([DisconnectingCode], 0, 1);
     except
       on E:EReceiveTimeout do 
         DoCantReconnect;
@@ -104,7 +104,7 @@ begin
   if Terminated then
     exit;
   Logs.DoLog(Format('<DBC>[%d]: Blocks received = %d',
-    [DYN_TET_CHAIN_SYNC_COMMAND_CODE, IncomCount]), INCOM, TLogFolder.sync);
+    [DynTETChainSyncCommandCode, IncomCount]), INCOM, TLogFolder.sync);
   AppCore.SetDynTETChainBlocks(ADynTETBlocksNumberNow, BytesToReceive);
   if not AppCore.BlocksSyncDone then
     UI.ShowDownloadProgress;
@@ -130,7 +130,7 @@ begin
   if Terminated then
     exit;
   Logs.DoLog(Format('<DBC>[%d]: Blocks received = %d',
-    [TET_CHAIN_SYNC_COMMAND_CODE, IncomCount]), INCOM, TLogFolder.sync);
+    [TETChainSyncCommandCode, IncomCount]), INCOM, TLogFolder.sync);
   AppCore.SetTETChainBlocks(ATETBlocksNumberNow, BytesToReceive);
   if not AppCore.BlocksSyncDone then
     UI.ShowDownloadProgress;
@@ -152,7 +152,7 @@ begin
   if Terminated then
     exit;
   Logs.DoLog(Format('<DBC>[%d]: Blocks received = %d',
-    [TOKEN_ICO_SYNC_COMMAND_CODE, IncomCount]), INCOM, TLogFolder.sync);
+    [TokenICOSyncCommandCode, IncomCount]), INCOM, TLogFolder.sync);
   AppCore.SetTokenICOBlocks(ABlocksNumberNow, BytesToReceive);
 end;
 
@@ -161,7 +161,7 @@ var
   TETBlocksCountBytes: array[0..3] of Byte;
   TETBlocksCount: Integer absolute TETBlocksCountBytes;
 begin
-  FBytesRequest[0] := TET_CHAIN_SYNC_COMMAND_CODE;
+  FBytesRequest[0] := TETChainSyncCommandCode;
   TETBlocksCount := AppCore.GetTETChainBlocksCount;
   Move(TETBlocksCountBytes[0], FBytesRequest[1], 4);
 
@@ -175,9 +175,9 @@ var
   IncomCount: Integer absolute IncomCountBytes;
   ToLoadTotal: UInt64;
 begin
-  FSocket.Send([TET_CHAINS_TOTAL_NUMBER_COMMAND_CODE], 0, 1);
+  FSocket.Send([TETChainsTotalNumberCode], 0, 1);
   Logs.DoLog(Format('<DBC>[%d]',
-    [TET_CHAINS_TOTAL_NUMBER_COMMAND_CODE]), OUTGO, TLogFolder.sync);
+    [TETChainsTotalNumberCode]), OUTGO, TLogFolder.sync);
 
   GetResponse(IncomCountBytes);
   if Terminated then
@@ -187,7 +187,7 @@ begin
   FTETChainTotalBlocksToLoad := IncomCount;
   ToLoadTotal := FDynTETChainTotalBlocksToLoad + FTETChainTotalBlocksToLoad;
   Logs.DoLog(Format('<DBC>[%d]: Blocks to receive = %d',
-    [TET_CHAINS_TOTAL_NUMBER_COMMAND_CODE, ToLoadTotal]), INCOM, TLogFolder.sync);
+    [TETChainsTotalNumberCode, ToLoadTotal]), INCOM, TLogFolder.sync);
 
   UI.ShowTotalBlocksToDownload(ToLoadTotal);
 end;
@@ -197,7 +197,7 @@ var
   DynTETBlocksCountBytes: array[0..3] of Byte;
   DynTETBlocksCount: Integer absolute DynTETBlocksCountBytes;
 begin
-  FBytesRequest[0] := DYN_TET_CHAIN_SYNC_COMMAND_CODE;
+  FBytesRequest[0] := DynTETChainSyncCommandCode;
   DynTETBlocksCount := AppCore.GetDynTETChainBlocksCount;
   Move(DynTETBlocksCountBytes[0], FBytesRequest[1], 4);
 
@@ -224,7 +224,8 @@ begin
     DoTETChainBlocksRequest;
   except
     on E:EReceiveTimeout do
-      if not DoTryReconnect then raise;
+      if not DoTryReconnect then
+        raise;
   end;
 end;
 
@@ -233,7 +234,7 @@ var
   ICOBlocksCountBytes: array[0..3] of Byte;
   ICOBlocksCount: Integer absolute ICOBlocksCountBytes;
 begin
-  FBytesRequest[0] := TOKEN_ICO_SYNC_COMMAND_CODE;
+  FBytesRequest[0] := TokenICOSyncCommandCode;
   ICOBlocksCount := AppCore.GetTokenICOBlocksCount;
   Move(ICOBlocksCountBytes[0], FBytesRequest[1], 4);
 

@@ -11,16 +11,16 @@ const
   DefaultTCPListenTo = '127.0.0.1:50000';
   DefaultPortHTTP = 8917;
 
-  DISCONNECTING_CODE = 0;
-  CONNECT_ERROR_CODE = 1;
-  ERROR_CODE = 2;
-  SUCCESS_CODE = 3;
-  VALIDATE_COMMAND_CODE = 100;
-  TET_CHAINS_TOTAL_NUMBER_COMMAND_CODE = 101;
-  TET_CHAIN_SYNC_COMMAND_CODE = 102;
-  DYN_TET_CHAIN_SYNC_COMMAND_CODE = 103;
-  TOKEN_ICO_SYNC_COMMAND_CODE = 104;
-  SMARTKEY_SYNC_COMMAND_CODE = 105;
+  DisconnectingCode = 0;
+  ConnectErrorCode = 1;
+  ErrorCode = 2;
+  SuccessCode = 3;
+  ValidateCommandCode = 100;
+  TETChainsTotalNumberCode = 101;
+  TETChainSyncCommandCode = 102;
+  DynTETChainSyncCommandCode = 103;
+  TokenICOSyncCommandCode = 104;
+  SmartKeySyncCommandCode = 105;
   TOKEN_SYNC_COMMAND_CODE = 106;
 
 type
