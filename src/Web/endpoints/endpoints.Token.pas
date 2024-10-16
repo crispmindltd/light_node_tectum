@@ -256,7 +256,7 @@ begin
     JSON := TJSONObject.Create;
     try
       JSONArray := TJSONArray.Create;
-      for i := 0 to Rows - 1 do
+      for i := 0 to Length(TETTransfersInfo) - 1 do
       begin
         JSONArray.AddElement(TJSONObject.Create);
         JSONNestedObject := JSONArray.Items[pred(JSONArray.Count)] as TJSONObject;
