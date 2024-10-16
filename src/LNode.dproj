@@ -143,11 +143,6 @@
         <DCC_IntegerOverflowCheck>true</DCC_IntegerOverflowCheck>
         <DCC_RangeChecking>true</DCC_RangeChecking>
     </PropertyGroup>
-    <PropertyGroup Condition="'$(Cfg_1_Linux64)'!=''">
-        <Debugger_Launcher>/usr/bin/gnome-terminal -- &quot;%debuggee%&quot;</Debugger_Launcher>
-        <Manifest_File>(None)</Manifest_File>
-        <AppDPIAwarenessMode>none</AppDPIAwarenessMode>
-    </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
         <DCC_RemoteDebug>false</DCC_RemoteDebug>
         <AppDPIAwarenessMode>PerMonitorV2</AppDPIAwarenessMode>
@@ -165,24 +160,11 @@
         <UWP_DelphiLogo44>..\icon\Windows\Uwp_44.png</UWP_DelphiLogo44>
         <UWP_DelphiLogo150>..\icon\Windows\Uwp_150.png</UWP_DelphiLogo150>
     </PropertyGroup>
-    <PropertyGroup Condition="'$(Cfg_1_Win64)'!=''">
-        <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
-        <VerInfo_Locale>1033</VerInfo_Locale>
-        <Icns_MainIcns>..\icon\Windows\AppIcon.icns</Icns_MainIcns>
-        <Icon_MainIcon>..\icon\Windows\AppIcon.ico</Icon_MainIcon>
-        <UWP_DelphiLogo44>..\icon\Windows\Uwp_44.png</UWP_DelphiLogo44>
-        <UWP_DelphiLogo150>..\icon\Windows\Uwp_150.png</UWP_DelphiLogo150>
-    </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
         <DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
         <DCC_Define>RELEASE;$(DCC_Define)</DCC_Define>
         <DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
         <DCC_DebugInformation>0</DCC_DebugInformation>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(Cfg_2_Linux64)'!=''">
-        <Debugger_Launcher>/usr/bin/gnome-terminal -- &quot;%debuggee%&quot;</Debugger_Launcher>
-        <Manifest_File>(None)</Manifest_File>
-        <AppDPIAwarenessMode>none</AppDPIAwarenessMode>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
         <AppDPIAwarenessMode>PerMonitorV2</AppDPIAwarenessMode>
@@ -271,6 +253,12 @@
         <DCCReference Include="Core\App.Constants.pas"/>
         <DCCReference Include="UI\OpenURL.pas"/>
         <DCCReference Include="Sync\Sync.TETChain.pas"/>
+        <DCCReference Include="UI\Forms\Frame.PageNum.pas">
+            <Form>PageNumFrame</Form>
+            <DesignClass>TFrame</DesignClass>
+        </DCCReference>
+        <DCCReference Include="Blockchain\Blockchain.SmartKey.pas"/>
+        <DCCReference Include="Sync\Sync.TokensChains.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

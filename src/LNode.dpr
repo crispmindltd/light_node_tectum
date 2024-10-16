@@ -47,7 +47,9 @@ uses
   App.Constants in 'Core\App.Constants.pas',
   OpenURL in 'UI\OpenURL.pas',
   Sync.TETChain in 'Sync\Sync.TETChain.pas',
-  Frame.PageNum in 'UI\Forms\Frame.PageNum.pas' {PageNumFrame: TFrame};
+  Frame.PageNum in 'UI\Forms\Frame.PageNum.pas' {PageNumFrame: TFrame},
+  Blockchain.SmartKey in 'Blockchain\Blockchain.SmartKey.pas',
+  Sync.TokensChains in 'Sync\Sync.TokensChains.pas';
 
 {$R *.res}
 
