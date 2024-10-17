@@ -17,7 +17,7 @@ type
     FFile: file of TTokenICODat;
   public
     constructor Create;
-    destructor Destory;
+    destructor Destroy;
 
     function GetBlockSize: Integer; override;
     function GetBlocksCount: Integer; override;
@@ -42,7 +42,7 @@ begin
     TFile.WriteAllBytes(FFullFilePath, []);
 end;
 
-destructor TBlockchainICODat.Destory;
+destructor TBlockchainICODat.Destroy;
 begin
 
   inherited;

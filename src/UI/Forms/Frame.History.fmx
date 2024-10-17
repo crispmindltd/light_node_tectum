@@ -4,7 +4,7 @@ object HistoryTransactionFrame: THistoryTransactionFrame
   Margins.Top = 5.000000000000000000
   Margins.Right = 5.000000000000000000
   Position.Y = 5.000000000000000000
-  Size.Width = 1063.000000000000000000
+  Size.Width = 1008.000000000000000000
   Size.Height = 30.000000000000000000
   Size.PlatformDefault = False
   OnMouseEnter = FrameMouseEnter
@@ -14,7 +14,7 @@ object HistoryTransactionFrame: THistoryTransactionFrame
     Align = Contents
     Fill.Kind = None
     HitTest = False
-    Size.Width = 1063.000000000000000000
+    Size.Width = 1008.000000000000000000
     Size.Height = 30.000000000000000000
     Size.PlatformDefault = False
     Stroke.Kind = None
@@ -83,7 +83,7 @@ object HistoryTransactionFrame: THistoryTransactionFrame
       StyledSettings = [Style]
       Margins.Left = 15.000000000000000000
       Position.X = 862.000000000000000000
-      Size.Width = 100.000000000000000000
+      Size.Width = 110.000000000000000000
       Size.Height = 30.000000000000000000
       Size.PlatformDefault = False
       TextSettings.Font.Family = 'Inter'
@@ -100,7 +100,7 @@ object HistoryTransactionFrame: THistoryTransactionFrame
       Margins.Left = 15.000000000000000000
       Margins.Top = 2.000000000000000000
       Margins.Bottom = 2.000000000000000000
-      Position.X = 977.000000000000000000
+      Position.X = 987.000000000000000000
       Position.Y = 2.000000000000000000
       Size.Width = 70.000000000000000000
       Size.Height = 26.000000000000000000

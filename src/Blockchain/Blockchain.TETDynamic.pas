@@ -18,7 +18,7 @@ type
     FIsOpened: Boolean;
   public
     constructor Create;
-    destructor Destory;
+    destructor Destroy;
     function DoOpen: Boolean;
     procedure DoClose;
 
@@ -29,8 +29,6 @@ type
     function TryReadBlock(ASkip: Integer; out ABlock: TTokenBase): Boolean;
     function ReadBlocksAsBytes(ASkipBlocks: Integer;
       ANumber: Integer = MaxBlocksNumber): TBytes; override;
-//    function ReadBlocks(ASkip: Integer;
-//      ANumber: Integer = MaxBlocksNumber): TArray<TTokenBase>;
 
     function TryGet(AUserID: Integer; out ABlockNum: Integer;
       var ATETDyn: TTokenBase): Boolean; overload;
@@ -51,7 +49,7 @@ begin
     TFile.WriteAllBytes(FFullFilePath, []);
 end;
 
-destructor TBlockchainTETDynamic.Destory;
+destructor TBlockchainTETDynamic.Destroy;
 begin
 
   inherited;
@@ -96,27 +94,6 @@ function TBlockchainTETDynamic.GetBlockSize: Integer;
 begin
   Result := SizeOf(TTokenBase);
 end;
-
-//function TBlockchainTETDynamic.ReadBlocks(ASkip,
-//  ANumber: Integer): TArray<TTokenBase>;
-//var
-//  NeedClose: Boolean;
-//  i: Integer;
-//begin
-//  Result := [];
-//  NeedClose := DoOpen;
-//  try
-//    if (ASkip < 0) or (ASkip >= FileSize(FFile)) then
-//      exit;
-//    Seek(FFile, ASkip);
-//    SetLength(Result, Min(ANumber, FileSize(FFile) - ASkip));
-//    for i := 0 to Length(Result) - 1 do
-//      Read(FFile, Result[i]);
-//  finally
-//    if NeedClose then
-//      DoClose;
-//  end;
-//end;
 
 function TBlockchainTETDynamic.ReadBlocksAsBytes(ASkipBlocks,
   ANumber: Integer): TBytes;
@@ -214,31 +191,6 @@ begin
       DoClose;
   end;
 end;
-
-//function TBlockchainTETDynamic.TryGetByUserID(AUserID: Int64; out ABlockID: Int64;
-//  var ATETDynamic: TTokenBase): Boolean;
-//var
-//  NeedClose: Boolean;
-//  i: Integer;
-//begin
-//  Result := False;
-//  NeedClose := DoOpen(fmOpenRead or fmShareDenyNone);
-//  try
-//    for i := 0 to (FFile.Size div GetBlockSize) - 1 do
-//    begin
-//      FFile.Seek(i * GetBlockSize, soBeginning);
-//      FFile.ReadData<TTokenBase>(ATETDynamic);
-//      if (ATETDynamic.OwnerID = AUserID) and (ATETDynamic.TokenDatID = 1) then
-//      begin
-//        ABlockID := i;
-//        exit(True);
-//      end;
-//    end;
-//  finally
-//    if NeedClose then
-//      DoClose;
-//  end;
-//end;
 
 procedure TBlockchainTETDynamic.WriteBlock(ASkip: Integer; ABlock: TTokenBase);
 var

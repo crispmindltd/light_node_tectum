@@ -73,6 +73,7 @@ begin
 
       while not (Terminated or IsError) do
         DoRequests;
+
       if not IsError then
         FSocket.Send([DisconnectingCode], 0, 1);
     except

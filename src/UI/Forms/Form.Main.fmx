@@ -206,7 +206,7 @@ object MainForm: TMainForm
               StyledSettings = [Style]
               Margins.Left = 15.000000000000000000
               Position.X = 567.000000000000000000
-              Size.Width = 300.000000000000000000
+              Size.Width = 290.000000000000000000
               Size.Height = 28.000000000000000000
               Size.PlatformDefault = False
               TextSettings.Font.Family = 'Inter'
@@ -219,8 +219,8 @@ object MainForm: TMainForm
               Align = Left
               StyledSettings = [Style]
               Margins.Left = 15.000000000000000000
-              Position.X = 882.000000000000000000
-              Size.Width = 100.000000000000000000
+              Position.X = 872.000000000000000000
+              Size.Width = 110.000000000000000000
               Size.Height = 28.000000000000000000
               Size.PlatformDefault = False
               TextSettings.Font.Family = 'Inter'

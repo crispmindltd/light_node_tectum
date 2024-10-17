@@ -10,7 +10,7 @@ uses
 const
   DateTimeLabelWidth = 150;
   BlockLabelWidth = 72;
-  ValueLabelWidth = 100;
+  ValueLabelWidth = 110;
   IncomRectWidth = 70;
 
 type

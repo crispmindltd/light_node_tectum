@@ -259,6 +259,8 @@
         </DCCReference>
         <DCCReference Include="Blockchain\Blockchain.SmartKey.pas"/>
         <DCCReference Include="Sync\Sync.TokensChains.pas"/>
+        <DCCReference Include="Blockchain\Blockchain.Token.pas"/>
+        <DCCReference Include="Blockchain\Blockchain.TokenDynamic.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

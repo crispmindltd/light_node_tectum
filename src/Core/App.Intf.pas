@@ -3,11 +3,8 @@ unit App.Intf;
 interface
 
 uses
-  App.Logs,
   Blockchain.BaseTypes,
-  Blockchain.Intf,
   Classes,
-  SyncObjs,
   SysUtils;
 
 type
@@ -72,14 +69,20 @@ type
     function TryGetSmartKey(ATicker: string; out ASmartKey: TCSmartKey): Boolean;
 
     //Tokens chains methods
-//    procedure UpdateTokensList;
-//    function GetTokensToSynchronize: TArray<Integer>;
-//    procedure AddTokenToSynchronize(ATokenID: Integer);
-//    procedure RemoveTokenToSynchronize(ATokenID: Integer);
-//    function GetTokenChainBlocksCount(ATokenID: Integer): Int64;
-//    function GetTokenBlockSize: Integer;
-//    function GetTokenChainBlocks(ATokenID: Integer; ASkip: Int64): TBytes;
-//    procedure SetTokenBlocks(ATokenID: Integer; ASkip: Int64; ABytes: TBytes);
+    procedure UpdateTokensList;
+    function GetTokensToSynchronize: TArray<Integer>;
+    procedure AddTokenToSynchronize(ATokenID: Integer);
+    procedure RemoveTokenFromSynchronize(ATokenID: Integer);
+    function GetTokenChainBlocksCount(ATokenID: Integer): Integer;
+    function GetTokenChainBlockSize: Integer;
+    function GetTokenChainBlocks(ATokenID: Integer; ASkip: Integer): TBytes;
+    procedure SetTokenChainBlocks(ATokenID: Integer; ASkip: Integer; ABytes: TBytes);
+
+    //Tokens dynamic blocks sync methods
+    function GetDynTokenChainBlocksCount(ATokenID: Integer): Integer;
+    function GetDynTokenChainBlockSize: Integer;
+    function GetDynTokenChainBlocks(ATokenID: Integer; ASkip: Integer): TBytes;
+    procedure SetDynTokenChainBlocks(ATokenID: Integer; ASkip: Integer; ABytes: TBytes);
 //    function GetSmartBlocks(ASmartID: Integer;
 //      var AAmount: Integer): TBytesBlocks; overload;
 //    function GetSmartBlocks(ATicker: String;

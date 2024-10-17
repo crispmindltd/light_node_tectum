@@ -49,7 +49,9 @@ uses
   Sync.TETChain in 'Sync\Sync.TETChain.pas',
   Frame.PageNum in 'UI\Forms\Frame.PageNum.pas' {PageNumFrame: TFrame},
   Blockchain.SmartKey in 'Blockchain\Blockchain.SmartKey.pas',
-  Sync.TokensChains in 'Sync\Sync.TokensChains.pas';
+  Sync.TokensChains in 'Sync\Sync.TokensChains.pas',
+  Blockchain.Token in 'Blockchain\Blockchain.Token.pas',
+  Blockchain.TokenDynamic in 'Blockchain\Blockchain.TokenDynamic.pas';
 
 {$R *.res}
 

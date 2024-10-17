@@ -18,7 +18,7 @@ type
     FIsOpened: Boolean;
   public
     constructor Create;
-    destructor Destory;
+    destructor Destroy;
     function DoOpen: Boolean;
     procedure DoClose;
 
@@ -46,7 +46,7 @@ begin
     TFile.WriteAllBytes(FFullFilePath, []);
 end;
 
-destructor TBlockchainTET.Destory;
+destructor TBlockchainTET.Destroy;
 begin
 
   inherited;

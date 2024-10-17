@@ -17,13 +17,15 @@ type
     FFile: file of TCSmartKey;
   public
     constructor Create;
-    destructor Destory;
+    destructor Destroy;
 
     function GetBlockSize: Integer; override;
     function GetBlocksCount: Integer; override;
     procedure WriteBlocksAsBytes(ASkipBlocks: Integer; ABytes: TBytes); override;
     function ReadBlocksAsBytes(ASkipBlocks: Integer;
       ANumber: Integer = MaxBlocksNumber): TBytes; override;
+    function ReadBlocks(ASkip: Integer;
+      ANumber: Integer = MaxBlocksNumber): TArray<TCSmartKey>;
 
     function TryGetSmartKey(ATicker: string; var ASmartKey: TCSmartKey): Boolean;
 //    function TryGetSmartKeyByAddress(const AAddress: String; var sk: TCSmartKey): Boolean;
@@ -41,10 +43,33 @@ begin
     TFile.WriteAllBytes(FFullFilePath, []);
 end;
 
-destructor TBlockchainSmartKey.Destory;
+destructor TBlockchainSmartKey.Destroy;
 begin
 
   inherited;
+end;
+
+function TBlockchainSmartKey.ReadBlocks(ASkip,
+  ANumber: Integer): TArray<TCSmartKey>;
+var
+  i: Integer;
+begin
+  Result := [];
+  FLock.Enter;
+  AssignFile(FFile, FFullFilePath);
+  Reset(FFile);
+  try
+    if (ASkip >= FileSize(FFile)) or (ASkip < 0) then
+      exit;
+
+    Seek(FFile, ASkip);
+    SetLength(Result, Min(ANumber, FileSize(FFile) - ASkip));
+    for i := 0 to Length(Result) - 1 do
+      Read(FFile, Result[i]);
+  finally
+    CloseFile(FFile);
+    FLock.Leave;
+  end;
 end;
 
 function TBlockchainSmartKey.GetBlocksCount: Integer;
@@ -68,7 +93,6 @@ end;
 function TBlockchainSmartKey.ReadBlocksAsBytes(ASkipBlocks: Integer;
   ANumber: Integer): TBytes;
 var
-  NeedClose: Boolean;
   BlockBytes: array[0..SizeOf(TCSmartKey) - 1] of Byte;
   SmartKeyBlock: TCSmartKey absolute BlockBytes;
   i: Integer;
@@ -78,8 +102,7 @@ begin
   AssignFile(FFile, FFullFilePath);
   Reset(FFile);
   try
-    if (ASkipBlocks >= FileSize(FFile)) or
-      (ASkipBlocks < 0) then
+    if (ASkipBlocks >= FileSize(FFile)) or (ASkipBlocks < 0) then
       exit;
 
     Seek(FFile, ASkipBlocks);

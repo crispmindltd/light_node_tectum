@@ -12,26 +12,23 @@ uses
   SysUtils;
 
 type
-  TBlockchainTokenDynamic = class(TChainFileWorker)
+  TBlockchainTokenDynamic = class(TChainFileBase)
   private
-    FFile: TFileStream;
+    FFile: file of TCTokensBase;
     FIsOpened: Boolean;
   public
     constructor Create(ATokenID: Integer);
-    destructor Destory;
-
-    function DoOpen(AMode: Word): Boolean;
+    destructor Destroy;
+    function DoOpen: Boolean;
     procedure DoClose;
+
     function GetBlockSize: Integer; override;
-    function GetBlocksCount: Int64; override;
-    procedure WriteBlock(ASkip: Int64; ABlock: TCTokensBase);
-    procedure WriteBlocksAsBytes(ASkip: Int64; ABytes: TBytes); override;
-    procedure WriteBlocks(ASkip: Int64; ABlocks: TArray<TCTokensBase>);
-    function TryReadBlock(ASkip: Int64; out ABlock: TCTokensBase): Boolean;
-    function ReadBlocksAsBytes(ASkip: Int64;
+    function GetBlocksCount: Integer; override;
+    procedure WriteBlocksAsBytes(ASkipBlocks: Integer; ABytes: TBytes); override;
+    procedure WriteBlock(ASkip: Integer; ABlock: TCTokensBase);
+    function TryReadBlock(ASkip: Integer; out ABlock: TCTokensBase): Boolean;
+    function ReadBlocksAsBytes(ASkipBlocks: Integer;
       ANumber: Integer = MaxBlocksNumber): TBytes; override;
-    function ReadBlocks(ASkip: Int64;
-      ANumber: Integer = MaxBlocksNumber): TArray<TCTokensBase>;
 
 //    function TryGetTokenBase(AOwnerID: Int64; out AID: Integer;
 //      out tcb: TCTokensBase): Boolean;
@@ -45,9 +42,10 @@ constructor TBlockchainTokenDynamic.Create(ATokenID: Integer);
 begin
   inherited Create(ConstStr.SmartCPath, ATokenID.ToString + '.tkn');
 
+  FIsOpened := False;
 end;
 
-destructor TBlockchainTokenDynamic.Destory;
+destructor TBlockchainTokenDynamic.Destroy;
 begin
 
   inherited;
@@ -57,13 +55,13 @@ procedure TBlockchainTokenDynamic.DoClose;
 begin
   if FIsOpened then
   begin
-    FFile.Free;
-    FLock.Leave;
+    CloseFile(FFile);
     FIsOpened := False;
+    FLock.Leave;
   end;
 end;
 
-function TBlockchainTokenDynamic.DoOpen(AMode: Word): Boolean;
+function TBlockchainTokenDynamic.DoOpen: Boolean;
 begin
   Result := not FIsOpened;
   if Result then
@@ -71,18 +69,19 @@ begin
     FLock.Enter;
     if not FileExists(FFullFilePath) then
       TFile.WriteAllBytes(FFullFilePath, []);
-    FFile := TFileStream.Create(FullPath, AMode);
+    AssignFile(FFile, FFullFilePath);
+    Reset(FFile);
     FIsOpened := True;
   end;
 end;
 
-function TBlockchainTokenDynamic.GetBlocksCount: Int64;
+function TBlockchainTokenDynamic.GetBlocksCount: Integer;
 var
   NeedClose: Boolean;
 begin
-  NeedClose := DoOpen(fmOpenRead or fmShareDenyNone);
+  NeedClose := DoOpen;
   try
-    Result := FFile.Size div GetBlockSize;
+    Result := FileSize(FFile);
   finally
     if NeedClose then
       DoClose;
@@ -120,18 +119,18 @@ end;
 //  end;
 //end;
 
-function TBlockchainTokenDynamic.TryReadBlock(ASkip: Int64;
+function TBlockchainTokenDynamic.TryReadBlock(ASkip: Integer;
   out ABlock: TCTokensBase): Boolean;
 var
   NeedClose: Boolean;
 begin
-  NeedClose := DoOpen(fmOpenRead or fmShareDenyNone);
+  NeedClose := DoOpen;
   try
     Result := (ASkip >= 0) and (ASkip < GetBlocksCount);
     if Result then
     begin
-      FFile.Seek(ASkip * GetBlockSize, soBeginning);
-      FFile.ReadData<TCTokensBase>(ABlock);
+      Seek(FFile, ASkip);
+      Read(FFile, ABlock);
     end;
   finally
     if NeedClose then
@@ -139,81 +138,70 @@ begin
   end;
 end;
 
-function TBlockchainTokenDynamic.ReadBlocks(ASkip: Int64;
-  ANumber: Integer): TArray<TCTokensBase>;
-var
-  NeedClose: Boolean;
-begin
-  NeedClose := DoOpen(fmOpenRead or fmShareDenyNone);
-  try
-    FFile.Seek(ASkip * GetBlockSize, soBeginning);
-    SetLength(Result, Min(ANumber * GetBlockSize, FFile.Size - FFile.Position));
-    FFile.Read(Result, Length(Result));
-  finally
-    if NeedClose then
-      DoClose;
-  end;
-end;
-
-function TBlockchainTokenDynamic.ReadBlocksAsBytes(ASkip: Int64;
+function TBlockchainTokenDynamic.ReadBlocksAsBytes(ASkipBlocks: Integer;
   ANumber: Integer): TBytes;
 var
   NeedClose: Boolean;
-begin
-  NeedClose := DoOpen(fmOpenRead or fmShareDenyNone);
-  try
-    FFile.Seek(ASkip * GetBlockSize, soBeginning);
-    SetLength(Result, Min(ANumber * GetBlockSize, FFile.Size - FFile.Position));
-    FFile.Read(Result, Length(Result));
-  finally
-    if NeedClose then
-      DoClose;
-  end;
-end;
-
-procedure TBlockchainTokenDynamic.WriteBlock(ASkip: Int64; ABlock: TCTokensBase);
-var
-  NeedClose: Boolean;
-begin
-  NeedClose := DoOpen(fmOpenWrite);
-  try
-    FFile.Seek(ASkip * GetBlockSize, soBeginning);
-    FFile.WriteData<TCTokensBase>(ABlock);
-  finally
-    if NeedClose then
-      DoClose;
-  end;
-end;
-
-procedure TBlockchainTokenDynamic.WriteBlocks(ASkip: Int64;
-  ABlocks: TArray<TCTokensBase>);
-var
+  BlockBytes: array[0..SizeOf(TCTokensBase) - 1] of Byte;
+  TokenBaseBlock: TCTokensBase absolute BlockBytes;
   i: Integer;
-  NeedClose: Boolean;
 begin
-  NeedClose := DoOpen(fmOpenWrite);
+  Result := [];
+  NeedClose := DoOpen;
   try
-    FFile.Seek(ASkip * GetBlockSize, soBeginning);
-    for i := 0 to Length(ABlocks) - 1 do
-      FFile.WriteData<TCTokensBase>(ABlocks[i]);
+    if (ASkipBlocks >= FileSize(FFile)) or
+      (ASkipBlocks < 0) then
+      exit;
+
+    Seek(FFile, ASkipBlocks);
+    SetLength(Result, Min(ANumber, FileSize(FFile) - ASkipBlocks) * GetBlockSize);
+    for i := 0 to (Length(Result) div GetBlockSize) - 1 do
+    begin
+      Read(FFile, TokenBaseBlock);
+      Move(BlockBytes[0], Result[i * GetBlockSize], GetBlockSize);
+    end;
   finally
     if NeedClose then
       DoClose;
   end;
 end;
 
-procedure TBlockchainTokenDynamic.WriteBlocksAsBytes(ASkip: Int64;
+procedure TBlockchainTokenDynamic.WriteBlock(ASkip: Integer; ABlock: TCTokensBase);
+var
+  NeedClose: Boolean;
+begin
+  if ASkip < 0 then
+    exit;
+
+  NeedClose := DoOpen;
+  try
+    Seek(FFile, ASkip);
+    Write(FFile, ABlock);
+  finally
+    if NeedClose then
+      DoClose;
+  end;
+end;
+
+procedure TBlockchainTokenDynamic.WriteBlocksAsBytes(ASkipBlocks: Integer;
   ABytes: TBytes);
 var
   NeedClose: Boolean;
+  BlockBytes: array[0..SizeOf(TCTokensBase) - 1] of Byte;
+  TokenBaseBlock: TCTokensBase absolute BlockBytes;
+  i: Integer;
 begin
-  if Length(ABytes) mod GetBlockSize <> 0 then
+  if (Length(ABytes) mod GetBlockSize <> 0) or (ASkipBlocks < 0) then
     exit;
 
-  NeedClose := DoOpen(fmOpenWrite);
+  NeedClose := DoOpen;
   try
-    FFile.Seek(ASkip * GetBlockSize, soBeginning);
-    FFile.Write(ABytes, Length(ABytes));
+    Seek(FFile, ASkipBlocks);
+    for i := 0 to (Length(ABytes) div GetBlockSize) - 1 do
+    begin
+      Move(ABytes[i * GetBlockSize], BlockBytes[0], GetBlockSize);
+      Write(FFile, TokenBaseBlock);
+    end;
   finally
     if NeedClose then
       DoClose;

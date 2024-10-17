@@ -17,7 +17,7 @@ type
 
   TConnectedClient = class(TThread)
     const
-      RECEIVE_DATA_TIMEOUT = 10000000;
+      RECEIVE_DATA_TIMEOUT = 10000;
     private
       FSocket: TSocket;
       FID: string;
@@ -33,8 +33,10 @@ type
       function GetDynTETChainBlocksToSend(out ABlocksNumber: Integer): TBytes;
       function GetTokenICOBlocksToSend(out ABlocksNumber: Integer): TBytes;
       function GetSmartKeyBlocksToSend(out ABlocksNumber: Integer): TBytes;
-//      function GetTokenChainBlocksToSend(out ATokenID: Integer;
-//        out ABlocksNumber: Integer): TBytes;
+      function GetTokenChainBlocksToSend(out ATokenID: Integer;
+        out ABlocksNumber: Integer): TBytes;
+      function GetDynTokenChainBlocksToSend(out ATokenID: Integer;
+        out ABlocksNumber: Integer): TBytes;
     protected
       procedure Execute; override;
     public
@@ -154,6 +156,19 @@ begin
   ABlocksNumber := Length(Result) div AppCore.GetDynTETChainBlockSize;
 end;
 
+function TConnectedClient.GetDynTokenChainBlocksToSend(out ATokenID,
+  ABlocksNumber: Integer): TBytes;
+var
+  DataBytes: array[0..3] of Byte;
+  DataInt: Integer absolute DataBytes;
+begin
+  FSocket.Receive(DataBytes, 0, 4, [TSocketFlag.WAITALL]);
+  ATokenID := DataInt;
+  FSocket.Receive(DataBytes, 0, 4, [TSocketFlag.WAITALL]);
+  Result := AppCore.GetDynTokenChainBlocks(ATokenID, DataInt);
+  ABlocksNumber := Length(Result) div AppCore.GetDynTokenChainBlockSize;
+end;
+
 function TConnectedClient.GetFullAddress: string;
 begin
   Result := Format('%s:%d',[FSocket.Endpoint.Address.Address,
@@ -181,27 +196,25 @@ begin
   ABlocksNumber := Length(Result) div AppCore.GetTokenICOBlockSize;
 end;
 
-//function TConnectedClient.GetTokenChainBlocksToSend(out ATokenID: Integer;
-//  out ABlocksNumber: Integer): TBytes;
-//var
-//  TokenIDBytes: array[0..3] of Byte;
-//  TokenID: Integer absolute TokenIDBytes;
-//  IncomCountBytes: array[0..7] of Byte;
-//  IncomCount: Int64 absolute IncomCountBytes;
-//begin
-//  FSocket.Receive(TokenIDBytes,0,4,[TSocketFlag.WAITALL]);
-//  FSocket.Receive(IncomCountBytes,0,8,[TSocketFlag.WAITALL]);
-//  Result := AppCore.GetTokenChainBlocks(TokenID,IncomCount);
-//  ATokenID := TokenID;
-//  ABlocksNumber := Length(Result) div AppCore.GetTokenBlockSize;
-//end;
+function TConnectedClient.GetTokenChainBlocksToSend(out ATokenID: Integer;
+  out ABlocksNumber: Integer): TBytes;
+var
+  DataBytes: array[0..3] of Byte;
+  DataInt: Integer absolute DataBytes;
+begin
+  FSocket.Receive(DataBytes, 0, 4, [TSocketFlag.WAITALL]);
+  ATokenID := DataInt;
+  FSocket.Receive(DataBytes, 0, 4, [TSocketFlag.WAITALL]);
+  Result := AppCore.GetTokenChainBlocks(ATokenID, DataInt);
+  ABlocksNumber := Length(Result) div AppCore.GetTokenChainBlockSize;
+end;
 
 procedure TConnectedClient.ReceiveRequest;
 var
   Command: Byte;
 //  tranferResult: string;
   OutgoBytes: array[0..3] of Byte;
-  OutgoInt: Integer absolute OutgoBytes;
+  OutgoBlocksNumber: Integer absolute OutgoBytes;
   ToSend: TBytes;
   TokenID: Integer;
 begin
@@ -226,75 +239,60 @@ begin
 
     TETChainsTotalNumberCode:
       begin
-        OutgoInt := AppCore.GetDynTETChainBlocksCount;
+        OutgoBlocksNumber := AppCore.GetDynTETChainBlocksCount;
         FSocket.Send(OutgoBytes, 0, 4);
-        OutgoInt := AppCore.GetTETChainBlocksCount;
+        OutgoBlocksNumber := AppCore.GetTETChainBlocksCount;
         FSocket.Send(OutgoBytes, 0, 4);
-
-//        Logs.DoLog(Format('<To %s>[%d]: Total count = %d',
-//          [FID, TET_CHAINS_TOTAL_NUMBER_COMMAND_CODE, OutgoInt]), OUTGO, sync);
       end;
 
     TETChainSyncCommandCode:
       begin
-        ToSend := GetTETChainBlocksToSend(OutgoInt);
+        ToSend := GetTETChainBlocksToSend(OutgoBlocksNumber);
         FSocket.Send(OutgoBytes, 0, 4);
-        if OutgoInt = 0 then
-          exit;
-
-        FSocket.Send(ToSend, 0, Length(ToSend));
-//        Logs.DoLog(Format('<To %s>[%d]: Blocks sended = %d',
-//          [FID, TET_CHAIN_SYNC_COMMAND_CODE, OutgoInt]), OUTGO, sync);
+        if OutgoBlocksNumber > 0 then
+          FSocket.Send(ToSend, 0, Length(ToSend));
       end;
 
     DynTETChainSyncCommandCode:
       begin
-        ToSend := GetDynTETChainBlocksToSend(OutgoInt);
+        ToSend := GetDynTETChainBlocksToSend(OutgoBlocksNumber);
         FSocket.Send(OutgoBytes, 0, 4);
-        if OutgoInt = 0 then
-          exit;
-
-        FSocket.Send(ToSend, 0, Length(ToSend));
-//        Logs.DoLog(Format('<To %s>[%d]: Blocks sended = %d',
-//          [FID, DYN_TET_CHAIN_SYNC_COMMAND_CODE, OutgoInt]), OUTGO, sync);
+        if OutgoBlocksNumber > 0 then
+          FSocket.Send(ToSend, 0, Length(ToSend));
       end;
 
     TokenICOSyncCommandCode:
       begin
-        ToSend := GetTokenICOBlocksToSend(OutgoInt);
+        ToSend := GetTokenICOBlocksToSend(OutgoBlocksNumber);
         FSocket.Send(OutgoBytes, 0, 4);
-        if OutgoInt = 0 then
-          exit;
-
-        FSocket.Send(ToSend, 0, Length(ToSend));
-//        Logs.DoLog(Format('<To %s>[%d]: Blocks sended = %d',
-//          [FID, TOKEN_ICO_SYNC_COMMAND_CODE, OutgoInt]), OUTGO, sync);
+        if OutgoBlocksNumber > 0 then
+          FSocket.Send(ToSend, 0, Length(ToSend));
       end;
 
     SmartKeySyncCommandCode:
       begin
-        ToSend := GetSmartKeyBlocksToSend(OutgoInt);
+        ToSend := GetSmartKeyBlocksToSend(OutgoBlocksNumber);
         FSocket.Send(OutgoBytes, 0, 4);
-        if OutgoInt = 0 then
-          exit;
-//
-        FSocket.Send(ToSend, 0, Length(ToSend));
-//        Logs.DoLog(Format('<To %s>[%d]: Blocks sended = %d',
-//          [FID,SMARTKEY_SYNC_COMMAND_CODE,OutgoInt]),OUTGO,sync);
+        if OutgoBlocksNumber > 0 then
+          FSocket.Send(ToSend, 0, Length(ToSend));
       end;
 
-//    TOKEN_SYNC_COMMAND_CODE:
-//      begin
-//        AppCore.UpdateTokensList;
-//        ToSend := GetTokenChainBlocksToSend(TokenID,OutgoInt);
-//        FSocket.Send(OutgoBytes,0,4);
-//        if OutgoInt <= 0 then
-//          exit;
-//
-//        FSocket.Send(ToSend,0,Length(ToSend));
-//        Logs.DoLog(Format('<To %s>[%d]: Token ID = %d, Blocks sended = %d',
-//          [FID,TOKEN_SYNC_COMMAND_CODE,TokenID,OutgoInt]),OUTGO,sync);
-//      end;
+    TokenChainSyncCommandCode:
+      begin
+        ToSend := GetTokenChainBlocksToSend(TokenID, OutgoBlocksNumber);
+        FSocket.Send(OutgoBytes, 0, 4);
+        if OutgoBlocksNumber > 0 then
+          FSocket.Send(ToSend, 0, Length(ToSend));
+      end;
+
+    DynTokenChainSyncCommandCode:
+      begin
+        AppCore.UpdateTokensList;
+        ToSend := GetDynTokenChainBlocksToSend(TokenID, OutgoBlocksNumber);
+        FSocket.Send(OutgoBytes, 0, 4);
+        if OutgoBlocksNumber > 0 then
+          FSocket.Send(ToSend, 0, Length(ToSend));
+      end
 
     else
       begin

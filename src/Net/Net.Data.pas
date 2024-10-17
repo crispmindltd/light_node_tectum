@@ -21,7 +21,8 @@ const
   DynTETChainSyncCommandCode = 103;
   TokenICOSyncCommandCode = 104;
   SmartKeySyncCommandCode = 105;
-  TOKEN_SYNC_COMMAND_CODE = 106;
+  TokenChainSyncCommandCode = 106;
+  DynTokenChainSyncCommandCode = 107;
 
 type
   TNodesConnectManager = class
