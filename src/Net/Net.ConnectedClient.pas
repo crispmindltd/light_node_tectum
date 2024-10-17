@@ -271,6 +271,7 @@ begin
 
     SmartKeySyncCommandCode:
       begin
+        AppCore.UpdateTokensList;
         ToSend := GetSmartKeyBlocksToSend(OutgoBlocksNumber);
         FSocket.Send(OutgoBytes, 0, 4);
         if OutgoBlocksNumber > 0 then
@@ -287,7 +288,6 @@ begin
 
     DynTokenChainSyncCommandCode:
       begin
-        AppCore.UpdateTokensList;
         ToSend := GetDynTokenChainBlocksToSend(TokenID, OutgoBlocksNumber);
         FSocket.Send(OutgoBytes, 0, 4);
         if OutgoBlocksNumber > 0 then

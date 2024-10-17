@@ -343,7 +343,6 @@ procedure TAppCore.DoNewToken(AReqID, ASessionKey, AFullName, AShortName,
   ATicker: string; AAmount: Int64; ADecimals: Integer;
   ACallBackProc: TGetStrProc);
 var
-  Splitted: TArray<string>;
   SmartKeyBlock: TCSmartKey;
   DateTime: string;
 begin
@@ -471,7 +470,6 @@ end;
 procedure TAppCore.DoTETTransfer(AReqID, ASessionKey, ATo: string;
   AAmount: Double; ACallBackProc: TGetStrProc);
 var
-  Splitted: TArray<string>;
   AmountStr: string;
 begin
   if not(ASessionKey.StartsWith('ipa') and (Length(ASessionKey) = 34)) then

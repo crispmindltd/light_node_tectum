@@ -33,7 +33,6 @@ type
       FName: string;
       FAddress: string;
       FPort: Word;
-      FNeedDelay: Boolean;
       FDone: TEvent;
 
       procedure Execute; override;
@@ -85,7 +84,6 @@ begin
   FAddress := AAddress;
   FPort := APort;
   FName := AName;
-  FNeedDelay := False;
   FIsError := False;
 end;
 

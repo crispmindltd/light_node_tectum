@@ -21,13 +21,14 @@ type
     private
       FDynTETChainTotalBlocksToLoad: Integer;
       FTETChainTotalBlocksToLoad: Integer;
+      FNeedDelay: Boolean;
 
       procedure DoRequests;
       procedure DoTETChainsTotalBlocksNumberRequest;
       procedure DoTETChainBlocksRequest;
       procedure ReceiveTETChainBlocks(const ATETBlocksNumberNow: Integer);
       procedure DoDynTETChainBlocksRequest;
-      procedure ReceiveDynTETChainBlocks(const ADynTETBlocksNumberNow: Integer);       
+      procedure ReceiveDynTETChainBlocks(const ADynTETBlocksNumberNow: Integer);
       procedure DoTokenICORequest;
       procedure ReceiveTokenICOBlocks(const ABlocksNumberNow: Integer);
     protected
@@ -47,6 +48,7 @@ begin
 
   FDynTETChainTotalBlocksToLoad := 0;
   FTETChainTotalBlocksToLoad := 0;
+  FNeedDelay := False;
 end;
 
 destructor TTETChainBlocksUpdater.Destroy;
@@ -93,7 +95,7 @@ var
   BytesToReceive: TBytes;
 begin
   GetResponse(IncomCountBytes);
-  if Terminated or (IncomCount <= 0) then
+  if Terminated or (IncomCount = 0) then
   begin
     FNeedDelay := True;
     exit;
@@ -119,7 +121,7 @@ var
   BytesToReceive: TBytes;
 begin
   GetResponse(IncomCountBytes);
-  if Terminated or (IncomCount <= 0) then
+  if Terminated or (IncomCount = 0) then
   begin
     FNeedDelay := True;
     exit;
@@ -145,7 +147,7 @@ var
   BytesToReceive: TBytes;
 begin
   GetResponse(IncomCountBytes);
-  if Terminated or (IncomCount <= 0) then
+  if Terminated or (IncomCount = 0) then
     exit;
 
   SetLength(BytesToReceive, IncomCount * AppCore.GetTokenICOBlockSize);

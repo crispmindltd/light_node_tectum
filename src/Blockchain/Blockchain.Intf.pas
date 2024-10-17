@@ -8,8 +8,8 @@ uses
   SysUtils;
 
 const
-  MaxBlocksNumber = 3000; // max blocks number per request
-  OneBlockSize = 316;
+  MaxBlocksNumber = 3000;  // max blocks number per request
+
 type
   TChainFileBase = class abstract
   protected
