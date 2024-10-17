@@ -164,7 +164,7 @@ begin
   FBytesRequest[0] := DynTokenChainSyncCommandCode;
   DataInt := ATokenID;
   Move(DataBytes[0], FBytesRequest[1], 4);
-  DataInt := AppCore.GetTokenChainBlocksCount(ATokenID);
+  DataInt := AppCore.GetDynTokenChainBlocksCount(ATokenID);
   Move(DataBytes[0], FBytesRequest[5], 4);
 
   FSocket.Send(FBytesRequest, 0, 9);

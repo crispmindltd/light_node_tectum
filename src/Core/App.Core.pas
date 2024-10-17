@@ -168,7 +168,6 @@ type
     function TryExtractPrivateKeyFromFile(out PrKey: string;
       out PubKey: string): Boolean;
 
-
 //    function TryGetTokenBase(ATicker: string; var sk: TCSmartKey): Boolean;
 //    function TryGetTokenBaseByAddress(const AAddress: string; var sk: TCSmartKey): Boolean;
 
