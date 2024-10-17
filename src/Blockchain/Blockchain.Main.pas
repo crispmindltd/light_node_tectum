@@ -41,7 +41,7 @@ type
       function TryGetTETAddressByOwnerID(const AOwnerID: Int64;
         out ATETAddress: String): Boolean;
       function TryGetTETTokenBase(const AOwnerID: Int64; out AID: Integer;
-        var tb:TTokenBase): Boolean; overload;
+        var tb:TTokenBase; ATETCheck: Boolean = True): Boolean; overload;
       function TryGetTETTokenBase(const ATETAddress: String; out AID: Integer;
         var tb:TTokenBase): Boolean; overload;
       function TryGetCTokenBase(ATokenID: Integer; const AOwnerID: Integer;
@@ -711,39 +711,54 @@ var
   bc4: TCbc4 absolute TCbc4Arr;
   tcb: TCTokensBase;
   tICO: TTokenICODat;
+  AddrDict: TDictionary<Integer, string>;
 begin
-  if not FSmartcontracts.TryGetValue(SmartNameByTicker(ATicker),ChainFileWorker)
+  if not (FSmartcontracts.TryGetValue(SmartNameByTicker(ATicker),ChainFileWorker) and
+          TryGetOneICOBlock(ATicker,tICO))
     then raise ESmartNotExistsError.Create('');
 
+  dynID := SmartIDByTicker(ATicker);
   count := ARows;
   Bytes := ChainFileWorker.ReadBlocks(ASkip,ARows);
   ARows := Min(Min(ARows,count),50);
 
   SetLength(Result,ARows);
-  for i := 0 to ARows-1 do
-  begin
-    Move(Bytes[i*SizeOf(bc4)],TCbc4Arr[0],SizeOf(bc4));
-
-    Result[i].DateTime := bc4.Smart.TimeEvent;
-    dynID := SmartIDByTicker(ATicker);
-    Result[i].BlockNum := ASkip + i;
-
-    if GetOneSmartDynBlock(dynID,bc4.Smart.tkn[1].TokenID,tcb) then
-      Result[i].TransFrom := tcb.Token;
-    if GetOneSmartDynBlock(dynID,bc4.Smart.tkn[2].TokenID,tcb) then
-      Result[i].TransTo := tcb.Token;
-
-    hashHex := '';
-    for j := 1 to CHashLength do
-      hashHex := hashHex + IntToHex(bc4.Hash[j],2);
-    Result[i].Hash := hashHex.ToLower;
-
-    if TryGetOneICOBlock(ATicker,tICO) then
+  FDynamicBlocks.TryGetValue(ConstStr.Token64FileName, ChainFileWorker);
+  AddrDict := TDictionary<Integer, string>.Create(ARows*2);
+  try
+    for i := 0 to ARows-1 do
     begin
+      Move(Bytes[i*SizeOf(bc4)],TCbc4Arr[0],SizeOf(bc4));
+
+      GetOneSmartDynBlock(dynID,bc4.Smart.tkn[1].TokenID,tcb);
+      AddrDict.AddOrSetValue(tcb.OwnerID,'');
+      GetOneSmartDynBlock(dynID,bc4.Smart.tkn[2].TokenID,tcb);
+      AddrDict.AddOrSetValue(tcb.OwnerID,'');
+    end;
+    TBlockchainTETDynamic(ChainFileWorker).GetTETAddresses(AddrDict);
+    for i := 0 to ARows-1 do
+    begin
+      Move(Bytes[i*SizeOf(bc4)],TCbc4Arr[0],SizeOf(bc4));
+
+      Result[i].DateTime := bc4.Smart.TimeEvent;
+      Result[i].BlockNum := ASkip + i;
+
+      GetOneSmartDynBlock(dynID,bc4.Smart.tkn[1].TokenID,tcb);
+      Result[i].TransFrom := AddrDict[tcb.OwnerID];
+      GetOneSmartDynBlock(dynID,bc4.Smart.tkn[2].TokenID,tcb);
+      Result[i].TransTo := AddrDict[tcb.OwnerID];
+
+      hashHex := '';
+      for j := 1 to CHashLength do
+        hashHex := hashHex + IntToHex(bc4.Hash[j],2);
+      Result[i].Hash := hashHex.ToLower;
+
       Result[i].FloatSize := tICO.FloatSize;
       Result[i].Amount := bc4.Smart.Delta / Power(10, Result[i].FloatSize);
       Result[i].Ticker := tICO.Abreviature;
     end;
+  finally
+    AddrDict.Free;
   end;
 end;
 
@@ -1253,7 +1268,7 @@ begin
 end;
 
 function TBlockchain.TryGetTETTokenBase(const AOwnerID: Int64;
-  out AID: Integer; var tb: TTokenBase): Boolean;
+  out AID: Integer; var tb: TTokenBase; ATETCheck: Boolean): Boolean;
 var
   ChainFileWorker: TChainFileWorker;
 begin
