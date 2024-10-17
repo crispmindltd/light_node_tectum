@@ -6,6 +6,7 @@ uses
   App.Constants,
   Blockchain.BaseTypes,
   Blockchain.Intf,
+  Generics.Collections,
   Math;
 
 type
@@ -25,6 +26,7 @@ type
     procedure WriteOneBlock(APos: Int64; ABytes: TOneBlockBytes); override;
 
     function TryGetTETAddress(const AOwnerID: Int64; out ATETAddress: String): Boolean;
+    procedure GetTETAddresses(var ADict: TDictionary<Integer, string>);
     function TryGetTokenBase(AOwnerID: Int64; out AID: Integer;
       out tb: TTokenBase): Boolean; overload;
     function TryGetTokenBase(ATETAddress: String; out AID: Integer;
@@ -138,6 +140,34 @@ begin
   end;
 end;
 
+procedure TBlockchainTETDynamic.GetTETAddresses(
+  var ADict: TDictionary<Integer, string>);
+var
+  i: Integer;
+  tb: TTokenBase;
+begin
+  FLock.Enter;
+  AssignFile(FFile, FFullFilePath);
+  Reset(FFile);
+  try
+    for i := FileSize(FFile) - 1 downto 0 do
+    begin
+      Seek(FFile,i);
+      Read(FFile,tb);
+      if tb.TokenDatID <> 1 then
+        continue;
+
+      if ADict.ContainsKey(tb.OwnerID) then
+        ADict.AddOrSetValue(tb.OwnerID, tb.Token);
+      if not ADict.ContainsValue('') then
+        break;
+    end;
+  finally
+    CloseFile(FFile);
+    FLock.Leave;
+  end;
+end;
+
 function TBlockchainTETDynamic.TryGetTokenBase(ATETAddress: String;
   out AID: Integer; out tb: TTokenBase): Boolean;
 var
@@ -169,14 +199,14 @@ function TBlockchainTETDynamic.TryGetTokenBase(AOwnerID: Int64; out AID: Integer
 var
   i: Integer;
 begin
-  FLock.Enter;
   Result := False;
+  FLock.Enter;
   AssignFile(FFile, FFullFilePath);
   Reset(FFile);
   try
-    for i := 0 to FileSize(FFile)-1 do
+    Seek(FFile,0);
+    for i := 0 to FileSize(FFile) - 1 do
     begin
-      Seek(FFile,i);
       Read(FFile,tb);
       if (tb.OwnerID = AOwnerID) and (tb.TokenDatID = 1) then
       begin
