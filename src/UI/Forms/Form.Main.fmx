@@ -42,7 +42,6 @@ object MainForm: TMainForm
       1094s
       897s)
     object TectumTabItem: TTabItem
-      Cursor = crHandPoint
       CustomIcon = <
         item
         end>
@@ -52,8 +51,9 @@ object MainForm: TMainForm
       TextSettings.Trimming = None
       StyledSettings = [Style, FontColor, Other]
       IsSelected = True
+      Margins.Left = -4.000000000000000000
       Margins.Right = 6.000000000000000000
-      Size.Width = 267.000000000000000000
+      Size.Width = 271.000000000000000000
       Size.Height = 64.000000000000000000
       Size.PlatformDefault = False
       StyleLookup = 'AuthTabItemstyle'
@@ -874,7 +874,6 @@ object MainForm: TMainForm
       end
     end
     object TokensTabItem: TTabItem
-      Cursor = crHandPoint
       CustomIcon = <
         item
         end>
@@ -1812,7 +1811,6 @@ object MainForm: TMainForm
       end
     end
     object CreateTokenTabItem: TTabItem
-      Cursor = crHandPoint
       CustomIcon = <
         item
         end>
@@ -2483,8 +2481,6 @@ object MainForm: TMainForm
       end
     end
     object ExplorerTabItem: TTabItem
-      AutoSize = False
-      Cursor = crHandPoint
       CustomIcon = <
         item
         end>

@@ -56,7 +56,7 @@ type
     procedure SetTETChainBlocks(ASkip: Integer; ABytes: TBytes);
     function GetTETUserLastTransactions(AUserID: Integer;
       ANumber: Integer): TArray<THistoryTransactionInfo>;
-    function TryGetTETChainBlock(ASkip: Integer; ATETBlock: Tbc2): Boolean;
+    function TryGetTETChainBlock(ASkip: Integer; var ATETBlock: Tbc2): Boolean;
 
     function GetDynTETChainBlockSize: Integer;
     function GetDynTETChainBlocksCount: Integer;
@@ -184,7 +184,8 @@ begin
   Result := FTETChains.Trans.GetBlocksCount;
 end;
 
-function TBlockchain.TryGetTETChainBlock(ASkip: Integer; ATETBlock: Tbc2): Boolean;
+function TBlockchain.TryGetTETChainBlock(ASkip: Integer;
+  var ATETBlock: Tbc2): Boolean;
 begin
   Result := FTETChains.Trans.TryGet(ASkip, ATETBlock);
 end;

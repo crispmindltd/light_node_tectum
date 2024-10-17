@@ -301,7 +301,7 @@ begin
     case Splitted[3].ToInteger of
       15: ShowLogInError('Server did not respond, try later');
       93: ShowLogInError(LogInErrorText);
-      816: ShowLogInError(SignUpErrorText);
+      816: ShowLogInError(LogInErrorText);
       else
         begin
           Logs.DoLog('Unknown error during auth with code ' +
