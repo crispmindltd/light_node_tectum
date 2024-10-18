@@ -32,7 +32,6 @@ type
     procedure ShowForm(Form: TCommonCustomForm; AsMainForm: Boolean = False);
     procedure CreateAndShowForm(const InstanceClass: TComponentClass;
       var Reference; AsMainForm: Boolean = False);
-    function IsChainNeedSync(const AName: String): Boolean;
     procedure ReleaseForm(var Form);
     procedure DoReleaseForm(Form: TCommonCustomForm);
   public
@@ -46,6 +45,7 @@ type
     procedure ShowTotalBlocksToDownload(const ABlocksNumberToLoad: UInt64);
     procedure ShowDownloadProgress;
     procedure NotifyNewTETBlocks(const ANeedRefreshBalance: Boolean);
+    procedure NotifyNewToken(const ATicker: string; ATokenID: Integer);
     procedure NotifyNewTokenBlocks(const ANeedRefreshBalance: Boolean);
   end;
 
@@ -164,11 +164,6 @@ begin
   TAccessCommonCustomForm(Form).ReleaseForm;
 end;
 
-function TUICore.IsChainNeedSync(const AName: String): Boolean;
-begin
-//  Result := MainForm.IsChainNeedSync(AName);
-end;
-
 procedure TUICore.NotifyNewTETBlocks(const ANeedRefreshBalance: Boolean);
 begin
   if Assigned(MainForm) then
@@ -176,6 +171,16 @@ begin
     procedure
     begin
       MainForm.NewTETChainBlocksEvent(ANeedRefreshBalance);
+    end);
+end;
+
+procedure TUICore.NotifyNewToken(const ATicker: string; ATokenID: Integer);
+begin
+  if Assigned(MainForm) then
+    TThread.Synchronize(nil,
+    procedure
+    begin
+      MainForm.NewTokenEvent(ATicker, ATokenID);
     end);
 end;
 

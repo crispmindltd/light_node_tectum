@@ -30,8 +30,8 @@ type
     function ReadBlocksAsBytes(ASkipBlocks: Integer;
       ANumber: Integer = MaxBlocksNumber): TBytes; override;
 
-//    function TryGetTokenBase(AOwnerID: Int64; out AID: Integer;
-//      out tcb: TCTokensBase): Boolean;
+    function TryGet(AUserID: Integer; out ABlockID: Integer;
+      out ATokenDyn: TCTokensBase): Boolean;
   end;
 
 implementation
@@ -93,31 +93,30 @@ begin
   Result := SizeOf(TCTokensBase);
 end;
 
-//function TBlockchainTokenDynamic.TryGetTokenBase(AOwnerID: Int64;
-//  out AID: Integer; out tcb: TCTokensBase): Boolean;
-//var
-//  i: Integer;
-//begin
-//  FLock.Enter;
-//  Result := False;
-//  AssignFile(FFile, FFullFilePath);
-//  Reset(FFile);
-//  try
-//    for i := 0 to FileSize(FFile)-1 do
-//    begin
-//      Seek(FFile,i);
-//      Read(FFile,tcb);
-//      if tcb.OwnerID = AOwnerID then
-//      begin
-//        AID := i;
-//        Exit(True);
-//      end;
-//    end;
-//  finally
-//    CloseFile(FFile);
-//    FLock.Leave;
-//  end;
-//end;
+function TBlockchainTokenDynamic.TryGet(AUserID: Integer; out ABlockID: Integer;
+  out ATokenDyn: TCTokensBase): Boolean;
+var
+  NeedClose: Boolean;
+  i: Integer;
+begin
+  Result := False;
+  NeedClose := DoOpen;
+  try
+    Seek(FFile, 0);
+    for i := 0 to FileSize(FFile) - 1 do
+    begin
+      Read(FFile, ATokenDyn);
+      if ATokenDyn.OwnerID = AUserID then
+      begin
+        ABlockID := i;
+        exit(True);
+      end;
+    end;
+  finally
+    if NeedClose then
+      DoClose;
+  end;
+end;
 
 function TBlockchainTokenDynamic.TryReadBlock(ASkip: Integer;
   out ABlock: TCTokensBase): Boolean;

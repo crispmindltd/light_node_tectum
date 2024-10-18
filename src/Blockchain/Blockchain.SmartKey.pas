@@ -128,7 +128,7 @@ begin
   AssignFile(FFile, FFullFilePath);
   Reset(FFile);
   try
-    Seek(FFile, i);
+    Seek(FFile, 0);
     for i := 0 to FileSize(FFile) - 1 do
     begin
       Read(FFile, ASmartKey);

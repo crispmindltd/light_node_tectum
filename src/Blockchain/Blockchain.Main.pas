@@ -68,8 +68,8 @@ type
 //      procedure SetDynBlock(ADynID: Integer; APos: Int64; ABytes: TOneBlockBytes);
 //      procedure SetDynBlocks(ADynID: Integer; APos: Int64; ABytes: TBytesBlocks;
 //        AAmount: Integer);
-    function TryGetTETDyn(const ATETAddress: string; out ABlockID: Integer;
-      out ATETDyn: TTokenBase): Boolean;
+    function TryGetDynTETBlock(const ATETAddress: string; out ABlockID: Integer;
+      out ADynTET: TTokenBase): Boolean;
 
     function GetICOBlockSize: Integer;
     function GetICOBlocksCount: Integer;
@@ -90,6 +90,7 @@ type
     function GetSmartKeyBlocksCount: Integer;
     function GetSmartKeyBlocks(ASkip: Integer): TBytes;
     procedure SetSmartKeyBlocks(ASkip: Integer; ABytes: TBytes);
+    function GetSmartKeys(ASkip, ARows: Integer): TArray<TCSmartKey>;
     function TryGetSmartKey(ATicker: string; var ASmartKey: TCSmartKey): Boolean;
 
     procedure UpdateTokensList;
@@ -98,12 +99,16 @@ type
     function GetTokenChainBlocks(ATokenID: Integer; ASkip: Integer): TBytes;
     procedure SetTokenChainBlocks(ATokenID: Integer; ASkip: Integer;
       ABytes: TBytes);
+    function TryGetTokenChainBlock(ATokenID: Integer; ASkip: Integer;
+      var ATokenBlock: TCbc4): Boolean;
 
     function GetDynTokenChainBlockSize: Integer;
     function GetDynTokenChainBlocksCount(ATokenID: Integer): Integer;
     function GetDynTokenChainBlocks(ATokenID: Integer; ASkip: Integer): TBytes;
     procedure SetDynTokenChainBlocks(ATokenID: Integer; ASkip: Integer;
       ABytes: TBytes);
+    function TryGetDynTokenBlock(ATokenID: Integer; const ATETAddress: string;
+      out ABlockID: Integer; out ADynToken: TCTokensBase): Boolean;
 //      function GetSmartTickerByID(ASmartID: Integer): string;
 ////      function SmartIdNameToTicker(AIDName: string): string;
 //      function SmartTickerToID(ATicker: string): Integer;
@@ -317,10 +322,10 @@ begin
   FTETChains.DynBlocks.WriteBlocksAsBytes(ASkip, ABytes);
 end;
 
-function TBlockchain.TryGetTETDyn(const ATETAddress: string;
-  out ABlockID: Integer; out ATETDyn: TTokenBase): Boolean;
+function TBlockchain.TryGetDynTETBlock(const ATETAddress: string;
+  out ABlockID: Integer; out ADynTET: TTokenBase): Boolean;
 begin
-  Result := FTETChains.DynBlocks.TryGet(ATETAddress, ABlockID, ATETDyn);
+  Result := FTETChains.DynBlocks.TryGet(ATETAddress, ABlockID, ADynTET);
 end;
 
 function TBlockchain.GetICOBlockSize: Integer;
@@ -388,7 +393,13 @@ begin
   begin
     Move(ABytes[i * SizeOf(TCSmartKey)], CSmartKeyBytes[0], SizeOf(TCSmartKey));
     AppCore.AddTokenToSynchronize(CSmartKey.SmartID);
+    UI.NotifyNewToken(CSmartKey.Abreviature, CSmartKey.SmartID);
   end;
+end;
+
+function TBlockchain.GetSmartKeys(ASkip, ARows: Integer): TArray<TCSmartKey>;
+begin
+  Result := FSmartKey.ReadBlocks(ASkip, ARows);
 end;
 
 function TBlockchain.TryGetSmartKey(ATicker: string;
@@ -487,6 +498,16 @@ begin
   end;
 end;
 
+function TBlockchain.TryGetTokenChainBlock(ATokenID: Integer; ASkip: Integer;
+  var ATokenBlock: TCbc4): Boolean;
+var
+  TokenChainsPair: TTokenChainsPair;
+begin
+  Result := False;
+  if FTokensChains.TryGetValue(ATokenID, TokenChainsPair) then
+    Result := TokenChainsPair.Trans.TryGet(ASkip, ATokenBlock);
+end;
+
 function TBlockchain.GetDynTokenChainBlockSize: Integer;
 begin
   Result := SizeOf(TCTokensBase);
@@ -519,6 +540,19 @@ var
 begin
   if FTokensChains.TryGetValue(ATokenID, TokenChainsPair) then
     TokenChainsPair.DynBlocks.WriteBlocksAsBytes(ASkip, ABytes);
+end;
+
+function TBlockchain.TryGetDynTokenBlock(ATokenID: Integer;
+  const ATETAddress: string; out ABlockID: Integer;
+  out ADynToken: TCTokensBase): Boolean;
+var
+  TokenChainsPair: TTokenChainsPair;
+  DynTET: TTokenBase;
+begin
+  Result := False;
+  if TryGetDynTETBlock(ATETAddress, ABlockID, DynTET) and
+     FTokensChains.TryGetValue(ATokenID, TokenChainsPair) then
+    Result := TokenChainsPair.DynBlocks.TryGet(DynTET.OwnerID-1, ABlockID, ADynToken);
 end;
 
 //function TBlockchain.DynamicNameByID(AID: Integer): string;

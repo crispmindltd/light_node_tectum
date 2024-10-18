@@ -15,13 +15,15 @@ type
     procedure RoundRectMouseLeave(Sender: TObject);
   private
     FIsSelected: Boolean;
-    function GetTicker: String;
+
+    function GetTicker: string;
+    procedure SetSelected(AIsSelected: Boolean);
   public
-    constructor Create(AOwner: TComponent; AName: String);
+    constructor Create(AOwner: TComponent; AName: string; ATokenID: Integer);
     destructor Destroy; override;
 
-    property Selected: Boolean read FIsSelected write FIsSelected;
-    property Ticker: String read GetTicker;
+    property Selected: Boolean write SetSelected;
+    property Ticker: string read GetTicker;
   end;
 
 implementation
@@ -30,19 +32,17 @@ implementation
 
 { TTickerFrame }
 
-constructor TTickerFrame.Create(AOwner: TComponent; AName: String);
+constructor TTickerFrame.Create(AOwner: TComponent; AName: string;
+  ATokenID: Integer);
 begin
   inherited Create(AOwner);
 
   TickerText.Text := AName;
   TickerText.AutoSize := True;
   Self.Width := TickerText.Width + 20;
-  Name := 'TickerItem' + AName.Replace(' ','');
-
-  if (AName = 'Search result') or (AName = 'Tectum') then
-    Align := TAlignLayout.MostLeft;
-
+  Name := 'TickerItem' + AName.Replace(' ', '');
   FIsSelected := False;
+  Self.Tag := ATokenID;
 end;
 
 destructor TTickerFrame.Destroy;
@@ -51,7 +51,7 @@ begin
   inherited;
 end;
 
-function TTickerFrame.GetTicker: String;
+function TTickerFrame.GetTicker: string;
 begin
   Result := TickerText.Text;
 end;
@@ -70,6 +70,23 @@ begin
     TickerText.TextSettings.FontColor := $FD000000;
     RoundRect.Fill.Color := $FFF3F3F3;
   end;
+end;
+
+procedure TTickerFrame.SetSelected(AIsSelected: Boolean);
+begin
+  FIsSelected := AIsSelected;
+  if AIsSelected then
+  begin
+    RoundRect.Fill.Color := $FF0072D5;
+    TickerText.TextSettings.FontColor := $FFFFFFFF;
+  end else
+  begin
+    TickerText.TextSettings.FontColor := $FD000000;
+    RoundRect.Fill.Color := $FFF3F3F3;
+  end;
+
+  if TickerText.Text = 'Search results' then
+    Visible := FIsSelected;
 end;
 
 end.

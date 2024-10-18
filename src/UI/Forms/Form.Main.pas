@@ -13,6 +13,7 @@ uses
   Frame.PageNum,
   Frame.Ticker,
   Generics.Collections,
+  Generics.Defaults,
   Math,
   Net.Data,
   Net.Socket,
@@ -24,7 +25,7 @@ uses
   System.Rtti, FMX.Grid.Style, FMX.ScrollBox, FMX.Grid, FMX.Memo.Types, FMX.Memo;
 
 type
-  TMainForm = class(TForm)
+  TMainForm = class(TForm, IComparer<TTickerFrame>)
     Tabs: TTabControl;
     TokensTabItem: TTabItem;
     ExplorerTabItem: TTabItem;
@@ -293,8 +294,6 @@ type
     procedure SendTokenButtonClick(Sender: TObject);
     procedure FloatAnimation1Finish(Sender: TObject);
     procedure HideTokenMessageTimerTimer(Sender: TObject);
-    procedure RoundRectMouseDown(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Single);
     procedure RoundRectTickerMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single);
     procedure AmountTETEditChangeTracking(Sender: TObject);
@@ -351,15 +350,17 @@ type
     TransToDrawNumber = 18;
   private
     FBalances: TDictionary<string, Double>;
-    chosenToken, chosenTicker: string;
+    FTickersFrames: TList<TTickerFrame>;
+    FSelectedFrame: TTickerFrame;
+
+    chosenToken: string;
     totalPagesAmount, pageNum: Integer;
-    FSearchResultsFrame: TTickerFrame;
 
     function DecimalsCount(const AValue: string): Integer;
     procedure RefreshTETBalance;
     procedure RefreshTETHistory;
     procedure AlignTETHeaders;
-    procedure RefreshHeaderBalance(AName: string);
+    procedure RefreshHeaderBalance(ATicker: string);
     procedure RefreshTokensBalances;
     procedure RefreshTokenHistory;
     procedure AlignTokensHeaders;
@@ -371,8 +372,9 @@ type
     procedure AlignExplorerHeaders(AShowTicker: Boolean);
     procedure CleanScrollBox(AVertScrollBox: TVertScrollBox);
 
+    procedure AddTickerFrame(const ATicker: string; ATokenID: Integer = -1);
+    procedure PlaceTickerFrame(const ANewTickerFrame: TTickerFrame);
     procedure AddTokenItem(AName: string; AValue: Extended);
-    procedure AddTicker(AName: string);
     procedure AddPageNum(APageNum: Integer);
     procedure ShowTETTransferStatus(const AMessage: string; AIsError: Boolean = False);
     procedure ShowTokenTransferStatus(const AMessage: string; AIsError: Boolean = False);
@@ -392,10 +394,12 @@ type
       Shift: TShiftState; X, Y: Single);
     procedure onTransactionSearchingDone(AIsFound: Boolean);
 
+    function Compare(const Left, Right: TTickerFrame): Integer;
     procedure TETTransferCallBack(const AResponse: string);
     procedure TokenCreatingCallBack(const AResponse: string);
   public
     procedure NewTETChainBlocksEvent(ANeedRefreshBalance: Boolean);
+    procedure NewTokenEvent(ATicker: string; ATokenID: Integer);
     procedure NewSmartBlocksEvent;
     procedure onKeysSaved;
     procedure onKeysSavingError;
@@ -406,12 +410,12 @@ var
 
 implementation
 
-function CustomSortCompare(Left, Right: TFmxObject): Integer;
+{$R *.fmx}
+
+function CustomSortCompareStrings(Left, Right: TFmxObject): Integer;
 begin
   Result := CompareStr((Left as TListBoxItem).Text, (Right as TListBoxItem).Text);
 end;
-
-{$R *.fmx}
 
 procedure TMainForm.TokenNameEditChangeTracking(Sender: TObject);
 begin
@@ -443,26 +447,30 @@ begin
     pageNumFrame.OnMouseDown := onPageNumFrameClick;
 end;
 
-procedure TMainForm.AddTicker(AName: string);
+procedure TMainForm.AddTickerFrame(const ATicker: string; ATokenID: Integer);
 var
-  ticker: TTickerFrame;
+  NewTickerFrame: TTickerFrame;
 begin
-  ticker := TTickerFrame.Create(TopExplorerHorzLayout, AName);
-  ticker.Parent := TopExplorerHorzLayout;
-  ticker.Position.X := Single.MaxValue;
-  TopExplorerHorzLayout.Width := TopExplorerHorzLayout.Width + ticker.Width +
-    ticker.Margins.Left;
+  TopExplorerHorzLayout.BeginUpdate;
+  try
+    NewTickerFrame := TTickerFrame.Create(TopExplorerHorzLayout,
+      ATicker, ATokenID);
+    NewTickerFrame.Parent := TopExplorerHorzLayout;
+    TopExplorerHorzLayout.Width := TopExplorerHorzLayout.Width +
+      NewTickerFrame.Width + NewTickerFrame.Margins.Left;
 
-  if AName <> 'Search result' then
-  begin
-    ticker.RoundRect.OnMouseDown := RoundRectTickerMouseDown;
-    if AName = 'Tectum' then
-      ticker.RoundRect.OnMouseDown(ticker,TMouseButton.mbLeft, [], 0, 0);
-  end else         
-  begin       
-    ticker.RoundRect.OnMouseDown := RoundRectMouseDown;
-    ticker.Visible := False;     
-    FSearchResultsFrame := ticker;
+    if ATicker = 'Search results' then
+      NewTickerFrame.Visible := False
+    else
+      NewTickerFrame.RoundRect.OnMouseDown := RoundRectTickerMouseDown;
+
+    FTickersFrames.Add(NewTickerFrame);
+    FTickersFrames.Sort(Self, Min(2, FTickersFrames.Count),
+      FTickersFrames.Count - Min(2, FTickersFrames.Count));
+    if FTickersFrames.Count > 1 then
+      PlaceTickerFrame(NewTickerFrame);
+  finally
+    TopExplorerHorzLayout.EndUpdate;
   end;
 end;
 
@@ -498,7 +506,7 @@ begin
   finally
     newItem.EndUpdate;
   end;
-  AddTicker(AName);
+//  AddTicker(AName);
 end;
 
 procedure TMainForm.AlignExplorerHeaders(AShowTicker: Boolean);
@@ -644,6 +652,11 @@ begin
     else
       Inc(i);
   end;
+end;
+
+function TMainForm.Compare(const Left, Right: TTickerFrame): Integer;
+begin
+  Result := CompareStr(Left.TickerText.Text, Right.TickerText.Text);
 end;
 
 procedure TMainForm.CopyFromLayoutClick(Sender: TObject);
@@ -794,6 +807,16 @@ begin
   Result := Length(TrimmedValue) - DecimalPos;
 end;
 
+procedure TMainForm.PlaceTickerFrame(const ANewTickerFrame: TTickerFrame);
+var
+  Index: Integer;
+  PrevTickerFrame: TTickerFrame;
+begin
+  Index := FTickersFrames.IndexOf(ANewTickerFrame);
+  PrevTickerFrame := FTickersFrames.Items[Index - 1];
+  ANewTickerFrame.Position.X := PrevTickerFrame.Position.X + PrevTickerFrame.Width;
+end;
+
 procedure TMainForm.DrawTransactions(
   ATransactions: TArray<TExplorerTransactionInfo>; AShowTicker: Boolean);
 var
@@ -886,9 +909,17 @@ begin
 end;
 
 procedure TMainForm.FormCreate(Sender: TObject);
+var
+  SmartKey: TCSmartKey;
 begin
   Caption := 'LNode' + ' ' + AppCore.GetVersion;
   FBalances := TDictionary<string, Double>.Create;
+  FTickersFrames := TList<TTickerFrame>.Create;
+  FTickersFrames.Capacity := 200;
+  AddTickerFrame('Search results');
+  AddTickerFrame('Tectum');
+  for SmartKey in AppCore.GetAllSmartKeyBlocks do
+    AddTickerFrame(SmartKey.Abreviature);
 
   TETCopyLoginLayout.OnMouseEnter := StylesForm.OnCopyLayoutMouseEnter;
   TETCopyLoginLayout.OnMouseLeave := StylesForm.OnCopyLayoutMouseLeave;
@@ -931,9 +962,6 @@ begin
   NextPageLayout.OnMouseLeave := StylesForm.OnCopyLayoutMouseLeave;
 
   chosenToken := '';
-  chosenTicker := '';
-//  AddTicker('Search result');
-//  AddTicker('Tectum');
 
   const Digitals = '0123456789' + FormatSettings.DecimalSeparator;
   AmountTETEdit.FilterChar := Digitals;
@@ -942,16 +970,18 @@ end;
 
 procedure TMainForm.FormDestroy(Sender: TObject);
 begin
+  FTickersFrames.Free;
   FBalances.Free;
 end;
 
 procedure TMainForm.FormShow(Sender: TObject);
 begin
   AddressTETLabel.Text := AppCore.TETAddress;
+  AddressTokenLabel.Text := AppCore.TETAddress;
   Tabs.TabIndex := 0;
   Tabs.OnChange(nil);
-//  RefreshTokensBalances;
-//  RefreshTETHistory;
+  FTickersFrames.Items[1].RoundRect.OnMouseDown(FTickersFrames.Items[1].RoundRect,
+    TMouseButton.mbLeft, [], 0, 0);
 end;
 
 procedure TMainForm.HideCreatingMessageTimerTimer(Sender: TObject);
@@ -1014,7 +1044,11 @@ begin
         RefreshTETHistory;
         SendTETToEdit.SetFocus;
       end;
-    1: RecepientAddressEdit.SetFocus;
+    1:
+      begin
+        RefreshTokensBalances;
+        RecepientAddressEdit.SetFocus;
+      end;
     2: CreateTokenShortNameEdit.SetFocus;
     3: begin
          ExplorerTabControl.TabIndex := 0;
@@ -1129,6 +1163,11 @@ begin
   end;
 //  RefreshPagesLayout;
 //  RefreshExplorer;
+end;
+
+procedure TMainForm.NewTokenEvent(ATicker: string; ATokenID: Integer);
+begin
+  AddTickerFrame(ATicker, ATokenID);
 end;
 
 procedure TMainForm.OnPageSelected;
@@ -1299,11 +1338,11 @@ var
   TokenICO: TTokenICODat;
   SmartKey: TCSmartKey;
 begin
-  if chosenTicker.IsEmpty then
-    exit;
+//  if chosenTicker.IsEmpty then
+//    exit;
 
   TransNumber := TransToDrawNumber;
-  if chosenTicker = 'Tectum' then
+//  if chosenTicker = 'Tectum' then
   begin
 //    i := AppCore.GetChainBlocksCount - pageNum * TransNumber;
 //    if i < 0 then
@@ -1331,15 +1370,13 @@ begin
   DrawTransactions(Transactions);
 end;
 
-procedure TMainForm.RefreshHeaderBalance(AName: string);
+procedure TMainForm.RefreshHeaderBalance(ATicker: string);
 var
-  value: Double;
+  Value: Double;
 begin
-  if FBalances.TryGetValue(AName,value) then
+  if FBalances.TryGetValue(ATicker, Value) then
     BalanceTokenValueLabel.Text :=
-      Format('%s %s',[FormatFloat('0.########',value), AName]);
-
-//  AddressTokenLabel.Text := AppCore.GetSmartAddressByTicker(AName);
+      Format('%s %s', [FormatFloat('0.########', Value), ATicker]);
 end;
 
 procedure TMainForm.RefreshPagesLayout;
@@ -1474,51 +1511,51 @@ var
   format: string;
   tICO: TTokenICODat;
 begin
-//  if not AppCore.TryGetTokenICO(TokenNameEdit.Text,tICO) then
-//    exit;
-
-  amount := 20;
+//  amount := 20;
 //  transArray := AppCore.GetSmartLastUserTransactions(AppCore.UserID,TokenNameEdit.Text,amount);
 
-  NoTokenHistoryLabel.Visible := amount = 0;
-  HistoryTokenHeaderLayout.Visible := not NoTokenHistoryLabel.Visible;
-  HistoryTokenVertScrollBox.Visible := not NoTokenHistoryLabel.Visible;
-  if NoTokenHistoryLabel.Visible then exit;
-
-  CleanScrollBox(HistoryTokenVertScrollBox);
-  HistoryTokenVertScrollBox.BeginUpdate;
-  try
-    format := '0.' + string.Create('0', tICO.FloatSize);
-    for i := 0 to amount - 1 do
-    begin
-      newTransFrame := THistoryTransactionFrame.Create(HistoryTokenVertScrollBox,
-                                                       transArray[i].DateTime,
-                                                       transArray[i].BlockNum,
-                                                       transArray[i].Address,
-                                                       transArray[i].Hash,
-                                                       FormatFloat(format, transArray[i].Value),
-                                                       transArray[i].Incom);
-      newTransFrame.OnClick := onTokenHistoryFrameClick;
-      newTransFrame.Parent := HistoryTokenVertScrollBox;
-    end;
-  finally
-    HistoryTokenVertScrollBox.EndUpdate;
-    AlignTokensHeaders;
-  end;
+//  NoTokenHistoryLabel.Visible := amount = 0;
+//  HistoryTokenHeaderLayout.Visible := not NoTokenHistoryLabel.Visible;
+//  HistoryTokenVertScrollBox.Visible := not NoTokenHistoryLabel.Visible;
+//  if NoTokenHistoryLabel.Visible then exit;
+//
+//  CleanScrollBox(HistoryTokenVertScrollBox);
+//  HistoryTokenVertScrollBox.BeginUpdate;
+//  try
+//    format := '0.' + string.Create('0', tICO.FloatSize);
+//    for i := 0 to amount - 1 do
+//    begin
+//      newTransFrame := THistoryTransactionFrame.Create(HistoryTokenVertScrollBox,
+//                                                       transArray[i].DateTime,
+//                                                       transArray[i].BlockNum,
+//                                                       transArray[i].Address,
+//                                                       transArray[i].Hash,
+//                                                       FormatFloat(format, transArray[i].Value),
+//                                                       transArray[i].Incom);
+//      newTransFrame.OnClick := onTokenHistoryFrameClick;
+//      newTransFrame.Parent := HistoryTokenVertScrollBox;
+//    end;
+//  finally
+//    HistoryTokenVertScrollBox.EndUpdate;
+//    AlignTokensHeaders;
+//  end;
 end;
 
 procedure TMainForm.RefreshTokensBalances;
 var
-  splt: TArray<string>;
-  balance: string;
+  SmartKeyBlock: TCSmartKey;
+  Value: Double;
+
+  Splitted: TArray<string>;
   i: Integer;
 begin
-//  for balance in AppCore.GetLocalTokensBalances do
+  for SmartKeyBlock in AppCore.GetAllSmartKeyBlocks do
   begin
-    splt := balance.Split([':']);
-    AddOrRefreshBalance(splt[0],splt[1].ToExtended);
+    Value := AppCore.GetTokenBalance(SmartKeyBlock.SmartID, AppCore.TETAddress);
+
+    AddOrRefreshBalance(SmartKeyBlock.Abreviature, Value);
   end;
-  TokensListBox.Sort(CustomSortCompare);
+  TokensListBox.Sort(CustomSortCompareStrings);
 
   if TokensListBox.Count > 0 then
   begin
@@ -1544,50 +1581,29 @@ begin
   end;
 end;
 
-procedure TMainForm.RoundRectMouseDown(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Single);
-var
-  i: Integer;
-  parent: TTickerFrame;
-  child: TTickerFrame;
-begin
-  if Sender is TTickerFrame then
-    parent := Sender as TTickerFrame
-  else
-    parent := (Sender as TRoundRect).Parent as TTickerFrame;
-  if parent.Ticker = chosenTicker then exit;
-
-  parent.RoundRect.Fill.Color := $FF0072D5;
-  parent.TickerText.TextSettings.FontColor := $FFFFFFFF;
-  parent.Selected := True;
-  chosenTicker := parent.Ticker;
-
-  for i := 0 to TopExplorerHorzLayout.ComponentCount - 1 do
-    if (TopExplorerHorzLayout.Components[i] is TTickerFrame) and
-       ((TopExplorerHorzLayout.Components[i] as TTickerFrame).Ticker <> chosenTicker) and
-       (TopExplorerHorzLayout.Components[i] as TTickerFrame).Selected then
-      begin
-        child := TopExplorerHorzLayout.Components[i] as TTickerFrame;
-        child.TickerText.TextSettings.FontColor := $FD000000;
-        child.RoundRect.Fill.Color := $FFF3F3F3;
-        child.Selected := False;
-        break;
-      end;
-end;
-
 procedure TMainForm.RoundRectTickerMouseDown(Sender: TObject;
   Button: TMouseButton; Shift: TShiftState; X, Y: Single);
+var
+  ParentFrame: TTickerFrame;
 begin
-  RoundRectMouseDown(Sender, Button, Shift, X, Y);  
-  FSearchResultsFrame.Visible := False;  
+  ParentFrame := (Sender as TRoundRect).Parent as TTickerFrame;
+  if ParentFrame.Equals(FSelectedFrame) then
+    exit;
+
+  if Assigned(FSelectedFrame) then
+    FSelectedFrame.Selected := False;
+  ParentFrame.Selected := True;
+  FSelectedFrame := ParentFrame;
+
   pageNum := 1;
-  RefreshPagesLayout;
+//  RefreshPagesLayout;
 end;
 
 procedure TMainForm.AddOrRefreshBalance(AName: string; AValue: Extended);
 var
   i: Integer;
 begin
+
   FBalances.AddOrSetValue(AName,AValue);
   if TokensListBox.Items.IndexOf(AName) = -1 then
     AddTokenItem(AName,AValue);
@@ -1639,11 +1655,11 @@ begin
       if Length(Transactions) > 0 then
       begin
         SearchEdit.Text := '';
-        if not FSearchResultsFrame.Visible then
+        if not FTickersFrames.Items[0].Visible then
         begin
-          FSearchResultsFrame.Visible := True;
-          FSearchResultsFrame.Position.X := -1;
-          FSearchResultsFrame.RoundRect.OnMouseDown(FSearchResultsFrame, 
+          FTickersFrames.Items[0].Visible := True;
+          FTickersFrames.Items[0].Position.X := -1;
+          FTickersFrames.Items[0].RoundRect.OnMouseDown(FTickersFrames.Items[0],
             TMouseButton.mbLeft, [], 0, 0);
         end;           
         DrawTransactions(Transactions, True);
@@ -1673,11 +1689,11 @@ begin
       if Length(Transactions) > 0 then
       begin
         SearchEdit.Text := '';
-        if not FSearchResultsFrame.Visible then
+        if not FTickersFrames.Items[0].Visible then
         begin
-          FSearchResultsFrame.Visible := True;
-          FSearchResultsFrame.Position.X := -1;
-          FSearchResultsFrame.RoundRect.OnMouseDown(FSearchResultsFrame, 
+          FTickersFrames.Items[0].Visible := True;
+          FTickersFrames.Items[0].Position.X := -1;
+          FTickersFrames.Items[0].RoundRect.OnMouseDown(FTickersFrames.Items[0],
             TMouseButton.mbLeft, [], 0, 0);
         end;           
         DrawTransactions(Transactions, True);

@@ -13,10 +13,10 @@ type
     procedure NullForm(var Form);
     procedure ShowMainForm;
     procedure ShowEnterPrivateKeyForm;
-    function IsChainNeedSync(const AName: String): Boolean;
     procedure ShowTotalBlocksToDownload(const ABlocksNumberToLoad: UInt64);
     procedure ShowDownloadProgress;
     procedure NotifyNewTETBlocks(const ANeedRefreshBalance: Boolean);
+    procedure NotifyNewToken(const ATicker: string; ATokenID: Integer);
     procedure NotifyNewTokenBlocks(const ANeedRefreshBalance: Boolean);
   end;
 
@@ -66,6 +66,7 @@ type
     function GetSmartKeyBlockSize: Integer;
     function GetSmartKeyBlocks(ASkip: Integer): TBytes;
     procedure SetSmartKeyBlocks(ASkip: Integer; ABytes: TBytes);
+    function GetAllSmartKeyBlocks: TArray<TCSmartKey>;
     function TryGetSmartKey(ATicker: string; out ASmartKey: TCSmartKey): Boolean;
 
     //Tokens chains methods
@@ -77,6 +78,7 @@ type
     function GetTokenChainBlockSize: Integer;
     function GetTokenChainBlocks(ATokenID: Integer; ASkip: Integer): TBytes;
     procedure SetTokenChainBlocks(ATokenID: Integer; ASkip: Integer; ABytes: TBytes);
+    function GetTokenBalance(ATokenID: Integer; ATETAddress: string): Double;
 
     //Tokens dynamic blocks sync methods
     function GetDynTokenChainBlocksCount(ATokenID: Integer): Integer;
@@ -131,7 +133,7 @@ type
 //      AAmount: Extended; APrKey,APubKey: string): string;
 //    function SendToConfirm(AReqID,AToSend: string): string;
 //    function GetLocalTokensBalances: TArray<string>;
-//    function GetLocalTokenBalance(ATokenID: Integer; AOwnerID: Int64): Extended;
+
 //    function DoGetTokenBalanceWithSmartAddress(AReqID,AAddressTET,ASmartAddress: string): string;
 //    function DoGetTokenBalanceWithTicker(AReqID,AAddressTET,ATicker: string): string;
 //
