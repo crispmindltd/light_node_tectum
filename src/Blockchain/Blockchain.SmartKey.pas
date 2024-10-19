@@ -27,7 +27,10 @@ type
     function ReadBlocks(ASkip: Integer;
       ANumber: Integer = MaxBlocksNumber): TArray<TCSmartKey>;
 
-    function TryGetSmartKey(ATicker: string; var ASmartKey: TCSmartKey): Boolean;
+    function TryGet(ATickerOrAddress: string;
+      var ASmartKey: TCSmartKey): Boolean; overload;
+    function TryGet(ATokenID: Integer;
+      var ASmartKey: TCSmartKey): Boolean; overload;
 //    function TryGetSmartKeyByAddress(const AAddress: String; var sk: TCSmartKey): Boolean;
   end;
 
@@ -118,7 +121,7 @@ begin
   end;
 end;
 
-function TBlockchainSmartKey.TryGetSmartKey(ATicker: string;
+function TBlockchainSmartKey.TryGet(ATokenID: Integer;
   var ASmartKey: TCSmartKey): Boolean;
 var
   i: Integer;
@@ -132,7 +135,31 @@ begin
     for i := 0 to FileSize(FFile) - 1 do
     begin
       Read(FFile, ASmartKey);
-      if ASmartKey.Abreviature = ATicker then
+      if ASmartKey.SmartID = ATokenID then
+        exit(True);
+    end;
+  finally
+    CloseFile(FFile);
+    FLock.Leave;
+  end;
+end;
+
+function TBlockchainSmartKey.TryGet(ATickerOrAddress: string;
+  var ASmartKey: TCSmartKey): Boolean;
+var
+  i: Integer;
+begin
+  Result := False;
+  FLock.Enter;
+  AssignFile(FFile, FFullFilePath);
+  Reset(FFile);
+  try
+    Seek(FFile, 0);
+    for i := 0 to FileSize(FFile) - 1 do
+    begin
+      Read(FFile, ASmartKey);
+      if (ASmartKey.Abreviature = ATickerOrAddress) or
+         (ASmartKey.key1 = ATickerOrAddress) then
         exit(True);
     end;
   finally

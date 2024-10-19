@@ -91,7 +91,10 @@ type
     function GetSmartKeyBlocks(ASkip: Integer): TBytes;
     procedure SetSmartKeyBlocks(ASkip: Integer; ABytes: TBytes);
     function GetSmartKeys(ASkip, ARows: Integer): TArray<TCSmartKey>;
-    function TryGetSmartKey(ATicker: string; var ASmartKey: TCSmartKey): Boolean;
+    function TryGetSmartKey(ATickerOrAddress: string;
+      var ASmartKey: TCSmartKey): Boolean; overload;
+    function TryGetSmartKey(ATokenID: Integer;
+      var ASmartKey: TCSmartKey): Boolean; overload;
 
     procedure UpdateTokensList;
     function GetTokenChainBlockSize: Integer;
@@ -402,10 +405,16 @@ begin
   Result := FSmartKey.ReadBlocks(ASkip, ARows);
 end;
 
-function TBlockchain.TryGetSmartKey(ATicker: string;
+function TBlockchain.TryGetSmartKey(ATickerOrAddress: string;
   var ASmartKey: TCSmartKey): Boolean;
 begin
-  Result := FSmartKey.TryGetSmartKey(ATicker, ASmartKey);
+  Result := FSmartKey.TryGet(ATickerOrAddress, ASmartKey);
+end;
+
+function TBlockchain.TryGetSmartKey(ATokenID: Integer;
+  var ASmartKey: TCSmartKey): Boolean;
+begin
+  Result := FSmartKey.TryGet(ATokenID, ASmartKey);
 end;
 
 procedure TBlockchain.UpdateTokensList;
@@ -552,7 +561,7 @@ begin
   Result := False;
   if TryGetDynTETBlock(ATETAddress, ABlockID, DynTET) and
      FTokensChains.TryGetValue(ATokenID, TokenChainsPair) then
-    Result := TokenChainsPair.DynBlocks.TryGet(DynTET.OwnerID-1, ABlockID, ADynToken);
+    Result := TokenChainsPair.DynBlocks.TryGet(DynTET.OwnerID, ABlockID, ADynToken);
 end;
 
 //function TBlockchain.DynamicNameByID(AID: Integer): string;

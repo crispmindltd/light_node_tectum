@@ -97,7 +97,8 @@ type
     function GetSmartKeyBlocks(ASkip: Integer): TBytes;
     procedure SetSmartKeyBlocks(ASkip: Integer; ABytes: TBytes);
     function GetAllSmartKeyBlocks: TArray<TCSmartKey>;
-    function TryGetSmartKey(ATicker: string; out ASmartKey: TCSmartKey): Boolean;
+    function TryGetSmartKey(ATicker: string; out ASmartKey: TCSmartKey): Boolean; overload;
+    function TryGetSmartKey(ATokenID: Integer; out ASmartKey: TCSmartKey): Boolean; overload;
 
     //Tokens chains methods
     procedure UpdateTokensList;
@@ -1102,6 +1103,12 @@ begin
   Result := FBlockchain.TryGetSmartKey(ATicker, ASmartKey);
 end;
 
+function TAppCore.TryGetSmartKey(ATokenID: Integer;
+  out ASmartKey: TCSmartKey): Boolean;
+begin
+  Result := FBlockchain.TryGetSmartKey(ATokenID, ASmartKey);
+end;
+
 procedure TAppCore.UpdateTokensList;
 begin
   FBlockchain.UpdateTokensList;
@@ -1140,8 +1147,8 @@ var
   BlockNum: Integer;
 begin
   if not (FBlockchain.TryGetDynTokenBlock(ATokenID, ATETAddress, BlockNum, TokenDyn) and
-          FBlockchain.TryGetICOBlock(ATokenID, ICODat) and
-          FBlockchain.TryGetTokenChainBlock(ATokenID, TokenDyn.LastBlock, TokenBlock)) then
+          FBlockchain.TryGetTokenChainBlock(ATokenID, TokenDyn.LastBlock, TokenBlock) and
+          FBlockchain.TryGetICOBlock(ATokenID, ICODat)) then
     exit(0);
 
   if BlockNum = TokenBlock.Smart.tkn[1].TokenID then

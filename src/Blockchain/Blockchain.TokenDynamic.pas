@@ -31,7 +31,9 @@ type
       ANumber: Integer = MaxBlocksNumber): TBytes; override;
 
     function TryGet(AUserID: Integer; out ABlockID: Integer;
-      out ATokenDyn: TCTokensBase): Boolean;
+      out ATokenDyn: TCTokensBase): Boolean; overload;
+    function TryGet(ATETAddress: string; out ABlockID: Integer;
+      out ATokenDyn: TCTokensBase): Boolean; overload;
   end;
 
 implementation
@@ -107,6 +109,31 @@ begin
     begin
       Read(FFile, ATokenDyn);
       if ATokenDyn.OwnerID = AUserID then
+      begin
+        ABlockID := i;
+        exit(True);
+      end;
+    end;
+  finally
+    if NeedClose then
+      DoClose;
+  end;
+end;
+
+function TBlockchainTokenDynamic.TryGet(ATETAddress: string;
+  out ABlockID: Integer; out ATokenDyn: TCTokensBase): Boolean;
+var
+  NeedClose: Boolean;
+  i: Integer;
+begin
+  Result := False;
+  NeedClose := DoOpen;
+  try
+    Seek(FFile, 0);
+    for i := 0 to FileSize(FFile) - 1 do
+    begin
+      Read(FFile, ATokenDyn);
+      if ATokenDyn.Token = ATETAddress then
       begin
         ABlockID := i;
         exit(True);

@@ -287,7 +287,6 @@ type
     procedure FormShow(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
-    procedure TokenItemApplyStyleLookup(Sender: TObject);
     procedure TokenNameEditChangeTracking(Sender: TObject);
     procedure RecepientAddressEditChangeTracking(Sender: TObject);
     procedure AmountTokenEditChangeTracking(Sender: TObject);
@@ -352,8 +351,8 @@ type
     FBalances: TDictionary<string, Double>;
     FTickersFrames: TList<TTickerFrame>;
     FSelectedFrame: TTickerFrame;
+    FChosenToken: string;
 
-    chosenToken: string;
     totalPagesAmount, pageNum: Integer;
 
     function DecimalsCount(const AValue: string): Integer;
@@ -362,6 +361,7 @@ type
     procedure AlignTETHeaders;
     procedure RefreshHeaderBalance(ATicker: string);
     procedure RefreshTokensBalances;
+    procedure RefreshTokenBalance(ATokenID: Integer);
     procedure RefreshTokenHistory;
     procedure AlignTokensHeaders;
     procedure RefreshPagesLayout;
@@ -374,12 +374,12 @@ type
 
     procedure AddTickerFrame(const ATicker: string; ATokenID: Integer = -1);
     procedure PlaceTickerFrame(const ANewTickerFrame: TTickerFrame);
-    procedure AddTokenItem(AName: string; AValue: Extended);
+    procedure AddTokenItem(AName: string; AValue: Double);
     procedure AddPageNum(APageNum: Integer);
     procedure ShowTETTransferStatus(const AMessage: string; AIsError: Boolean = False);
     procedure ShowTokenTransferStatus(const AMessage: string; AIsError: Boolean = False);
     procedure ShowTokenCreatingStatus(const AMessage: string; AIsError: Boolean = False);
-    procedure AddOrRefreshBalance(AName: string; AValue: Extended);
+    procedure AddOrRefreshBalance(ATicker: string; AValue: Double);
     procedure ShowExplorerTransactionDetails(ATicker, ADateTime, ABlockNum,
       AHash, ATransFrom, ATransTo, AAmount: string); overload;
     procedure ShowExplorerTransactionDetails(ATransaction: TExplorerTransactionInfo); overload;
@@ -425,11 +425,7 @@ begin
 end;
 
 procedure TMainForm.TokenNameEditClick(Sender: TObject);
-var
-  i: Integer;
 begin
-  for i := 0 to TokensListBox.Count-1 do
-    TokensListBox.ListItems[i].OnApplyStyleLookup(TokensListBox.ListItems[i]);
   MainRectangle.Visible := True;
 end;
 
@@ -474,19 +470,15 @@ begin
   end;
 end;
 
-procedure TMainForm.AddTokenItem(AName: string; AValue: Extended);
+procedure TMainForm.AddTokenItem(AName: string; AValue: Double);
 var
-  newItem: TListBoxItem;
+  NewItem: TListBoxItem;
+  BalanceText: TText;
 begin
-  newItem := TListBoxItem.Create(TokensListBox);
-  newItem.Parent := TokensListBox;
-  PopupRectangle.Height := SearchTokenEdit.Height +
-    40 * (Min(TokensListBox.Count,3)) + 32;
-  newItem.StyleLookup := 'TokenItemStyle';
-
-  newItem.BeginUpdate;
+  NewItem := TListBoxItem.Create(TokensListBox);
+  NewItem.BeginUpdate;
   try
-    with newItem do
+    with NewItem do
     begin
       Name := 'TokenItem' + TokensListBox.Count.ToString;
       Margins.Top := 5;
@@ -496,17 +488,36 @@ begin
       TextSettings.FontColor := $FF323130;
       HitTest := True;
 
+      StyleLookup := 'TokenItemStyle';
+      ApplyStyleLookup;
       onMouseEnter := StylesForm.OnTokenItemMouseEnter;
       onMouseLeave := StylesForm.OnTokenItemMouseLeave;
       onMouseDown := StylesForm.OnTokenItemMouseDown;
       onMouseUp := StylesForm.OnTokenItemMouseUp;
       onClick := TokenItemClick;
-      onApplyStyleLookup := TokenItemApplyStyleLookup;
+    end;
+
+    BalanceText := TText.Create(NewItem);
+    NewItem.TagObject := BalanceText;
+    with BalanceText do
+    begin
+      Name := 'TokenBalanceText' + TokensListBox.Count.ToString;
+      Align := TAlignLayout.Right;
+      Parent := NewItem;
+      TextSettings.Font.Family := 'Inter';
+      TextSettings.Font.Size := 14;
+      TextSettings.FontColor := TAlphaColorRec.Black;
+      Text := FormatFloat('0.########', AValue);
+      AutoSize := True;
     end;
   finally
-    newItem.EndUpdate;
+    NewItem.EndUpdate;
+    BalanceText.AutoSize := False;
   end;
-//  AddTicker(AName);
+
+  TokensListBox.AddObject(NewItem);
+  PopupRectangle.Height := SearchTokenEdit.Height +
+    40 * (Min(TokensListBox.Count, 3)) + 32;
 end;
 
 procedure TMainForm.AlignExplorerHeaders(AShowTicker: Boolean);
@@ -862,22 +873,22 @@ end;
 
 procedure TMainForm.TokenItemClick(Sender: TObject);
 var
-  tICO: TTokenICODat;
+  TokenICO: TTokenICODat;
 begin
-  TokenNameEdit.Text := (Sender as TListBoxItem).Text;
-  chosenToken := (Sender as TListBoxItem).Text;
+  FChosenToken := (Sender as TListBoxItem).Text;
+  TokenNameEdit.Text := FChosenToken;
   RefreshHeaderBalance(TokenNameEdit.Text);
-  MainRectangleMouseDown(nil,TMouseButton.mbLeft,[],0,0);
+  MainRectangleMouseDown(nil, TMouseButton.mbLeft, [], 0, 0);
 
-//  if AppCore.TryGetTokenICO(TokenNameEdit.Text,tICO) then
-//  begin
-//    TokenShortNameEdit.Text := tICO.ShortName;
-//    TokenInfoMemo.Text := tICO.FullName;
-//  end else
-//  begin
-//    TokenShortNameEdit.Text := '';
-//    TokenInfoMemo.Text := '';
-//  end;
+  if AppCore.TryGetTokenICO(TokenNameEdit.Text, TokenICO) then
+  begin
+    TokenShortNameEdit.Text := TokenICO.ShortName;
+    TokenInfoMemo.Text := TokenICO.FullName;
+  end else
+  begin
+    TokenShortNameEdit.Text := '';
+    TokenInfoMemo.Text := '';
+  end;
 end;
 
 procedure TMainForm.FloatAnimation1Finish(Sender: TObject);
@@ -920,6 +931,7 @@ begin
   AddTickerFrame('Tectum');
   for SmartKey in AppCore.GetAllSmartKeyBlocks do
     AddTickerFrame(SmartKey.Abreviature);
+  FChosenToken := '';
 
   TETCopyLoginLayout.OnMouseEnter := StylesForm.OnCopyLayoutMouseEnter;
   TETCopyLoginLayout.OnMouseLeave := StylesForm.OnCopyLayoutMouseLeave;
@@ -961,8 +973,6 @@ begin
   NextPageLayout.OnMouseEnter := StylesForm.OnCopyLayoutMouseEnter;
   NextPageLayout.OnMouseLeave := StylesForm.OnCopyLayoutMouseLeave;
 
-  chosenToken := '';
-
   const Digitals = '0123456789' + FormatSettings.DecimalSeparator;
   AmountTETEdit.FilterChar := Digitals;
   AmountTokenEdit.FilterChar := Digitals;
@@ -980,6 +990,7 @@ begin
   AddressTokenLabel.Text := AppCore.TETAddress;
   Tabs.TabIndex := 0;
   Tabs.OnChange(nil);
+  RefreshTokensBalances;
   FTickersFrames.Items[1].RoundRect.OnMouseDown(FTickersFrames.Items[1].RoundRect,
     TMouseButton.mbLeft, [], 0, 0);
 end;
@@ -1046,7 +1057,6 @@ begin
       end;
     1:
       begin
-        RefreshTokensBalances;
         RecepientAddressEdit.SetFocus;
       end;
     2: CreateTokenShortNameEdit.SetFocus;
@@ -1123,28 +1133,6 @@ var
 begin
   if TPlatformServices.Current.SupportsPlatformService(IFMXClipBoardService, Service) then
     Service.SetClipboard(TokenHashDetailsText.Text);
-end;
-
-procedure TMainForm.TokenItemApplyStyleLookup(Sender: TObject);
-var
-  item: TListBoxItem;
-  rect: TRectangle;
-  valueLabel: TLabel;
-  value: Double;
-begin
-  item := Sender as TListBoxItem;
-  item.BeginUpdate;
-  try
-    rect := item.FindStyleResource('RectangleStyle') as TRectangle;
-    if Assigned(rect) then
-    begin
-      valueLabel := rect.FindStyleResource('TokenAmountLabelStyle') as TLabel;
-      if FBalances.TryGetValue(item.Text,value) then
-        valueLabel.Text := FormatFloat('0.########',value);
-    end;
-  finally
-    item.EndUpdate;
-  end;
 end;
 
 procedure TMainForm.MainRectangleMouseDown(Sender: TObject;
@@ -1502,6 +1490,16 @@ begin
   end;
 end;
 
+procedure TMainForm.RefreshTokenBalance(ATokenID: Integer);
+var
+  SmartKeyBlock: TCSmartKey;
+  Value: Double;
+begin
+  Value := AppCore.GetTokenBalance(ATokenID, AppCore.TETAddress);
+  AppCore.TryGetSmartKey(ATokenID, SmartKeyBlock);
+  AddOrRefreshBalance(SmartKeyBlock.Abreviature, Value);
+end;
+
 procedure TMainForm.RefreshTokenHistory;
 var
   transArray: TArray<THistoryTransactionInfo>;
@@ -1544,40 +1542,27 @@ end;
 procedure TMainForm.RefreshTokensBalances;
 var
   SmartKeyBlock: TCSmartKey;
-  Value: Double;
-
-  Splitted: TArray<string>;
-  i: Integer;
+  Item: TListBoxItem;
 begin
   for SmartKeyBlock in AppCore.GetAllSmartKeyBlocks do
-  begin
-    Value := AppCore.GetTokenBalance(SmartKeyBlock.SmartID, AppCore.TETAddress);
-
-    AddOrRefreshBalance(SmartKeyBlock.Abreviature, Value);
-  end;
-  TokensListBox.Sort(CustomSortCompareStrings);
+    RefreshTokenBalance(SmartKeyBlock.SmartID);
 
   if TokensListBox.Count > 0 then
   begin
     BalanceTokenLabel.Opacity := 1;
-    AddressTokenLabel.Opacity := 1;
     TokenNameEdit.Enabled := True;
     RecepientAddressEdit.Enabled := True;
     AmountTokenEdit.Enabled := True;
-    ExplorerTabItem.Enabled := True;
-    if chosenToken.IsEmpty then
-      TokensListBox.ListItems[0].OnClick(TokensListBox.ListItems[0])
-    else for i := 0 to TokensListBox.Count-1 do
-         if TokensListBox.Items[i] = chosenToken then
-         begin
-           TokensListBox.ListItems[i].OnClick(TokensListBox.ListItems[i]);
-           break;
-         end;
+    if not FChosenToken.IsEmpty then
+    begin
+      Item := TokensListBox.ListItems[TokensListBox.Items.IndexOf(FChosenToken)];
+      Item.OnClick(Item);
+    end else
+      TokensListBox.ListItems[0].OnClick(TokensListBox.ListItems[0]);
   end else
   begin
     BalanceTokenLabel.Opacity := 0;
     BalanceTokenValueLabel.Text := 'No custom tokens yet';
-    AddressTokenLabel.Opacity := 0;
   end;
 end;
 
@@ -1599,24 +1584,22 @@ begin
 //  RefreshPagesLayout;
 end;
 
-procedure TMainForm.AddOrRefreshBalance(AName: string; AValue: Extended);
+procedure TMainForm.AddOrRefreshBalance(ATicker: string; AValue: Double);
 var
-  i: Integer;
+  Index: Integer;
 begin
-
-  FBalances.AddOrSetValue(AName,AValue);
-  if TokensListBox.Items.IndexOf(AName) = -1 then
-    AddTokenItem(AName,AValue);
-
-  for i := 0 to TokensListBox.Count-1 do
+  FBalances.AddOrSetValue(ATicker, AValue);
+  Index := TokensListBox.Items.IndexOf(ATicker);
+  if Index >= 0 then
   begin
-    if TokensListBox.ListItems[i].Text = AName then
-    begin
-      TokensListBox.ListItems[i].ApplyStyleLookup;
-      if BalanceTokenValueLabel.Text.Contains(AName) then
-        RefreshHeaderBalance(AName);
-      break;
-    end;
+    (TokensListBox.ListItems[Index].TagObject as TText).Text :=
+      FormatFloat('0.########', AValue);
+    if BalanceTokenValueLabel.Text.Contains(ATicker) then
+      RefreshHeaderBalance(ATicker);
+  end else
+  begin
+    AddTokenItem(ATicker, AValue);
+    TokensListBox.Sort(CustomSortCompareStrings);
   end;
 end;
 

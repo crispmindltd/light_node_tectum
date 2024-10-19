@@ -67,7 +67,8 @@ type
     function GetSmartKeyBlocks(ASkip: Integer): TBytes;
     procedure SetSmartKeyBlocks(ASkip: Integer; ABytes: TBytes);
     function GetAllSmartKeyBlocks: TArray<TCSmartKey>;
-    function TryGetSmartKey(ATicker: string; out ASmartKey: TCSmartKey): Boolean;
+    function TryGetSmartKey(ATicker: string; out ASmartKey: TCSmartKey): Boolean; overload;
+    function TryGetSmartKey(ATokenID: Integer; out ASmartKey: TCSmartKey): Boolean; overload;
 
     //Tokens chains methods
     procedure UpdateTokensList;
