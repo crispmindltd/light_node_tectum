@@ -24,8 +24,8 @@ The Light Node supports the following types of requests:
 -   **[POST /tokens](docs/create_token_request.md)**: Create a new token
 -   **[GET /tokens/fee](docs/token_fee_request.md)**: Retrieve fee of creating token
 -   **[POST /tokens/transfer](docs/create_token_request.md)**: To transfer tokens between two addresses
--   GET /tokens/transfer/fee: Retrieve fee of token transfer
--   GET /tokens/transfers: Retrieve token transfer history
+-   **[GET /tokens/transfer/fee](docs/token_transfer_fee_v2.md)**: Retrieve the fee required for transferring a token
+-   **[GET /tokens/transfers](docs/token_transfer_history.md)**: Retrieve the transfer history for a specific token
 -   **[GET /tokens/address/byid](docs/smart_contract_address_request.md)**: Retrieve the smart contract address by ID
 -   **[GET /tokens/address/byticker](docs/smart_contract_address_ticker_request.md)**: Retrieve the smart contract address by ticker
 -   **[GET /tokens/balance/byaddress](docs/token_balance_request.md)**: Retrieve token balance by address

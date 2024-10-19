@@ -1177,7 +1177,6 @@ begin
 
   PrevPageLayout.Enabled := pageNum > 1;
   NextPageLayout.Enabled := pageNum < totalPagesAmount;
-  RefreshExplorer;
 end;
 
 procedure TMainForm.NewSmartBlocksEvent;
