@@ -12,6 +12,7 @@ const
   BlockLabelWidth = 72;
   ValueLabelWidth = 110;
   IncomRectWidth = 70;
+  TickerLabelWidth = 80;
 
 type
   THistoryTransactionFrame = class(TFrame)

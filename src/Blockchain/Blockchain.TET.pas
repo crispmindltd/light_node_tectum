@@ -27,8 +27,8 @@ type
     procedure WriteBlocksAsBytes(ASkipBlocks: Integer; ABytes: TBytes); override;
     function ReadBlocksAsBytes(ASkipBlocks: Integer;
       ANumber: Integer = MaxBlocksNumber): TBytes; override;
-    function ReadBlocks(ASkip: Integer;
-      ANumber: Integer = MaxBlocksNumber): TArray<Tbc2>;
+    function ReadBlocks(ASkip: Integer; ANumber: Integer = MaxBlocksNumber;
+      AFromTheEnd: Boolean = False): TArray<Tbc2>;
 
     function TryGet(ASkip: Integer; out ATETBlock: Tbc2): Boolean;
   end;
@@ -92,7 +92,8 @@ begin
   Result := SizeOf(Tbc2);
 end;
 
-function TBlockchainTET.ReadBlocks(ASkip, ANumber: Integer): TArray<Tbc2>;
+function TBlockchainTET.ReadBlocks(ASkip, ANumber: Integer;
+  AFromTheEnd: Boolean): TArray<Tbc2>;
 var
   NeedClose: Boolean;
   i: Integer;
@@ -102,10 +103,22 @@ begin
   try
     if (ASkip < 0) or (ASkip >= FileSize(FFile)) then
       exit;
-    Seek(FFile, ASkip);
-    SetLength(Result, Min(ANumber, FileSize(FFile) - ASkip));
-    for i := 0 to Length(Result) - 1 do
-      Read(FFile, Result[i]);
+
+    if AFromTheEnd then
+    begin
+      SetLength(Result, Min(ANumber, FileSize(FFile) - ASkip));
+      for i := 0 to Length(Result) - 1 do
+      begin
+        Seek(FFile, FileSize(FFile) - ASkip - i - 1);
+        Read(FFile, Result[i]);
+      end;
+    end else
+    begin
+      Seek(FFile, ASkip);
+      SetLength(Result, Min(ANumber, FileSize(FFile) - ASkip));
+      for i := 0 to Length(Result) - 1 do
+        Read(FFile, Result[i]);
+    end;
   finally
     if NeedClose then
       DoClose;

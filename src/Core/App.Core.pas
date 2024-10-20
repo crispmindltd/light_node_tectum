@@ -70,8 +70,10 @@ type
     procedure SetTETChainBlocks(ASkip: Integer; ABytes: TBytes);
 //    function GetChainTransations(ASkip: Integer; var ARows: Integer): TArray<TExplorerTransactionInfo>;
 //    function GetChainLastTransactions(var Amount: Integer): TArray<TExplorerTransactionInfo>;
-    function GetTETUserTransactions(AUserID: Integer; ASkip: Integer;
-      ARows: Integer; ALast: Boolean = False): TArray<THistoryTransactionInfo>;
+    function GetTETUserLastTransactions(AUserID: Integer;
+      ARows: Integer): TArray<THistoryTransactionInfo>;
+    function GetTETTransactions(ASkip: Integer; ARows: Integer;
+      AFromTheEnd: Boolean = True): TArray<TExplorerTransactionInfo>;
 //    function GetTETUserLastTransactions(AUserID: Int64;
 //      var ANumber: Integer): TArray<THistoryTransactionInfo>;
     function GetTETBalance(ATETAddress: string): Double;
@@ -110,6 +112,8 @@ type
     function GetTokenChainBlocks(ATokenID: Integer; ASkip: Integer): TBytes;
     procedure SetTokenChainBlocks(ATokenID: Integer; ASkip: Integer; ABytes: TBytes);
     function GetTokenBalance(ATokenID: Integer; ATETAddress: string): Double;
+    function GetTokenUserTransactions(ATokenID: Integer; AUserID: Integer;
+      ASkip: Integer; ARows: Integer; ALast: Boolean = False): TArray<THistoryTransactionInfo>;
 
     //Tokens dynamic blocks sync methods
     function GetDynTokenChainBlocksCount(ATokenID: Integer): Integer;
@@ -154,10 +158,12 @@ type
       ACallBackProc: TGetStrProc); overload;
     function DoNewToken(AReqID, ASessionKey, AFullName, AShortName,
       ATicker: string; AAmount: Int64; ADecimals: Integer): string; overload;
-//    function GetNewTokenFee(AAmount: Int64; ADecimals: Integer): Integer;
-//    function DoTokenTransfer(AReqID,AAddrTETFrom,AAddrTETTo,ASmartAddr: string;
-//      AAmount: Extended; APrKey,APubKey: string): string;
-//    function SendToConfirm(AReqID,AToSend: string): string;
+    function GetNewTokenFee(AAmount: Int64; ADecimals: Integer): Integer;
+    procedure DoTokenTransfer(AReqID, AAddrTETFrom, AAddrTETTo, ASmartAddr: string;
+      AAmount: Double; APrKey, APubKey: string; ACallBackProc: TGetStrProc); overload;
+    function DoTokenTransfer(AReqID, AAddrTETFrom, AAddrTETTo, ASmartAddr: string;
+      AAmount: Double; APrKey, APubKey: string): string; overload;
+    function SendToConfirm(AReqID, AToSend: string): string;
 
 //    function GetLocalTokenBalance(ATokenID: Integer; AOwnerID: Int64): Extended;
 //    function DoGetTokenBalanceWithSmartAddress(AReqID,AAddressTET,ASmartAddress: string): string;
@@ -168,8 +174,8 @@ type
 //    function GetPubKeyByID(AReqID: string; AID: Int64): string;
 //    function GetPubKeyBySessionKey(AReqID,ASessionKey: string): string;
     function TrySaveKeysToFile(APrivateKey: string): Boolean;
-    function TryExtractPrivateKeyFromFile(out PrKey: string;
-      out PubKey: string): Boolean;
+    procedure TryExtractPrivateKeyFromFile(out PrKey: string;
+      out PubKey: string);
 
 //    function TryGetTokenBase(ATicker: string; var sk: TCSmartKey): Boolean;
 //    function TryGetTokenBaseByAddress(const AAddress: string; var sk: TCSmartKey): Boolean;
@@ -499,6 +505,131 @@ begin
     end).Start;
 end;
 
+function TAppCore.DoTokenTransfer(AReqID, AAddrTETFrom, AAddrTETTo,
+  ASmartAddr: string; AAmount: Double; APrKey, APubKey: string): string;
+var
+  AmountStr, Sign, SignLine: string;
+  Splitted: TArray<string>;
+  RequestDone: TEvent;
+begin
+  AAddrTETFrom := Remove0x(AAddrTETFrom);
+  if Length(AAddrTETFrom) <> 40 then
+    raise EValidError.Create('invalid address "from"');
+  AAddrTETTo := Remove0x(AAddrTETTo);
+  if Length(AAddrTETFrom) <> 40 then
+    raise EValidError.Create('invalid address "to"');
+  if AAddrTETFrom.Equals(AAddrTETTo) then
+    raise ESameAddressesError.Create('');
+  ASmartAddr := Remove0x(ASmartAddr);
+  if Length(ASmartAddr) <> 40 then
+    raise EValidError.Create('invalid smartcontract address');
+
+  if (AAmount <= 0) or (AAmount > 999999999999999999) then
+    raise EValidError.Create('invalid amount value');
+  AmountStr := FormatFloat('0.########', AAmount);
+  if (Length(AmountStr.Replace(',', '')) > 18) or
+     (Length(Copy(AmountStr, AmountStr.IndexOf(',') + 2, 10)) > 8) then
+    raise EValidError.Create('incorrect amount');
+
+  if Length(APrKey) <> 64 then
+    raise EValidError.Create('invalid private key');
+  if Length(APubKey) <> 130 then
+    raise EValidError.Create('invalid public key');
+
+  SignLine := Format('%s %s %s %s',[AAddrTETFrom, AAddrTETTo, ASmartAddr, AmountStr]);
+  Sign := SignTransaction(SignLine, APrKey).ToLower;
+  if Sign.IsEmpty then
+    raise EValidError.Create('invalid private key');
+
+  Result := FNodeClient.DoRequestToValidator(
+    Format('TknCTransfer %s %s %s %s <%s> %s %s %s',
+    [AReqID, AAddrTETFrom, AAddrTETTo, AmountStr, SignLine, Sign,
+     APubKey, ASmartAddr]));
+  if IsURKError(Result) then
+  begin;
+    Splitted := Result.Split([' ']);
+    case Splitted[3].ToInteger of
+      41502: raise EInvalidSignError.Create('');
+      41500: raise ESocketError.Create('');
+      41501: raise EUnknownError.Create('41501');
+      41505: raise ERequestInProgressError.Create('');
+      110: raise EInsufficientFundsError.Create('');
+      else raise EUnknownError.Create(Splitted[3]);
+    end;
+  end;
+end;
+
+procedure TAppCore.DoTokenTransfer(AReqID, AAddrTETFrom, AAddrTETTo,
+  ASmartAddr: string; AAmount: Double; APrKey, APubKey: string;
+  ACallBackProc: TGetStrProc);
+var
+  AmountStr, Sign, SignLine, Response: string;
+begin
+  AAddrTETFrom := Remove0x(AAddrTETFrom);
+  if Length(AAddrTETFrom) <> 40 then
+    raise EValidError.Create('invalid address "from"');
+  AAddrTETTo := Remove0x(AAddrTETTo);
+  if Length(AAddrTETFrom) <> 40 then
+    raise EValidError.Create('invalid address "to"');
+  if AAddrTETFrom.Equals(AAddrTETTo) then
+    raise ESameAddressesError.Create('');
+  ASmartAddr := Remove0x(ASmartAddr);
+  if Length(ASmartAddr) <> 40 then
+    raise EValidError.Create('invalid smartcontract address');
+
+  if (AAmount <= 0) or (AAmount > 999999999999999999) then
+    raise EValidError.Create('invalid amount value');
+  AmountStr := FormatFloat('0.########', AAmount);
+  if (Length(AmountStr.Replace(',', '')) > 18) or
+     (Length(Copy(AmountStr, AmountStr.IndexOf(',') + 2, 10)) > 8) then
+    raise EValidError.Create('incorrect amount');
+
+  if Length(APrKey) <> 64 then
+    raise EValidError.Create('invalid private key');
+  if Length(APubKey) <> 130 then
+    raise EValidError.Create('invalid public key');
+
+  SignLine := Format('%s %s %s %s', [AAddrTETFrom, AAddrTETTo, ASmartAddr, AmountStr]);
+  Sign := SignTransaction(SignLine, APrKey).ToLower;
+  if Sign.IsEmpty then
+    raise EValidError.Create('invalid private key');
+
+  TThread.CreateAnonymousThread(
+  procedure
+  begin
+    try
+      try
+        Response := FNodeClient.DoRequestToValidator(
+          Format('TknCTransfer %s %s %s %s <%s> %s %s %s',
+          [AReqID, AAddrTETFrom, AAddrTETTo, AmountStr, SignLine, Sign,
+           APubKey, ASmartAddr]));
+      except
+        on E:EValidatorDidNotAnswerError do
+          Response := Format('URKError U16 * 41501 <UserKey:%s>', [AReqID]);
+      end;
+    finally
+      TThread.Synchronize(nil,
+      procedure
+      begin
+        ACallBackProc(Response);
+      end);
+    end;
+  end).Start;
+
+//  if IsURKError(Result) then
+//  begin;
+//    Splitted := Result.Split([' ']);
+//    case Splitted[3].ToInteger of
+//      41502: raise EInvalidSignError.Create('');
+//      41500: raise ESocketError.Create('');
+//      41501: raise EUnknownError.Create('41501');
+//      41505: raise ERequestInProgressError.Create('');
+//      110: raise EInsufficientFundsError.Create('');
+//      else raise EUnknownError.Create(Splitted[3]);
+//    end;
+//  end;
+end;
+
 procedure TAppCore.DoReg(AReqID, ASeed: string; ACallBackProc: TGetStrProc);
 var
   Keys: IAsymmetricCipherKeyPair;
@@ -590,17 +721,17 @@ end;
 //  end;
 //end;
 
-//function TAppCore.GetNewTokenFee(AAmount: Int64; ADecimals: Integer): Integer;
-//begin
-//  if (AAmount < 1000) or (AAmount > 9999999999999999) then
-//    raise EValidError.Create('invalid amount value');
-//  if (ADecimals < 2) or (ADecimals > 8) then
-//    raise EValidError.Create('invalid decimals value');
-//  if Length(AAmount.ToString) + ADecimals > 18 then
-//    raise EValidError.Create('invalid decimals value');
-//
-//  Result := Min((AAmount div (ADecimals * 10)) + 1,10);
-//end;
+function TAppCore.GetNewTokenFee(AAmount: Int64; ADecimals: Integer): Integer;
+begin
+  if (AAmount < 1000) or (AAmount > 9999999999999999) then
+    raise EValidError.Create('invalid amount value');
+  if (ADecimals < 2) or (ADecimals > 8) then
+    raise EValidError.Create('invalid decimals value');
+  if Length(AAmount.ToString) + ADecimals > 18 then
+    raise EValidError.Create('invalid decimals value');
+
+  Result := Min((AAmount div (ADecimals * 10)) + 1, 10);
+end;
 
 //function TAppCore.DoGetTokenBalanceWithSmartAddress(AReqID, AAddressTET,
 //  ASmartAddress: string): string;
@@ -664,76 +795,8 @@ end;
 //  PrKey := PrKey.ToLower;
 //end;
 
-//function TAppCore.DoTokenTransfer(AReqID,AAddrTETFrom,AAddrTETTo,ASmartAddr: string;
-//  AAmount: Extended; APrKey,APubKey: string): string;
-//var
-//  AmountStr,sign,signLine,res: string;
-//  splt: TArray<string>;
-//  requestDone: TEvent;
-//begin
-//  AAddrTETFrom := Remove0x(AAddrTETFrom);
-//  if Length(AAddrTETFrom) <> 40 then
-//    raise EValidError.Create('invalid address "from"');
-//  AAddrTETTo := Remove0x(AAddrTETTo);
-//  if Length(AAddrTETFrom) <> 40 then
-//    raise EValidError.Create('invalid address "to"');
-//  if AAddrTETFrom.Equals(AAddrTETTo) then
-//    raise ESameAddressesError.Create('');
-//  ASmartAddr := Remove0x(ASmartAddr);
-//  if Length(ASmartAddr) <> 40 then
-//    raise EValidError.Create('invalid smartcontract address');
-//
-//  if (AAmount <= 0) or (AAmount > 999999999999999999) then
-//    raise EValidError.Create('invalid amount value');
-//  AmountStr := FormatFloat('0.########', AAmount);
-//  if (Length(AmountStr.Replace(',','')) > 18) or
-//     (Length(Copy(AmountStr,AmountStr.IndexOf(',')+2,10)) > 8) then
-//    raise EValidError.Create('incorrect amount');
-//
-//  if Length(APrKey) <> 64 then
-//    raise EValidError.Create('invalid private key');
-//  if Length(APubKey) <> 130 then
-//    raise EValidError.Create('invalid public key');
-//
-//  signLine := Format('%s %s %s %s',[AAddrTETFrom,AAddrTETTo,ASmartAddr,AmountStr]);
-//  sign := SignTransaction(signLine,APrKey).ToLower;
-//  if sign.IsEmpty then
-//    raise EValidError.Create('invalid private key');
-//
-//  requestDone := TEvent.Create;
-//  requestDone.ResetEvent;
-//  try
-//    TThread.CreateAnonymousThread(
-//    procedure
-//    begin
-//      res := FNodeClient.DoRequestToValidator(
-//        Format('TknCTransfer %s %s %s %s <%s> %s %s %s',
-//        [AReqID,AAddrTETFrom,AAddrTETTo,AmountStr,signLine,sign,APubKey,ASmartAddr]));
-//      requestDone.SetEvent;
-//    end).Start;
-//    if requestDone.WaitFor(600000) = wrTimeout then
-//      raise ESocketError.Create('');
-//  finally
-//    requestDone.Free;
-//  end;
-//
-//  Result := res;
-//  if IsURKError(Result) then
-//  begin;
-//    splt := Result.Split([' ']);
-//    case splt[3].ToInteger of
-//      41502: raise EInvalidSignError.Create('');
-//      41500: raise ESocketError.Create('');
-//      41501: raise EUnknownError.Create('41501');
-//      41505: raise ERequestInProgressError.Create('');
-//      110: raise EInsufficientFundsError.Create('');
-//      else raise EUnknownError.Create(splt[3]);
-//    end;
-//  end;
-//end;
-
-function TAppCore.TryExtractPrivateKeyFromFile(out PrKey: string;
-  out PubKey: string): Boolean;
+procedure TAppCore.TryExtractPrivateKeyFromFile(out PrKey: string;
+  out PubKey: string);
 var
   Path: string;
   Lines: TArray<string>;
@@ -929,11 +992,22 @@ end;
 //  Result := FBlockchain.GetChainTransactions(ASkip,ARows);
 //end;
 
-function TAppCore.GetTETUserTransactions(AUserID, ASkip: Integer;
-  ARows: Integer; ALast: Boolean): TArray<THistoryTransactionInfo>;
+function TAppCore.GetTETUserLastTransactions(AUserID,
+  ARows: Integer): TArray<THistoryTransactionInfo>;
 begin
   if AUserID < 0 then
     raise EValidError.Create('invalid "user id" value');
+  if ARows <= 0 then
+    raise EValidError.Create('invalid "rows" value');
+  if ARows > 50 then
+    raise EValidError.Create('"rows" value can''t be more than 50');
+
+  Result := FBlockchain.GetTETUserLastTransactions(AUserID, ARows);
+end;
+
+function TAppCore.GetTETTransactions(ASkip: Integer; ARows: Integer;
+  AFromTheEnd: Boolean): TArray<TExplorerTransactionInfo>;
+begin
   if ASkip < 0 then
     raise EValidError.Create('invalid "skip" value');
   if ARows <= 0 then
@@ -941,8 +1015,7 @@ begin
   if ARows > 50 then
     raise EValidError.Create('"rows" value can''t be more than 50');
 
-  if ALast then
-    Result := FBlockchain.GetTETUserLastTransactions(AUserID, ARows);
+  Result := FBlockchain.GetTETTransactions(ASkip, ARows, AFromTheEnd);
 end;
 
 function TAppCore.GetSessionKey: string;
@@ -1159,6 +1232,24 @@ begin
     raise EUnknownError.Create('');
 end;
 
+function TAppCore.GetTokenUserTransactions(ATokenID, AUserID, ASkip,
+  ARows: Integer; ALast: Boolean): TArray<THistoryTransactionInfo>;
+begin
+  if AUserID < 0 then
+    raise EValidError.Create('invalid "user id" value');
+  if ATokenID < 0 then
+    raise EValidError.Create('invalid "token id" value');
+  if ASkip < 0 then
+    raise EValidError.Create('invalid "skip" value');
+  if ARows <= 0 then
+    raise EValidError.Create('invalid "rows" value');
+  if ARows > 50 then
+    raise EValidError.Create('"rows" value can''t be more than 50');
+
+  if ALast then
+    Result := FBlockchain.GetTokenUserLastTransactions(ATokenID, AUserID, ARows);
+end;
+
 function TAppCore.GetTokenChainBlocks(ATokenID: Integer; ASkip: Integer): TBytes;
 begin
   Result := FBlockchain.GetTokenChainBlocks(ATokenID, ASkip);
@@ -1204,7 +1295,7 @@ end;
 function TAppCore.Remove0x(AAddress: string): string;
 begin
   if (Length(AAddress) > 40) and AAddress.StartsWith('0x') then
-    Result := AAddress.Substring(2,Length(AAddress))
+    Result := AAddress.Substring(2, Length(AAddress))
   else
     Result := AAddress;
 end;
@@ -1248,10 +1339,10 @@ begin
   TFile.AppendAllText(Path, 'private key:' + APrivateKey + sLineBreak);
 end;
 
-//function TAppCore.SendToConfirm(AReqID, AToSend: string): string;
-//begin
-//  Result := FNodeClient.DoRequest(AReqID,AToSend);
-//end;
+function TAppCore.SendToConfirm(AReqID, AToSend: string): string;
+begin
+  Result := FNodeClient.DoRequest(AReqID, AToSend);
+end;
 
 //procedure TAppCore.SetTETChainBlocks(ASkip: Int64; ABytes: TBytes);
 //begin

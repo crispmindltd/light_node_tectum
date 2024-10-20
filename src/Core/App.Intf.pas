@@ -16,8 +16,9 @@ type
     procedure ShowTotalBlocksToDownload(const ABlocksNumberToLoad: UInt64);
     procedure ShowDownloadProgress;
     procedure NotifyNewTETBlocks(const ANeedRefreshBalance: Boolean);
-    procedure NotifyNewToken(const ATicker: string; ATokenID: Integer);
-    procedure NotifyNewTokenBlocks(const ANeedRefreshBalance: Boolean);
+    procedure NotifyNewToken(const ASmartKey: TCSmartKey);
+    procedure NotifyNewTokenBlocks(const ASmartKey: TCSmartKey;
+      ANeedRefreshBalance: Boolean);
   end;
 
   IAppCore = interface
@@ -37,9 +38,10 @@ type
     function GetTETChainBlocksCount: Integer;
     function GetTETChainBlocks(ASkip: Integer): TBytes;
     procedure SetTETChainBlocks(ASkip: Integer; ABytes: TBytes);
-    function GetTETUserTransactions(AUserID: Integer; ASkip: Integer;
-      ARows: Integer; ALast: Boolean = False): TArray<THistoryTransactionInfo>;
-//    function GetChainTransations(ASkip: Integer; var ARows: Integer): TArray<TExplorerTransactionInfo>;
+    function GetTETUserLastTransactions(AUserID: Integer;
+      ARows: Integer): TArray<THistoryTransactionInfo>;
+    function GetTETTransactions(ASkip: Integer; ARows: Integer;
+      AFromTheEnd: Boolean = True): TArray<TExplorerTransactionInfo>;
 //    function GetChainLastTransactions(var Amount: Integer): TArray<TExplorerTransactionInfo>;
 
 //    function GetTETUserLastTransactions(AUserID: Int64;
@@ -80,6 +82,8 @@ type
     function GetTokenChainBlocks(ATokenID: Integer; ASkip: Integer): TBytes;
     procedure SetTokenChainBlocks(ATokenID: Integer; ASkip: Integer; ABytes: TBytes);
     function GetTokenBalance(ATokenID: Integer; ATETAddress: string): Double;
+    function GetTokenUserTransactions(ATokenID: Integer; AUserID: Integer;
+      ASkip: Integer; ARows: Integer; ALast: Boolean = False): TArray<THistoryTransactionInfo>;
 
     //Tokens dynamic blocks sync methods
     function GetDynTokenChainBlocksCount(ATokenID: Integer): Integer;
@@ -129,10 +133,12 @@ type
       ACallBackProc: TGetStrProc); overload;
     function DoNewToken(AReqID, ASessionKey, AFullName, AShortName,
       ATicker: string; AAmount: Int64; ADecimals: Integer): string; overload;
-//    function GetNewTokenFee(AAmount: Int64; ADecimals: Integer): Integer;
-//    function DoTokenTransfer(AReqID,AAddrTETFrom,AAddrTETTo,ASmartAddr: string;
-//      AAmount: Extended; APrKey,APubKey: string): string;
-//    function SendToConfirm(AReqID,AToSend: string): string;
+    function GetNewTokenFee(AAmount: Int64; ADecimals: Integer): Integer;
+    procedure DoTokenTransfer(AReqID, AAddrTETFrom, AAddrTETTo, ASmartAddr: string;
+      AAmount: Double; APrKey, APubKey: string; ACallBackProc: TGetStrProc); overload;
+    function DoTokenTransfer(AReqID, AAddrTETFrom, AAddrTETTo, ASmartAddr: string;
+      AAmount: Double; APrKey, APubKey: string): string; overload;
+    function SendToConfirm(AReqID, AToSend: string): string;
 //    function GetLocalTokensBalances: TArray<string>;
 
 //    function DoGetTokenBalanceWithSmartAddress(AReqID,AAddressTET,ASmartAddress: string): string;
@@ -143,8 +149,8 @@ type
 //    function GetPubKeyByID(AReqID: string; AID: Int64): string;
 //    function GetPubKeyBySessionKey(AReqID,ASessionKey: string): string;
     function TrySaveKeysToFile(APrivateKey: string): Boolean;
-    function TryExtractPrivateKeyFromFile(out PrKey: string;
-      out PubKey: string): Boolean;
+    procedure TryExtractPrivateKeyFromFile(out PrKey: string;
+      out PubKey: string);
 
 //    function TryGetTokenBase(ATicker: string; var sk: TCSmartKey): Boolean;
 //    function TryGetTokenBaseByAddress(const AAddress: string; var sk: TCSmartKey): Boolean;

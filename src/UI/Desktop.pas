@@ -45,8 +45,9 @@ type
     procedure ShowTotalBlocksToDownload(const ABlocksNumberToLoad: UInt64);
     procedure ShowDownloadProgress;
     procedure NotifyNewTETBlocks(const ANeedRefreshBalance: Boolean);
-    procedure NotifyNewToken(const ATicker: string; ATokenID: Integer);
-    procedure NotifyNewTokenBlocks(const ANeedRefreshBalance: Boolean);
+    procedure NotifyNewToken(const ASmartKey: TCSmartKey);
+    procedure NotifyNewTokenBlocks(const ASmartKey: TCSmartKey;
+      ANeedRefreshBalance: Boolean);
   end;
 
 implementation
@@ -174,24 +175,25 @@ begin
     end);
 end;
 
-procedure TUICore.NotifyNewToken(const ATicker: string; ATokenID: Integer);
+procedure TUICore.NotifyNewToken(const ASmartKey: TCSmartKey);
 begin
   if Assigned(MainForm) then
     TThread.Synchronize(nil,
     procedure
     begin
-      MainForm.NewTokenEvent(ATicker, ATokenID);
+      MainForm.NewTokenEvent(ASmartKey);
     end);
 end;
 
-procedure TUICore.NotifyNewTokenBlocks(const ANeedRefreshBalance: Boolean);
+procedure TUICore.NotifyNewTokenBlocks(const ASmartKey: TCSmartKey;
+  ANeedRefreshBalance: Boolean);
 begin
-//  if Assigned(MainForm) then
-//    TThread.Synchronize(nil,
-//    procedure
-//    begin
-//      MainForm.NewTokenBlocksEvent(ANeedRefreshBalance);
-//    end);
+  if Assigned(MainForm) then
+    TThread.Synchronize(nil,
+    procedure
+    begin
+      MainForm.NewTokenBlocksEvent(ASmartKey, ANeedRefreshBalance);
+    end);
 end;
 
 procedure TUICore.NullForm(var Form);

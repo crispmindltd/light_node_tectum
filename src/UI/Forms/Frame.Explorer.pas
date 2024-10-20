@@ -17,9 +17,9 @@ type
     AmountLabel: TLabel;
     Rectangle: TRectangle;
     TickerLabel: TLabel;
-    procedure FrameResize(Sender: TObject);
     procedure FrameMouseEnter(Sender: TObject);
     procedure FrameMouseLeave(Sender: TObject);
+    procedure FrameResized(Sender: TObject);
   private
   public
     constructor Create(AOwner: TComponent; ADateTime: TDateTime; ABlock: Integer;
@@ -67,19 +67,18 @@ begin
   Rectangle.Fill.Kind := TBrushKind.None;
 end;
 
-procedure TExplorerTransactionFrame.FrameResize(Sender: TObject);
+procedure TExplorerTransactionFrame.FrameResized(Sender: TObject);
 var
-  Width: Integer;
+  Width: Single;
 begin
+  Width := Self.Width - DateTimeLabel.Width - BlockLabel.Width -
+    AmountLabel.Width - 70;
   if TickerLabel.Visible then
-    Width := Round(Self.Width - DateTimeLabel.Width - TickerLabel.Width -
-      BlockLabel.Width - AmountLabel.Width - 90) div 3
-  else
-    Width := Round(Self.Width - DateTimeLabel.Width - BlockLabel.Width -
-      AmountLabel.Width - 75) div 3;
-  FromLabel.Width := Width;
-  ToLabel.Width := Width;
-  HashLabel.Width := Width;
+    Width := Width - TickerLabel.Width - 15;
+
+  FromLabel.Width := Width * 0.25;
+  ToLabel.Width := Width * 0.25;
+  HashLabel.Width := Width * 0.5;
 end;
 
 end.

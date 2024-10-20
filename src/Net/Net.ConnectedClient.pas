@@ -28,7 +28,7 @@ type
       procedure Disconnect;
       procedure ReceiveRequest;
       function GetFullAddress: string;
-//      function DoValidation: string;
+      function DoValidation: string;
       function GetTETChainBlocksToSend(out ABlocksNumber: Integer): TBytes;
       function GetDynTETChainBlocksToSend(out ABlocksNumber: Integer): TBytes;
       function GetTokenICOBlocksToSend(out ABlocksNumber: Integer): TBytes;
@@ -87,39 +87,39 @@ begin
   {$ENDIF}
 end;
 
-//function TConnectedClient.DoValidation: string;
-//var
-//  incomCountBytes: array[0..3] of Byte;
-//  incomCount: Integer absolute incomCountBytes;
-//  reqBytes: TBytes;
-//  incomStr: string;
-//  splt: TArray<string>;
-//begin
-//  FSocket.Receive(incomCountBytes,0,4,[TSocketFlag.WAITALL]);
-//  SetLength(reqBytes,incomCount);
-//  FSocket.Receive(reqBytes,0,incomCount,[TSocketFlag.WAITALL]);
-//  try
-//    incomStr := TEncoding.ANSI.Getstring(reqBytes);
-//    splt := incomStr.Trim.Split([' '], '<', '>');
-//    if not FOnNewValidationRequest(splt[7]) then
-//      Exit(Format('URKError U16 * 41505 <UserKey:%s>',[splt[1]]));
-//    Logs.DoLog(Format('<From %s>[%d]: %s',[FID,VALIDATE_COMMAND_CODE,incomStr]),INCOM,tcp);
-//    try
-//      if ECDSACheckTextSign(splt[5].Trim(['<','>']),splt[6],HexToBytes(splt[7])) then
-//      try
-//        Result := AppCore.SendToConfirm(splt[1],incomStr);
-//      except
-//        on E:ESocketError do
-//          Result := Format('URKError U16 * 41500 <UserKey:%s>',[splt[1]]);
-//      end else
-//        Result := Format('URKError U16 * 41502 <UserKey:%s>',[splt[1]]);
-//    finally
-//      FOnValidationDone(splt[7]);
-//    end;
-//  except
-//    Result := Format('URKError U16 * 41501 <UserKey:%s>',[splt[1]]);
-//  end;
-//end;
+function TConnectedClient.DoValidation: string;
+var
+  IncomCountBytes: array[0..3] of Byte;
+  IncomCount: Integer absolute IncomCountBytes;
+  IncomBytes: TBytes;
+  IncomStr: string;
+  Splitted: TArray<string>;
+begin
+  FSocket.Receive(IncomCountBytes, 0, 4, [TSocketFlag.WAITALL]);
+  SetLength(IncomBytes, IncomCount);
+  FSocket.Receive(IncomBytes, 0, IncomCount, [TSocketFlag.WAITALL]);
+  try
+    IncomStr := TEncoding.ANSI.GetString(IncomBytes);
+    Splitted := IncomStr.Trim.Split([' '], '<', '>');
+    if not FOnNewValidationRequest(Splitted[7]) then
+      Exit(Format('URKError U16 * 41505 <UserKey:%s>', [Splitted[1]]));
+    try
+      if ECDSACheckTextSign(Splitted[5].Trim(['<','>']), Splitted[6],
+        HexToBytes(Splitted[7])) then
+      try
+        Result := AppCore.SendToConfirm(Splitted[1], IncomStr);
+      except
+        on E:ESocketError do
+          Result := Format('URKError U16 * 41500 <UserKey:%s>', [Splitted[1]]);
+      end else
+        Result := Format('URKError U16 * 41502 <UserKey:%s>', [Splitted[1]]);
+    finally
+      FOnValidationDone(Splitted[7]);
+    end;
+  except
+    Result := Format('URKError U16 * 41501 <UserKey:%s>', [Splitted[1]]);
+  end;
+end;
 
 function TConnectedClient.GetTETChainBlocksToSend(out ABlocksNumber: Integer): TBytes;
 var
@@ -212,7 +212,7 @@ end;
 procedure TConnectedClient.ReceiveRequest;
 var
   Command: Byte;
-//  tranferResult: string;
+  Response: string;
   OutgoBytes: array[0..3] of Byte;
   OutgoBlocksNumber: Integer absolute OutgoBytes;
   ToSend: TBytes;
@@ -226,16 +226,14 @@ begin
         Logs.DoLog(Format('%s disconnected', [FID]), OUTGO);
       end;
 
-//    VALIDATE_COMMAND_CODE:
-//      begin
-//        tranferResult := DoValidation;
-//        bytes := TEncoding.ANSI.GetBytes(tranferResult);
-//        outgoBlocksAmount := Length(bytes);
-//        FSocket.Send(outgoCountBytes,0,4);
-//        FSocket.Send(bytes,0,outgoBlocksAmount);
-//        Logs.DoLog(Format('<To %s>[%d]: %s',[FID,VALIDATE_COMMAND_CODE,
-//          tranferResult]),OUTGO,tcp);
-//      end;
+    ValidateCommandCode:
+      begin
+        Response := DoValidation;
+        ToSend := TEncoding.ANSI.GetBytes(Response);
+        OutgoBlocksNumber := Length(ToSend);
+        FSocket.Send(OutgoBytes, 0, 4);
+        FSocket.Send(ToSend, 0, OutgoBlocksNumber);
+      end;
 
     TETChainsTotalNumberCode:
       begin

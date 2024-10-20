@@ -91,7 +91,7 @@ begin
       [DynTokenChainSyncCommandCode, ATokenID, IncomCount]), INCOM, TLogFolder.sync);
     AppCore.SetDynTokenChainBlocks(ATokenID, ABlocksCountNow, BytesToReceive);
   finally
-    Result := IncomCount = 0;
+    Result := IncomCount < MaxBlocksNumber;
   end;
 end;
 
@@ -135,7 +135,7 @@ begin
       [TokenChainSyncCommandCode, ATokenID, IncomCount]), INCOM, TLogFolder.sync);
     AppCore.SetTokenChainBlocks(ATokenID, ABlocksCountNow, BytesToReceive);
   finally
-    Result := IncomCount = 0;
+    Result := IncomCount < MaxBlocksNumber;
   end;
 end;
 

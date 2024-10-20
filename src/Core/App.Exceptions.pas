@@ -35,6 +35,11 @@ const
   InsufficientFundsErrorText = 'Insufficient funds';
   UnableSendToTyourselfErrorText = 'Unable to send to yourself';
   TokenAlreadyExistsErrorText = 'Token already exists';
+  InvalidSignErrorText = 'Validator did not confirm the signature';
+  ServerDidNotRespondErrorText = 'RemoteServer did not respond. Try later';
+  ValidatorFailedErrorText = 'Validator returned an error with code 41501';
+  ValidatorDidNotRespondErrorText = 'Validator did not respond. Try later';
+  TransactionInProgressErrorText = 'Previous transaction has not yet been processed. Try later';
 
 implementation
 

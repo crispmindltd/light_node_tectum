@@ -28,7 +28,7 @@ object MainForm: TMainForm
     Size.Height = 930.000000000000000000
     Size.PlatformDefault = False
     StyleLookup = 'AuthTabControlstyle'
-    TabIndex = 1
+    TabIndex = 0
     TabOrder = 0
     TabPosition = Top
     OnChange = TabsChange
@@ -50,7 +50,7 @@ object MainForm: TMainForm
       TextSettings.FontColor = claWhite
       TextSettings.Trimming = None
       StyledSettings = [Style, FontColor, Other]
-      IsSelected = False
+      IsSelected = True
       Margins.Left = -4.000000000000000000
       Margins.Right = 6.000000000000000000
       Size.Width = 271.000000000000000000
@@ -160,7 +160,6 @@ object MainForm: TMainForm
             Size.Height = 28.000000000000000000
             Size.PlatformDefault = False
             TabOrder = 1
-            OnPaint = HistoryTETHeaderLayoutPaint
             object DateTimeTETHeaderLabel: TLabel
               Align = Left
               StyledSettings = [Style]
@@ -391,6 +390,7 @@ object MainForm: TMainForm
             Size.Height = 410.000000000000000000
             Size.PlatformDefault = False
             TabOrder = 7
+            OnPaint = HistoryTETVertScrollBoxPaint
             OnResized = HistoryTETVertScrollBoxResized
             Viewport.Width = 1094.000000000000000000
             Viewport.Height = 410.000000000000000000
@@ -882,7 +882,7 @@ object MainForm: TMainForm
       TextSettings.FontColor = claWhite
       TextSettings.Trimming = None
       StyledSettings = [Style, FontColor, Other]
-      IsSelected = True
+      IsSelected = False
       Margins.Left = 6.000000000000000000
       Margins.Right = 6.000000000000000000
       Size.Width = 261.000000000000000000
@@ -996,8 +996,8 @@ object MainForm: TMainForm
               Align = Left
               StyledSettings = [Style]
               Margins.Left = 15.000000000000000000
-              Position.X = 887.000000000000000000
-              Size.Width = 120.000000000000000000
+              Position.X = 872.000000000000000000
+              Size.Width = 110.000000000000000000
               Size.Height = 28.000000000000000000
               Size.PlatformDefault = False
               TextSettings.Font.Family = 'Inter'
@@ -1010,7 +1010,7 @@ object MainForm: TMainForm
               Align = Left
               StyledSettings = [Style]
               Margins.Left = 15.000000000000000000
-              Position.X = 160.000000000000000000
+              Position.X = 165.000000000000000000
               Size.Width = 72.000000000000000000
               Size.Height = 28.000000000000000000
               Size.PlatformDefault = False
@@ -1023,9 +1023,7 @@ object MainForm: TMainForm
             object DateTimeTokenHeaderLabel: TLabel
               Align = Left
               StyledSettings = [Style]
-              Margins.Left = 5.000000000000000000
-              Position.X = 5.000000000000000000
-              Size.Width = 140.000000000000000000
+              Size.Width = 150.000000000000000000
               Size.Height = 28.000000000000000000
               Size.PlatformDefault = False
               TextSettings.Font.Family = 'Inter'
@@ -1038,7 +1036,7 @@ object MainForm: TMainForm
               Align = Left
               StyledSettings = [Style]
               Margins.Left = 15.000000000000000000
-              Position.X = 247.000000000000000000
+              Position.X = 252.000000000000000000
               Size.Width = 300.000000000000000000
               Size.Height = 28.000000000000000000
               Size.PlatformDefault = False
@@ -1052,8 +1050,8 @@ object MainForm: TMainForm
               Align = Left
               StyledSettings = [Style]
               Margins.Left = 15.000000000000000000
-              Position.X = 562.000000000000000000
-              Size.Width = 310.000000000000000000
+              Position.X = 567.000000000000000000
+              Size.Width = 290.000000000000000000
               Size.Height = 28.000000000000000000
               Size.PlatformDefault = False
               TextSettings.Font.Family = 'Inter'
@@ -1066,7 +1064,7 @@ object MainForm: TMainForm
               Align = Left
               StyledSettings = [Style]
               Margins.Left = 15.000000000000000000
-              Position.X = 1022.000000000000000000
+              Position.X = 997.000000000000000000
               Size.Width = 70.000000000000000000
               Size.Height = 28.000000000000000000
               Size.PlatformDefault = False
@@ -1194,6 +1192,15 @@ object MainForm: TMainForm
               TextSettings.FontColor = claWhite
               TextSettings.Trimming = None
               OnClick = SendTokenButtonClick
+              object TransTokenAniIndicator: TAniIndicator
+                Align = Right
+                Margins.Right = -40.000000000000000000
+                Position.X = 175.000000000000000000
+                Size.Width = 35.000000000000000000
+                Size.Height = 35.000000000000000000
+                Size.PlatformDefault = False
+                Visible = False
+              end
             end
             object TokenNameEdit: TEdit
               Touch.InteractiveGestures = [LongTap, DoubleTap]
@@ -1210,6 +1217,7 @@ object MainForm: TMainForm
               Size.Width = 406.000000000000000000
               Size.Height = 40.000000000000000000
               Size.PlatformDefault = False
+              OnChange = TokenNameEditChange
               OnChangeTracking = TokenNameEditChangeTracking
               OnClick = TokenNameEditClick
               object DropDownEditButton: TDropDownEditButton
@@ -1277,10 +1285,10 @@ object MainForm: TMainForm
             Padding.Top = 15.000000000000000000
             Padding.Right = 15.000000000000000000
             Padding.Bottom = 15.000000000000000000
-            Position.X = 496.000000000000000000
-            Position.Y = 30.000000000000000000
+            Position.X = 488.000000000000000000
+            Position.Y = 33.000000000000000000
             Size.Width = 598.000000000000000000
-            Size.Height = 256.000000000000000000
+            Size.Height = 253.000000000000000000
             Size.PlatformDefault = False
             Stroke.Kind = None
             object TokenShortNameEdit: TEdit
@@ -1324,12 +1332,12 @@ object MainForm: TMainForm
               EnabledScroll = False
               Margins.Top = 10.000000000000000000
               Size.Width = 568.000000000000000000
-              Size.Height = 188.000000000000000000
+              Size.Height = 185.000000000000000000
               Size.PlatformDefault = False
               StyleLookup = 'PathMemostyle'
               TabOrder = 12
               Viewport.Width = 564.000000000000000000
-              Viewport.Height = 184.000000000000000000
+              Viewport.Height = 181.000000000000000000
             end
           end
         end
@@ -2614,8 +2622,8 @@ object MainForm: TMainForm
               Align = Left
               StyledSettings = [Style]
               Margins.Left = 15.000000000000000000
-              Position.X = 937.000000000000000000
-              Size.Width = 160.000000000000000000
+              Position.X = 947.000000000000000000
+              Size.Width = 110.000000000000000000
               Size.Height = 28.000000000000000000
               Size.PlatformDefault = False
               TextSettings.Font.Family = 'Inter'
@@ -2629,7 +2637,7 @@ object MainForm: TMainForm
               Align = Left
               StyledSettings = [Style]
               Margins.Left = 15.000000000000000000
-              Position.X = 160.000000000000000000
+              Position.X = 170.000000000000000000
               Size.Width = 72.000000000000000000
               Size.Height = 28.000000000000000000
               Size.PlatformDefault = False
@@ -2645,7 +2653,7 @@ object MainForm: TMainForm
               StyledSettings = [Style]
               Margins.Left = 5.000000000000000000
               Position.X = 5.000000000000000000
-              Size.Width = 140.000000000000000000
+              Size.Width = 150.000000000000000000
               Size.Height = 28.000000000000000000
               Size.PlatformDefault = False
               TextSettings.Font.Family = 'Inter'
@@ -2659,7 +2667,7 @@ object MainForm: TMainForm
               Align = Left
               StyledSettings = [Style]
               Margins.Left = 15.000000000000000000
-              Position.X = 247.000000000000000000
+              Position.X = 257.000000000000000000
               Size.Width = 215.000000000000000000
               Size.Height = 28.000000000000000000
               Size.PlatformDefault = False
@@ -2674,7 +2682,7 @@ object MainForm: TMainForm
               Align = Left
               StyledSettings = [Style]
               Margins.Left = 15.000000000000000000
-              Position.X = 707.000000000000000000
+              Position.X = 717.000000000000000000
               Size.Width = 215.000000000000000000
               Size.Height = 28.000000000000000000
               Size.PlatformDefault = False
@@ -2689,7 +2697,7 @@ object MainForm: TMainForm
               Align = Left
               StyledSettings = [Style]
               Margins.Left = 15.000000000000000000
-              Position.X = 477.000000000000000000
+              Position.X = 487.000000000000000000
               Size.Width = 215.000000000000000000
               Size.Height = 28.000000000000000000
               Size.PlatformDefault = False
@@ -2780,6 +2788,7 @@ object MainForm: TMainForm
                 Size.Height = 28.000000000000000000
                 Size.PlatformDefault = False
                 TabOrder = 1
+                OnMouseDown = NextPageLayoutMouseDown
                 object NextPagePath: TPath
                   Align = Center
                   Data.Path = {
@@ -2804,6 +2813,7 @@ object MainForm: TMainForm
                 Size.Height = 28.000000000000000000
                 Size.PlatformDefault = False
                 TabOrder = 0
+                OnMouseDown = PrevPageLayoutMouseDown
                 object PrevPagePath: TPath
                   Align = Center
                   Data.Path = {
@@ -3418,7 +3428,7 @@ object MainForm: TMainForm
         Touch.InteractiveGestures = [LongTap, DoubleTap]
         Align = Top
         TabOrder = 0
-        FilterChar = 'qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM'
+        FilterChar = 'qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM0123456789'
         TextSettings.Font.Family = 'Inter'
         TextSettings.FontColor = xFF323130
         Position.X = 12.000000000000000000
@@ -3444,14 +3454,14 @@ object MainForm: TMainForm
         Size.Width = 379.000000000000000000
         Size.Height = 0.000000000000000000
         Size.PlatformDefault = False
-        StyleLookup = 'transparentlistboxstyle'
+        StyleLookup = 'LBListBoxstyle123'
         TabOrder = 1
         DisableFocusEffect = True
         ItemHeight = 35.000000000000000000
         DefaultItemStyles.ItemStyle = ''
         DefaultItemStyles.GroupHeaderStyle = ''
         DefaultItemStyles.GroupFooterStyle = ''
-        Viewport.Width = 379.000000000000000000
+        Viewport.Width = 375.000000000000000000
         Viewport.Height = 0.000000000000000000
       end
     end
