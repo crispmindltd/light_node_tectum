@@ -48,7 +48,7 @@ type
     function GetTETChainBlocksCount: Integer;
     function GetTETChainBlocks(ASkip: Integer): TBytes;
     procedure SetTETChainBlocks(ASkip: Integer; ABytes: TBytes);
-    function GetTETUserLastTransactions(AUserID: Integer;
+    function GetTETUserLastTransactions(AUserID: Integer; ASkip,
       ARows: Integer): TArray<THistoryTransactionInfo>;
     function GetTETTransactions(ASkip: Integer;
       ARows: Integer; AFromTheEnd: Boolean): TArray<TExplorerTransactionInfo>;
@@ -112,6 +112,10 @@ type
     function TryGetDynTokenBlock(ATokenID: Integer; const ATETAddress: string;
       out ABlockID: Integer; out ADynToken: TCTokensBase): Boolean;
 
+    function TryGetTETAddressByUserID(const AUserID: Integer;
+      out ATETAddress: string): Boolean;
+    function TryGetUserIDByTETAddress(const ATETAddress: string;
+      out AUserID: Integer): Boolean;
     function SearchTransactionsByBlockNum(const ABlockNum: Integer):
       TArray<TExplorerTransactionInfo>;
     function SearchTransactionByHash(const AHash: string;
@@ -135,9 +139,6 @@ type
 //      function GetSmartAddress(AID: Integer): string; overload;
 //      function GetLastSmartUserTransactions(AUserID: Integer; ATicker: string;
 //        var AAmount: Integer): TArray<THistoryTransactionInfo>;
-
-    function TryGetTETAddressByOwnerID(const AUserID: Integer;
-      out ATETAddress: string): Boolean;
   end;
 
 implementation
@@ -180,7 +181,18 @@ begin
   inherited;
 end;
 
-function TBlockchain.TryGetTETAddressByOwnerID(const AUserID: Integer;
+function TBlockchain.TryGetUserIDByTETAddress(const ATETAddress: string;
+  out AUserID: Integer): Boolean;
+var
+  BlockNum: Integer;
+  TETDyn: TTokenBase;
+begin
+  Result := FTETChains.DynBlocks.TryGet(ATETAddress, BlockNum, TETDyn);
+  if Result then
+    AUserID := TETDyn.OwnerID;
+end;
+
+function TBlockchain.TryGetTETAddressByUserID(const AUserID: Integer;
   out ATETAddress: string): Boolean;
 var
   BlockNum: Integer;
@@ -255,7 +267,7 @@ begin
   end;
 end;
 
-function TBlockchain.GetTETUserLastTransactions(AUserID: Integer;
+function TBlockchain.GetTETUserLastTransactions(AUserID: Integer; ASkip,
   ARows: Integer): TArray<THistoryTransactionInfo>;
 var
   TETBlock: Tbc2;
@@ -273,6 +285,21 @@ begin
 
   StartBlockNum := TETDyn.StartBlock;
   i := TETDyn.LastBlock;
+  while (ASkip > 0) and (i > 0) and (i > StartBlockNum) do
+  begin
+    FTETChains.Trans.TryGet(i, TETBlock);  // do skipping
+    if TETBlock.Smart.tkn[1].TokenID = TokenID then
+		begin
+      i := TETBlock.Smart.tkn[1].FromBlock;
+      Dec(ASkip);
+    end else
+    if TETBlock.Smart.tkn[2].TokenID = TokenID then
+		begin
+      i := TETBlock.Smart.tkn[2].FromBlock;
+      Dec(ASkip);
+    end;
+  end;
+
   while (i > 0) and (i > StartBlockNum) and (Length(Result) <= ARows) do
   begin
     FTETChains.Trans.TryGet(i, TETBlock);
@@ -432,8 +459,107 @@ end;
 
 function TBlockchain.SearchTransactionsByAddress(
   const ATETAddress: string): TArray<TExplorerTransactionInfo>;
+var
+  i, j, TransCount, TokenID, UserID: Integer;
+  TokenChainsPair: TTokenChainsPair;
+  TETBlock: Tbc2;
+  TokenBlock: TCbc4;
+  TETBaseFrom, TETBaseTo: TTokenBase;
+  TokenBaseFrom, TokenBaseTo: TCTokensBase;
+  TokenICO: TTokenICODat;
+  Transaction: TExplorerTransactionInfo;
+  UserIDStr: string;
+  AddressesDict: TDictionary<Integer, string>;
 begin
+  Result := [];
+  FTETChains.Trans.DoOpen;
+  FTETChains.DynBlocks.DoOpen;
+  TryGetUserIDByTETAddress(ATETAddress, UserID);
+  try
+    for i := 0 to FTETChains.Trans.GetBlocksCount - 1 do
+    begin
+      FTETChains.Trans.TryGet(i, TETBlock);
+      if (FTETChains.DynBlocks.TryReadBlock(TETBlock.Smart.tkn[1].TokenID,
+        TETBaseFrom) and (ATETAddress = TETBaseFrom.Token)) or
+        (FTETChains.DynBlocks.TryReadBlock(TETBlock.Smart.tkn[2].TokenID,
+        TETBaseTo) and (ATETAddress = TETBaseTo.Token)) then
+      begin
+        Transaction.DateTime := TETBlock.Smart.TimeEvent;
+        Transaction.BlockNum := i;
+        Transaction.Hash := '';
+        for j := 1 to TokenLength do
+          Transaction.Hash := Transaction.Hash + IntToHex(TETBlock.Hash[j], 2).ToLower;
+        Transaction.TransFrom := TETBaseFrom.Token;
+        Transaction.TransTo := TETBaseTo.Token;
+        Transaction.Amount := TETBlock.Smart.Delta / Power(10, 8);
+        Transaction.FloatSize := 8;
+        Transaction.Ticker := 'TET';
+        Result := Result + [Transaction];
+      end;
+    end;
+    TransCount := Length(Result);
+  finally
+    FTETChains.DynBlocks.DoClose;
+    FTETChains.Trans.DoClose;
+  end;
+  AddressesDict := TDictionary<Integer, string>.Create(300);
+  AddressesDict.AddOrSetValue(UserID, ATETAddress);
+  try
+    for TokenID in FTokensChains.Keys do
+    begin
+      TokenChainsPair := FTokensChains[TokenID];
+      TokenChainsPair.Trans.DoOpen;
+      TokenChainsPair.DynBlocks.DoOpen;
+      try
+        for i := 0 to TokenChainsPair.Trans.GetBlocksCount - 1 do
+        begin
+          TokenChainsPair.Trans.TryGet(i, TokenBlock);
+          if (TokenChainsPair.DynBlocks.TryReadBlock(TokenBlock.Smart.tkn[1].TokenID,
+            TokenBaseFrom) and (UserID = TokenBaseFrom.OwnerID)) or
+            (TokenChainsPair.DynBlocks.TryReadBlock(TokenBlock.Smart.tkn[2].TokenID,
+            TokenBaseTo) and (UserID = TokenBaseTo.OwnerID)) then
+          begin
+            if not AddressesDict.ContainsKey(TokenBaseFrom.OwnerID) then
+              AddressesDict.AddOrSetValue(TokenBaseFrom.OwnerID, '');
+            if not AddressesDict.ContainsKey(TokenBaseTo.OwnerID) then
+              AddressesDict.AddOrSetValue(TokenBaseTo.OwnerID, '');
+            Transaction.TransFrom := TokenBaseFrom.OwnerID.ToString;
+            Transaction.TransTo := TokenBaseTo.OwnerID.ToString;
 
+            Transaction.DateTime := TokenBlock.Smart.TimeEvent;
+            Transaction.BlockNum := i;
+
+            Transaction.Hash := '';
+            for j := 1 to CHashLength do
+              Transaction.Hash := Transaction.Hash + IntToHex(TokenBlock.Hash[j], 2).ToLower;
+
+            Transaction.TransFrom := TokenBaseFrom.OwnerID.ToString;
+            Transaction.TransTo := TokenBaseTo.OwnerID.ToString;
+            FTokenICO.TryGet(TokenID, TokenICO);
+            Transaction.FloatSize := TokenICO.FloatSize;
+            Transaction.Amount := TokenBlock.Smart.Delta / Power(10, TokenICO.FloatSize);
+            Transaction.Ticker := TokenICO.Abreviature;
+            Result := Result + [Transaction];
+          end
+        end;
+        if AddressesDict.ContainsValue('') then
+          FTETChains.DynBlocks.GetTETAddresses(AddressesDict);
+        for i := TransCount to Length(Result) - 1 do
+        begin
+          UserIDStr := Result[i].TransFrom;
+          Result[i].TransFrom := AddressesDict[UserIDStr.ToInteger];
+          UserIDStr := Result[i].TransTo;
+          Result[i].TransTo := AddressesDict[UserIDStr.ToInteger];
+        end;
+        TransCount := Length(Result);
+      finally
+        TokenChainsPair.DynBlocks.DoClose;
+        TokenChainsPair.Trans.DoClose;
+      end;
+    end;
+  finally
+    AddressesDict.Free;
+  end;
 end;
 
 function TBlockchain.SearchTransactionsByBlockNum(
@@ -742,7 +868,7 @@ begin
         HashHex := HashHex + IntToHex(TokenBlock.Hash[j], 2);
       Transaction.Hash := HashHex.ToLower;
       TokenChainsPair.DynBlocks.TryReadBlock(TokenBlock.Smart.tkn[2].TokenID, TokenDyn);
-      if TryGetTETAddressByOwnerID(TokenDyn.OwnerID, TETAddr) then
+      if TryGetTETAddressByUserID(TokenDyn.OwnerID, TETAddr) then
         Transaction.Address := TETAddr;
       Transaction.Incom := False;
       Result := Result + [Transaction];
@@ -758,7 +884,7 @@ begin
         HashHex := HashHex + IntToHex(TokenBlock.Hash[j],2);
       Transaction.Hash := HashHex.ToLower;
       TokenChainsPair.DynBlocks.TryReadBlock(TokenBlock.Smart.tkn[1].TokenID, TokenDyn);
-      if TryGetTETAddressByOwnerID(TokenDyn.OwnerID, TETAddr) then
+      if TryGetTETAddressByUserID(TokenDyn.OwnerID, TETAddr) then
         Transaction.Address := TETAddr;
       Transaction.Incom := True;
       Result := Result + [Transaction];

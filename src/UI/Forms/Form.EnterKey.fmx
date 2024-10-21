@@ -70,13 +70,15 @@ object EnterPrivateKeyForm: TEnterPrivateKeyForm
       TabOrder = 1
     end
     object LinkLabel: TLabel
+      Align = Top
       AutoSize = True
       Cursor = crHandPoint
       StyledSettings = []
       HitTest = True
-      Position.X = 285.000000000000000000
-      Position.Y = 122.000000000000000000
-      Size.Width = 236.000000000000000000
+      Padding.Top = 5.000000000000000000
+      Position.X = 40.000000000000000000
+      Position.Y = 141.000000000000000000
+      Size.Width = 550.000000000000000000
       Size.Height = 19.000000000000000000
       Size.PlatformDefault = False
       TextSettings.Font.Family = 'Inter'
@@ -89,11 +91,12 @@ object EnterPrivateKeyForm: TEnterPrivateKeyForm
       OnMouseLeave = LinkLabelMouseLeave
     end
     object PrivateKeyLabel: TLabel
+      Align = Top
       AutoSize = True
       StyledSettings = []
       Position.X = 40.000000000000000000
       Position.Y = 50.000000000000000000
-      Size.Width = 166.000000000000000000
+      Size.Width = 550.000000000000000000
       Size.Height = 37.000000000000000000
       Size.PlatformDefault = False
       TextSettings.Font.Family = 'Inter'
@@ -105,6 +108,7 @@ object EnterPrivateKeyForm: TEnterPrivateKeyForm
       TabOrder = 0
     end
     object PrKeyRectangle: TRectangle
+      Align = Top
       Fill.Color = x55FFFFFF
       Padding.Left = 10.000000000000000000
       Padding.Top = 7.000000000000000000
@@ -112,7 +116,7 @@ object EnterPrivateKeyForm: TEnterPrivateKeyForm
       Padding.Bottom = 7.000000000000000000
       Margins.Top = 17.000000000000000000
       Position.X = 40.000000000000000000
-      Position.Y = 158.000000000000000000
+      Position.Y = 177.000000000000000000
       Size.Width = 550.000000000000000000
       Size.Height = 170.000000000000000000
       Size.PlatformDefault = False
@@ -157,6 +161,7 @@ object EnterPrivateKeyForm: TEnterPrivateKeyForm
       OnClick = SaveKeyButtonClick
     end
     object TextInfoLabel: TLabel
+      Align = Top
       AutoSize = True
       StyledSettings = [Style]
       Margins.Top = 17.000000000000000000
@@ -170,7 +175,7 @@ object EnterPrivateKeyForm: TEnterPrivateKeyForm
       TextSettings.FontColor = xFF323130
       Text = 
         'To send a transaction, it is necessary to enter a private key. Y' +
-        'ou can retrieve the private key from your account.'
+        'ou can retrieve the private key from your account:'
       TabOrder = 2
     end
     object ShadowEffect1: TShadowEffect

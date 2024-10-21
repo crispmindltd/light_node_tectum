@@ -127,7 +127,7 @@ function TTokenEndpoints.DoCoinTransfer(AReqID: string; AEvent: TEvent;
 var
   JSON: TJSONObject;
   SessionKey, TransTo, Response: string;
-  Amount: Extended;
+  Amount: Double;
 begin
   Result.ReqID := AReqID;
   try
@@ -170,7 +170,7 @@ var
   JSON, JSONNestedObject: TJSONObject;
   JSONArray: TJSONArray;
   Params: TStringList;
-  TETTransfersInfo: TArray<TExplorerTransactionInfo>;
+  Transactions: TArray<TExplorerTransactionInfo>;
   i, Rows, Skip: Integer;
 begin
   Result.ReqID := AReqID;
@@ -189,7 +189,7 @@ begin
     else if not TryStrToInt(Params.Values['skip'], Skip) then
       raise EValidError.Create('request parameters error');
 
-//    TETTransfersInfo := AppCore.GetTETTransations(Skip, Rows);
+    Transactions := AppCore.GetTETTransactions(Skip, Rows);
     JSON := TJSONObject.Create;
     try
       JSONArray := TJSONArray.Create;
@@ -198,16 +198,15 @@ begin
         JSONArray.AddElement(TJSONObject.Create);
         JSONNestedObject := JSONArray.Items[pred(JSONArray.Count)] as TJSONObject;
         JSONNestedObject.AddPair('date', TJSONNumber.Create(
-          DateTimeToUnix(TETTransfersInfo[i].DateTime)));
+          DateTimeToUnix(Transactions[i].DateTime)));
         JSONNestedObject.AddPair('block',
-          TJSONNumber.Create(TETTransfersInfo[i].BlockNum));
-        JSONNestedObject.AddPair('address_from', TETTransfersInfo[i].TransFrom);
-        JSONNestedObject.AddPair('address_to', TETTransfersInfo[i].TransTo);
-        JSONNestedObject.AddPair('hash', TETTransfersInfo[i].Hash);
+          TJSONNumber.Create(Transactions[i].BlockNum));
+        JSONNestedObject.AddPair('address_from', Transactions[i].TransFrom);
+        JSONNestedObject.AddPair('address_to', Transactions[i].TransTo);
+        JSONNestedObject.AddPair('hash', Transactions[i].Hash);
         JSONNestedObject.AddPair('amount',
-          TJSONDecimal.Create(TETTransfersInfo[i].Amount /
-            Power(10, TETTransfersInfo[i].FloatSize), TETTransfersInfo[i].FloatSize));
-        JSONNestedObject.AddPair('fee', TJSONDecimal.Create(0,  TETTransfersInfo[i].FloatSize));
+          TJSONDecimal.Create(Transactions[i].Amount, Transactions[i].FloatSize));
+        JSONNestedObject.AddPair('fee', TJSONDecimal.Create(0, Transactions[i].FloatSize));
       end;
       JSON.AddPair('transactions', JSONArray);
       Result.Code := HTTP_SUCCESS;
@@ -229,9 +228,8 @@ var
   JSON, JSONNestedObject: TJSONObject;
   JSONArray: TJSONArray;
   Params: TStringList;
-  TETTransfersInfo: TArray<THistoryTransactionInfo>;
-  TransInfo: TArray<string>;
-  i, UserId, Rows, Skip: Integer;
+  Transactions: TArray<THistoryTransactionInfo>;
+  i, UserID, Rows, Skip: Integer;
 begin
   Result.ReqID := AReqID;
   Params := TStringList.Create(dupIgnore, True, False);
@@ -241,7 +239,7 @@ begin
 
     Params.AddStrings(AParams);
     if Params.Values['user_id'].IsEmpty or
-      not TryStrToInt(Params.Values['user_id'], UserId) then
+      not TryStrToInt(Params.Values['user_id'], UserID) then
       raise EValidError.Create('request parameters error');
     if Params.Values['rows'].IsEmpty then
       Rows := 20
@@ -252,24 +250,24 @@ begin
     else if not TryStrToInt(Params.Values['skip'], Skip) then
       raise EValidError.Create('request parameters error');
 
-//    TETTransfersInfo := AppCore.GetChainUserTransactions(UserId, Skip, Rows);
+    Transactions := AppCore.GetTETUserLastTransactions(UserID, Skip, Rows);
     JSON := TJSONObject.Create;
     try
       JSONArray := TJSONArray.Create;
-      for i := 0 to Length(TETTransfersInfo) - 1 do
+      for i := 0 to Length(Transactions) - 1 do
       begin
         JSONArray.AddElement(TJSONObject.Create);
         JSONNestedObject := JSONArray.Items[pred(JSONArray.Count)] as TJSONObject;
         JSONNestedObject.AddPair('date', TJSONNumber.Create(
-          DateTimeToUnix(TETTransfersInfo[i].DateTime)));
+          DateTimeToUnix(Transactions[i].DateTime)));
         JSONNestedObject.AddPair('block',
-          TJSONNumber.Create(TETTransfersInfo[i].BlockNum));
-        JSONNestedObject.AddPair('address', TETTransfersInfo[i].Address);
+          TJSONNumber.Create(Transactions[i].BlockNum));
+        JSONNestedObject.AddPair('address', Transactions[i].Address);
         JSONNestedObject.AddPair('incoming',
-          TJSONBool.Create(TETTransfersInfo[i].Incom));
-        JSONNestedObject.AddPair('hash', TETTransfersInfo[i].Hash);
+          TJSONBool.Create(Transactions[i].Incom));
+        JSONNestedObject.AddPair('hash', Transactions[i].Hash);
         JSONNestedObject.AddPair('amount',
-          TJSONDecimal.Create(TETTransfersInfo[i].Value, 8 {tet_decimals}));
+          TJSONDecimal.Create(Transactions[i].Value, 8 {tet_decimals}));
         JSONNestedObject.AddPair('fee', TJSONDecimal.Create(0, 8 {tet_decimals}));
       end;
       JSON.AddPair('transactions', JSONArray);
@@ -302,7 +300,7 @@ var
   JSON: TJSONObject;
   Response: string;
   Params: TStringList;
-  TokenId: Integer;
+  TokenID: Integer;
 begin
   Result.ReqID := AReqID;
   Params := TStringList.Create(dupIgnore, True, False);
@@ -312,10 +310,10 @@ begin
 
     Params.AddStrings(AParams);
     if Params.Values['smart_id'].IsEmpty or
-      (not TryStrToInt(Params.Values['smart_id'], TokenId)) then
+      (not TryStrToInt(Params.Values['smart_id'], TokenID)) then
       raise EValidError.Create('request parameters error');
 
-//    Response := AppCore.GetSmartAddressByID(TokenId);
+    Response := AppCore.GetTokenAddress(TokenID);
     JSON := TJSONObject.Create;
     try
       JSON.AddPair('smart_address', Response);
@@ -348,7 +346,7 @@ begin
     if Params.Values['ticker'].IsEmpty then
       raise EValidError.Create('request parameters error');
 
-//    Response := AppCore.GetSmartAddressByTicker(Params.Values['ticker']);
+    Response := AppCore.GetTokenAddress(Params.Values['ticker']);
     JSON := TJSONObject.Create;
     try
       JSON.AddPair('smart_address', Response);
@@ -370,8 +368,7 @@ function TTokenEndpoints.GetTokenBalanceWithAddress(AReqID: string;
 var
   JSON: TJSONObject;
   Params: TStringList;
-  balance: Extended;
-  CSmartKey: TCSmartKey;
+  Value: Double;
   TokenICODat: TTokenICODat;
 begin
   Result.ReqID := AReqID;
@@ -381,22 +378,16 @@ begin
       raise ENotSupportedError.Create('');
 
     Params.AddStrings(AParams);
-    const SmartAddress = Params.Values['smart_address'];
-    const AddressTET = Params.Values['address_tet'];
+    const TokenAddress = Params.Values['smart_address'];
+    const TETAddress = Params.Values['address_tet'];
 
-    if AddressTET.IsEmpty or SmartAddress.IsEmpty then
+    if TETAddress.IsEmpty or TokenAddress.IsEmpty then
       raise EValidError.Create('request parameters error');
 
-//    if not ( //
-//      AppCore.TryGetTokenBaseByAddress(SmartAddress, CSmartKey)//
-//      and AppCore.TryGetTokenICO(CSmartKey.Abreviature, TokenICODat)//
-//    ) then
-//      raise EValidError.Create('incorrect smart_address');
-
-//    balance := AppCore.GetLocalTokenBalance(SmartAddress, AddressTET);
+    Value := AppCore.GetTokenBalanceWithTokenAddress(TokenAddress, TETAddress);
     JSON := TJSONObject.Create;
     try
-      JSON.AddPair('balance', TJSONDecimal.Create(balance, TokenICODat.FloatSize));
+      JSON.AddPair('balance', TJSONDecimal.Create(Value, TokenICODat.FloatSize));
       Result.Code := HTTP_SUCCESS;
       Result.Response := JSON.ToString;
     finally
@@ -414,9 +405,8 @@ function TTokenEndpoints.GetTokenBalanceWithTicker(AReqID: string;
   : TEndpointResponse;
 var
   JSON: TJSONObject;
-  balance: Extended;
+  Value: Double;
   Params: TStringList;
-  CSmartKey: TCSmartKey;
   TokenICODat: TTokenICODat;
 begin
   Result.ReqID := AReqID;
@@ -432,18 +422,10 @@ begin
     if AddressTET.IsEmpty or Ticker.IsEmpty then
       raise EValidError.Create('request parameters error');
 
-//    const SmartAddress = AppCore.GetSmartAddressByTicker(Params.Values['ticker']);
-
-//    if not ( //
-//      AppCore.TryGetTokenBaseByAddress(SmartAddress, CSmartKey)//
-//      and AppCore.TryGetTokenICO(CSmartKey.Abreviature, TokenICODat)//
-//    ) then
-//      raise EValidError.Create('incorrect smart_address');
-//
-//    balance := AppCore.GetLocalTokenBalance(Ticker.ToUpper, AddressTET);
+    Value := AppCore.GetTokenBalanceWithTicker(Ticker.ToUpper, AddressTET);
     JSON := TJSONObject.Create;
     try
-      JSON.AddPair('balance', TJSONDecimal.Create(balance, TokenICODat.FloatSize));
+      JSON.AddPair('balance', TJSONDecimal.Create(Value, TokenICODat.FloatSize));
       Result.Code := HTTP_SUCCESS;
       Result.Response := JSON.ToString;
     finally
@@ -543,7 +525,7 @@ function TTokenEndpoints.GetCoinsBalances(AReqID: string; AEvent: TEvent;
 var
   JSON: TJSONObject;
   Params: TStringList;
-  Response: Extended;
+  Response: Double;
 begin
   Result.ReqID := AReqID;
   Params := TStringList.Create(dupIgnore, True, False);
@@ -626,7 +608,7 @@ begin
 
     const Decimals = DecimalsStr.ToInteger;
     const TokenAmount = TokenAmountStr.ToInt64;
-//    Response := AppCore.GetNewTokenFee(TokenAmount, Decimals);
+    Response := AppCore.GetNewTokenFee(TokenAmount, Decimals);
 
     JSON := TJSONObject.Create;
     try
@@ -706,7 +688,8 @@ var
   JSON, JSONNestedObject: TJSONObject;
   JSONArray: TJSONArray;
   Params: TStringList;
-  TETTransfersInfo: TArray<TExplorerTransactionInfo>;
+  Transactions: TArray<TExplorerTransactionInfo>;
+  SmartKey: TCSmartKey;
   i, Rows, Skip: Integer;
 begin
   Result.ReqID := AReqID;
@@ -728,25 +711,28 @@ begin
     else if not TryStrToInt(Params.Values['skip'], Skip) then
       raise EValidError.Create('request parameters error');
 
-//    TETTransfersInfo := AppCore.GetSmartTransactions(Ticker, Skip, Rows);
+    if not AppCore.TryGetSmartKey(Ticker, SmartKey) then
+      raise ESmartNotExistsError.Create('');
+
+    Transactions := AppCore.GetTokenTransactions(SmartKey.SmartID, Skip, Rows);
     JSON := TJSONObject.Create;
     try
       JSON.AddPair('ticker', Ticker);
       JSONArray := TJSONArray.Create;
-      for i := 0 to Rows - 1 do
+      for i := 0 to Length(Transactions) - 1 do
       begin
         JSONArray.AddElement(TJSONObject.Create);
         JSONNestedObject := JSONArray.Items[pred(JSONArray.Count)] as TJSONObject;
         JSONNestedObject.AddPair('date', TJSONNumber.Create(
-          DateTimeToUnix(TETTransfersInfo[i].DateTime)));
+          DateTimeToUnix(Transactions[i].DateTime)));
         JSONNestedObject.AddPair('block',
-          TJSONNumber.Create(TETTransfersInfo[i].BlockNum));
-        JSONNestedObject.AddPair('address_from', TETTransfersInfo[i].TransFrom);
-        JSONNestedObject.AddPair('address_to', TETTransfersInfo[i].TransTo);
-        JSONNestedObject.AddPair('hash', TETTransfersInfo[i].Hash);
+          TJSONNumber.Create(Transactions[i].BlockNum));
+        JSONNestedObject.AddPair('address_from', Transactions[i].TransFrom);
+        JSONNestedObject.AddPair('address_to', Transactions[i].TransTo);
+        JSONNestedObject.AddPair('hash', Transactions[i].Hash);
         JSONNestedObject.AddPair('amount',
-          TJSONDecimal.Create(TETTransfersInfo[i].Amount, TETTransfersInfo[i].FloatSize));
-        JSONNestedObject.AddPair('fee', TJSONDecimal.Create(0, TETTransfersInfo[i].FloatSize));
+          TJSONDecimal.Create(Transactions[i].Amount, Transactions[i].FloatSize));
+        JSONNestedObject.AddPair('fee', TJSONDecimal.Create(0, Transactions[i].FloatSize));
       end;
       JSON.AddPair('transactions', JSONArray);
 
@@ -768,8 +754,7 @@ var
   JSON: TJSONObject;
   Response: string;
   TransFrom, TransTo, SmartAddress, PrKey, PubKey: string;
-  TokensAmount: Extended;
-  CSmartKey: TCSmartKey;
+  TokensAmount: Double;
   TokenICODat: TTokenICODat;
 begin
   Result.ReqID := AReqID;
@@ -789,22 +774,15 @@ begin
         ) then
         raise EValidError.Create('request parameters error');
 
-//      if not(
-//        AppCore.TryGetTokenBaseByAddress(SmartAddress, CSmartKey)//
-//        and AppCore.TryGetTokenICO(CSmartKey.Abreviature, TokenICODat)//
-//        ) then
-//        raise EValidError.Create('incorrect smart_address');
-
       const AmountStr = JSON.GetValue<string>('amount', '');
       if not AmountStr.IsEmpty and (DecimalsCount(AmountStr) > TokenICODat.FloatSize) then
         raise EValidError.Create('too much decimals');
-
     finally
       JSON.Free;
     end;
 
-//    Response := AppCore.DoTokenTransfer(AReqID, TransFrom, TransTo, SmartAddress,
-//      TokensAmount, PrKey, PubKey);
+    Response := AppCore.DoTokenTransfer(AReqID, TransFrom, TransTo, SmartAddress,
+      TokensAmount, PrKey, PubKey);
     JSON := TJSONObject.Create;
     try
       JSON.AddPair('hash', Response.Split([' '])[3].ToLower);

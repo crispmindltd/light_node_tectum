@@ -108,7 +108,7 @@ begin
       (not TryStrToInt(Params.Values['user_id'], UserID)) then
       raise EValidError.Create('request parameters error');
 
-//    Response := AppCore.GetPubKeyByID(AReqID, UserID);
+    Response := AppCore.GetPubKeyByID(AReqID, UserID);
     JSON := TJSONObject.Create;
     try
       JSON.AddPair('public_key', Response.Split([' '])[2]);
@@ -141,8 +141,8 @@ begin
     if Params.Values['session_key'].IsEmpty then
       raise EValidError.Create('request parameters error');
 
-//    Response := AppCore.GetPubKeyBySessionKey(AReqID,
-//      Params.Values['session_key']);
+    Response := AppCore.GetPubKeyBySessionKey(AReqID,
+      Params.Values['session_key']);
     JSON := TJSONObject.Create;
     try
       JSON.AddPair('public_key', Response.Split([' '])[2]);
@@ -177,7 +177,7 @@ begin
       JSON.Free;
     end;
 
-//    Response := AppCore.DoRecoverKeys(Seed, PubKey, PrKey);
+    Response := AppCore.DoRecoverKeys(Seed, PubKey, PrKey);
     JSON := TJSONObject.Create;
     try
       JSON.AddPair('private_key', PrKey);

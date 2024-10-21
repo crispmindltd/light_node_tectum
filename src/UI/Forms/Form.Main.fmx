@@ -28,7 +28,7 @@ object MainForm: TMainForm
     Size.Height = 930.000000000000000000
     Size.PlatformDefault = False
     StyleLookup = 'AuthTabControlstyle'
-    TabIndex = 0
+    TabIndex = 1
     TabOrder = 0
     TabPosition = Top
     OnChange = TabsChange
@@ -50,7 +50,7 @@ object MainForm: TMainForm
       TextSettings.FontColor = claWhite
       TextSettings.Trimming = None
       StyledSettings = [Style, FontColor, Other]
-      IsSelected = True
+      IsSelected = False
       Margins.Left = -4.000000000000000000
       Margins.Right = 6.000000000000000000
       Size.Width = 271.000000000000000000
@@ -881,7 +881,7 @@ object MainForm: TMainForm
       TextSettings.FontColor = claWhite
       TextSettings.Trimming = None
       StyledSettings = [Style, FontColor, Other]
-      IsSelected = False
+      IsSelected = True
       Margins.Left = 6.000000000000000000
       Margins.Right = 6.000000000000000000
       Size.Width = 261.000000000000000000

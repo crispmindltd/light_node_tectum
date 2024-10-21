@@ -1478,7 +1478,7 @@ var
   TETTransactionFrame: THistoryTransactionFrame;
   i: Integer;
 begin
-  TETTransactions := AppCore.GetTETUserLastTransactions(AppCore.UserID,
+  TETTransactions := AppCore.GetTETUserLastTransactions(AppCore.UserID, 0,
     MaxTransactionsNumber);
 
   NoTETHistoryLabel.Visible := Length(TETTransactions) = 0;
@@ -1628,27 +1628,25 @@ begin
   
   TThread.CreateAnonymousThread(
   procedure
-  var
-    Transactions: TArray<TExplorerTransactionInfo>;
   begin
-    Transactions := AppCore.SearchTransactionsByAddress(SearchEdit.Text);
+    FSearchResultTrans := AppCore.SearchTransactionsByAddress(SearchEdit.Text);
     AniIndicator1.Enabled := False;
     AniIndicator1.Visible := False;
     TThread.Synchronize(nil,
     procedure
     begin
-      onTransactionSearchingDone(Length(Transactions) > 0);
-      if Length(Transactions) > 0 then
+      onTransactionSearchingDone(Length(FSearchResultTrans) > 0);
+      if Length(FSearchResultTrans) > 0 then
       begin
         SearchEdit.Text := '';
         if not FTickersFrames.Items[0].Visible then
         begin
+          FSelectedFrame.Selected := False;
+          FSelectedFrame := FTickersFrames.Items[0];
+          FSelectedFrame.Selected := True;
           FTickersFrames.Items[0].Visible := True;
-          FTickersFrames.Items[0].Position.X := -1;
-          FTickersFrames.Items[0].RoundRect.OnMouseDown(FTickersFrames.Items[0],
-            TMouseButton.mbLeft, [], 0, 0);
         end;           
-        RefreshExplorer(Transactions, True);
+        RefreshPagesLayout;
       end;
     end);
   end).Start;

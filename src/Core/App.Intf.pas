@@ -38,18 +38,11 @@ type
     function GetTETChainBlocksCount: Integer;
     function GetTETChainBlocks(ASkip: Integer): TBytes;
     procedure SetTETChainBlocks(ASkip: Integer; ABytes: TBytes);
-    function GetTETUserLastTransactions(AUserID: Integer;
+    function GetTETUserLastTransactions(AUserID: Integer; ASkip: Integer;
       ARows: Integer): TArray<THistoryTransactionInfo>;
     function GetTETTransactions(ASkip: Integer; ARows: Integer;
       AFromTheEnd: Boolean = True): TArray<TExplorerTransactionInfo>;
-//    function GetChainLastTransactions(var Amount: Integer): TArray<TExplorerTransactionInfo>;
-
-//    function GetTETUserLastTransactions(AUserID: Int64;
-//      var ANumber: Integer): TArray<THistoryTransactionInfo>;
-    function GetTETBalance(ATETAddress: string): Double; overload;
-//    function GetTETLocalBalance(ATETAddress: string): Double; overload;
-
-    //TET dynamic blocks sync methods
+    function GetTETBalance(ATETAddress: string): Double;
     function GetDynTETChainBlockSize: Integer;
     function GetDynTETChainBlocksCount: Integer;
     function GetDynTETChainBlocks(ASkip: Integer): TBytes;
@@ -82,41 +75,26 @@ type
     function GetTokenChainBlocks(ATokenID: Integer; ASkip: Integer): TBytes;
     procedure SetTokenChainBlocks(ATokenID: Integer; ASkip: Integer; ABytes: TBytes);
     function GetTokenBalance(ATokenID: Integer; ATETAddress: string): Double;
+    function GetTokenBalanceWithTokenAddress(ATETAddress, ATokenAddress: string): Double;
+    function GetTokenBalanceWithTicker(ATETAddress, ATicker: string): Double;
     function GetTokenUserTransactions(ATokenID: Integer; AUserID: Integer;
       ASkip: Integer; ARows: Integer; ALast: Boolean = False): TArray<THistoryTransactionInfo>;
     function GetTokenTransactions(ATokenID: Integer; ASkip: Integer; ARows: Integer;
       AFromTheEnd: Boolean = True): TArray<TExplorerTransactionInfo>;
-
     //Tokens dynamic blocks sync methods
     function GetDynTokenChainBlocksCount(ATokenID: Integer): Integer;
     function GetDynTokenChainBlockSize: Integer;
     function GetDynTokenChainBlocks(ATokenID: Integer; ASkip: Integer): TBytes;
     procedure SetDynTokenChainBlocks(ATokenID: Integer; ASkip: Integer; ABytes: TBytes);
-//    function GetSmartBlocks(ASmartID: Integer;
-//      var AAmount: Integer): TBytesBlocks; overload;
-//    function GetSmartBlocks(ATicker: string;
-//      out AAmount: Integer): TBytesBlocks; overload;
-////    function GetSmartBlocks(ASmartName: string;
-////      var AAmount: Integer): TBytesBlocks; overload;
-//    function GetOneSmartKeyBlock(AFrom: Int64): TCSmartKey;
-//    function GetOneSmartBlock(ASmartID: Integer; AFrom: Int64): TCbc4;
-//    function GetSmartTransactions(ATicker: string; ASkip: Integer;
-//      var ARows: Integer): TArray<TExplorerTransactionInfo>;
-//    function GetSmartLastTransactions(ATicker: string;
-//      var Amount: Integer): TArray<TExplorerTransactionInfo>;
-//    function GetSmartLastUserTransactions(AUserID: Integer; ATicker: string;
-//      var Amount: Integer): TArray<THistoryTransactionInfo>;
-//
-//    //Dynamic blocks sync methods
-//    function GetDynBlocksCount(ADynID: Integer): Integer;
-//    function GetDynBlockSize(ADynID: Integer): Integer;
-//    function GetDynBlocks(ADynID: Integer; AFrom: Int64;
-//      out AAmount: Integer): TBytesBlocks;
-//    procedure SetDynBlocks(ADynID: Integer; APos: Int64; ABytes: TBytesBlocks;
-//      AAmount: Integer);
-//    procedure SetDynBlock(ADynID: Integer; APos: Int64; ABytes: TOneBlockBytes);
-//
-//    function GetBlocksCount(AReqID: string): string;
+
+    function SearchTransactionsByBlockNum(const ABlockNum: Integer):
+      TArray<TExplorerTransactionInfo>;
+    function SearchTransactionByHash(const AHash: string;
+      out ATransaction: TExplorerTransactionInfo): Boolean;
+    function SearchTransactionsByAddress(
+      const ATETAddress: string): TArray<TExplorerTransactionInfo>;
+
+    function GetTETBlocksTotalCount(AReqID: string): string;
     procedure DoReg(AReqID, ASeed: string; ACallBackProc: TGetStrProc); overload;
     function DoReg(AReqID: string; ASeed: string; out APubKey: string;
       out APrKey: string; out ALogin: string; out APassword: string;
@@ -128,8 +106,8 @@ type
       AAmount: Double; ACallBackProc: TGetStrProc); overload;
     function DoTETTransfer(AReqID, ASessionKey, ATo: string;
       AAmount: Double): string; overload;
-//    function DoRecoverKeys(ASeed: string; out PubKey: string;
-//      out PrKey: string): string;
+    function DoRecoverKeys(ASeed: string; out PubKey: string;
+      out PrKey: string): string;
     procedure DoNewToken(AReqID, ASessionKey, AFullName, AShortName,
       ATicker: string; AAmount: Int64; ADecimals: Integer;
       ACallBackProc: TGetStrProc); overload;
@@ -141,27 +119,13 @@ type
     function DoTokenTransfer(AReqID, AAddrTETFrom, AAddrTETTo, ASmartAddr: string;
       AAmount: Double; APrKey, APubKey: string): string; overload;
     function SendToConfirm(AReqID, AToSend: string): string;
-    function SearchTransactionsByBlockNum(const ABlockNum: Integer):
-      TArray<TExplorerTransactionInfo>;
-    function SearchTransactionByHash(const AHash: string;
-      out ATransaction: TExplorerTransactionInfo): Boolean;
-    function SearchTransactionsByAddress(
-      const ATETAddress: string): TArray<TExplorerTransactionInfo>;
-//    function GetLocalTokensBalances: TArray<string>;
-
-//    function DoGetTokenBalanceWithSmartAddress(AReqID,AAddressTET,ASmartAddress: string): string;
-//    function DoGetTokenBalanceWithTicker(AReqID,AAddressTET,ATicker: string): string;
-//
-//    function GetSmartAddressByID(AID: Int64): string;
-//    function GetSmartAddressByTicker(ATicker: string): string;
-//    function GetPubKeyByID(AReqID: string; AID: Int64): string;
-//    function GetPubKeyBySessionKey(AReqID,ASessionKey: string): string;
+    function GetPubKeyByID(AReqID: string; AUserID: Integer): string;
+    function GetPubKeyBySessionKey(AReqID, ASessionKey: string): string;
+    function GetTokenAddress(ATokenID: Integer): string; overload;
+    function GetTokenAddress(ATicker: string): string; overload;
     function TrySaveKeysToFile(APrivateKey: string): Boolean;
     procedure TryExtractPrivateKeyFromFile(out PrKey: string;
       out PubKey: string);
-
-//    function TryGetTokenBase(ATicker: string; var sk: TCSmartKey): Boolean;
-//    function TryGetTokenBaseByAddress(const AAddress: string; var sk: TCSmartKey): Boolean;
 
     property SessionKey: string read GetSessionKey write SetSessionKey;
     property TETAddress: string read GetTETAddress;
