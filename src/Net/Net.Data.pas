@@ -7,7 +7,7 @@ uses
   SysUtils;
 
 const
-  DefaultNodeAddress = '185.180.223.168:50000';
+  DefaultNodeAddress = '89.39.104.213:50005';
   DefaultTCPListenTo = '127.0.0.1:50000';
   DefaultPortHTTP = 8917;
 
