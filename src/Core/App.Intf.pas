@@ -22,14 +22,14 @@ type
   end;
 
   IAppCore = interface
-    function GetVersion: String;
+    function GetVersion: string;
     procedure Run;
     procedure Stop;
-    function GetSessionKey: String;
-    function GetTETAddress: String;
+    function GetSessionKey: string;
+    function GetTETAddress: string;
     function GetUserID: Integer;
     function GetLoadingStatus: Boolean;
-    procedure SetSessionKey(const ASessionKey: String);
+    procedure SetSessionKey(const ASessionKey: string);
     procedure SetUserID(const AID: Integer);
     procedure SetLoadingStatus(const AIsDone: Boolean);
 
@@ -47,7 +47,7 @@ type
 //    function GetTETUserLastTransactions(AUserID: Int64;
 //      var ANumber: Integer): TArray<THistoryTransactionInfo>;
     function GetTETBalance(ATETAddress: string): Double; overload;
-//    function GetTETLocalBalance(ATETAddress: String): Double; overload;
+//    function GetTETLocalBalance(ATETAddress: string): Double; overload;
 
     //TET dynamic blocks sync methods
     function GetDynTETChainBlockSize: Integer;
@@ -84,6 +84,8 @@ type
     function GetTokenBalance(ATokenID: Integer; ATETAddress: string): Double;
     function GetTokenUserTransactions(ATokenID: Integer; AUserID: Integer;
       ASkip: Integer; ARows: Integer; ALast: Boolean = False): TArray<THistoryTransactionInfo>;
+    function GetTokenTransactions(ATokenID: Integer; ASkip: Integer; ARows: Integer;
+      AFromTheEnd: Boolean = True): TArray<TExplorerTransactionInfo>;
 
     //Tokens dynamic blocks sync methods
     function GetDynTokenChainBlocksCount(ATokenID: Integer): Integer;
@@ -92,17 +94,17 @@ type
     procedure SetDynTokenChainBlocks(ATokenID: Integer; ASkip: Integer; ABytes: TBytes);
 //    function GetSmartBlocks(ASmartID: Integer;
 //      var AAmount: Integer): TBytesBlocks; overload;
-//    function GetSmartBlocks(ATicker: String;
+//    function GetSmartBlocks(ATicker: string;
 //      out AAmount: Integer): TBytesBlocks; overload;
-////    function GetSmartBlocks(ASmartName: String;
+////    function GetSmartBlocks(ASmartName: string;
 ////      var AAmount: Integer): TBytesBlocks; overload;
 //    function GetOneSmartKeyBlock(AFrom: Int64): TCSmartKey;
 //    function GetOneSmartBlock(ASmartID: Integer; AFrom: Int64): TCbc4;
-//    function GetSmartTransactions(ATicker: String; ASkip: Integer;
+//    function GetSmartTransactions(ATicker: string; ASkip: Integer;
 //      var ARows: Integer): TArray<TExplorerTransactionInfo>;
-//    function GetSmartLastTransactions(ATicker: String;
+//    function GetSmartLastTransactions(ATicker: string;
 //      var Amount: Integer): TArray<TExplorerTransactionInfo>;
-//    function GetSmartLastUserTransactions(AUserID: Integer; ATicker: String;
+//    function GetSmartLastUserTransactions(AUserID: Integer; ATicker: string;
 //      var Amount: Integer): TArray<THistoryTransactionInfo>;
 //
 //    //Dynamic blocks sync methods
@@ -114,7 +116,7 @@ type
 //      AAmount: Integer);
 //    procedure SetDynBlock(ADynID: Integer; APos: Int64; ABytes: TOneBlockBytes);
 //
-//    function GetBlocksCount(AReqID: String): String;
+//    function GetBlocksCount(AReqID: string): string;
     procedure DoReg(AReqID, ASeed: string; ACallBackProc: TGetStrProc); overload;
     function DoReg(AReqID: string; ASeed: string; out APubKey: string;
       out APrKey: string; out ALogin: string; out APassword: string;
@@ -139,6 +141,12 @@ type
     function DoTokenTransfer(AReqID, AAddrTETFrom, AAddrTETTo, ASmartAddr: string;
       AAmount: Double; APrKey, APubKey: string): string; overload;
     function SendToConfirm(AReqID, AToSend: string): string;
+    function SearchTransactionsByBlockNum(const ABlockNum: Integer):
+      TArray<TExplorerTransactionInfo>;
+    function SearchTransactionByHash(const AHash: string;
+      out ATransaction: TExplorerTransactionInfo): Boolean;
+    function SearchTransactionsByAddress(
+      const ATETAddress: string): TArray<TExplorerTransactionInfo>;
 //    function GetLocalTokensBalances: TArray<string>;
 
 //    function DoGetTokenBalanceWithSmartAddress(AReqID,AAddressTET,ASmartAddress: string): string;

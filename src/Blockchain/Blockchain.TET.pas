@@ -30,7 +30,9 @@ type
     function ReadBlocks(ASkip: Integer; ANumber: Integer = MaxBlocksNumber;
       AFromTheEnd: Boolean = False): TArray<Tbc2>;
 
-    function TryGet(ASkip: Integer; out ATETBlock: Tbc2): Boolean;
+    function TryGet(ASkip: Integer; out ATETBlock: Tbc2): Boolean; overload;
+    function TryGet(AHash: string; out ABlockNum: Integer;
+      out ATETBlock: Tbc2): Boolean; overload;
   end;
 
 implementation
@@ -145,6 +147,35 @@ begin
     begin
       Read(FFile, Tbc2Block);
       Move(BlockBytes[0], Result[i * GetBlockSize], GetBlockSize);
+    end;
+  finally
+    if NeedClose then
+      DoClose;
+  end;
+end;
+
+function TBlockchainTET.TryGet(AHash: string; out ABlockNum: Integer;
+  out ATETBlock: Tbc2): Boolean;
+var
+  NeedClose: Boolean;
+  HashHex: string;
+  i, j: Integer;
+begin
+  Result := False;
+  NeedClose := DoOpen;
+  try
+    Seek(FFile, 0);
+    for i := 0 to FileSize(FFile) - 1 do
+    begin
+      Read(FFile, ATETBlock);
+      HashHex := '';
+      for j := 1 to TokenLength do
+        HashHex := HashHex + IntToHex(ATETBlock.Hash[j], 2);
+      if HashHex.ToLower = AHash then
+      begin
+        ABlockNum := i;
+        exit(true);
+      end;
     end;
   finally
     if NeedClose then

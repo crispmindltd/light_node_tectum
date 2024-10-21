@@ -42,7 +42,7 @@ begin
   Self.Width := TickerText.Width + 20;
   Name := 'TickerItem' + AName.Replace(' ', '');
   FIsSelected := False;
-  Self.Tag := ATokenID;
+  Tag := ATokenID;
 end;
 
 destructor TTickerFrame.Destroy;

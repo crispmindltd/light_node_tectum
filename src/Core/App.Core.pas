@@ -114,6 +114,8 @@ type
     function GetTokenBalance(ATokenID: Integer; ATETAddress: string): Double;
     function GetTokenUserTransactions(ATokenID: Integer; AUserID: Integer;
       ASkip: Integer; ARows: Integer; ALast: Boolean = False): TArray<THistoryTransactionInfo>;
+    function GetTokenTransactions(ATokenID: Integer; ASkip: Integer; ARows: Integer;
+      AFromTheEnd: Boolean = True): TArray<TExplorerTransactionInfo>;
 
     //Tokens dynamic blocks sync methods
     function GetDynTokenChainBlocksCount(ATokenID: Integer): Integer;
@@ -130,8 +132,6 @@ type
 //    function GetOneSmartKeyBlock(AFrom: Int64): TCSmartKey;
 //    function GetOneSmartBlock(ASmartID: Integer; AFrom: Int64): TCbc4;
 
-//    function GetSmartTransactions(ATicker: string; ASkip: Integer;
-//      var ARows: Integer): TArray<TExplorerTransactionInfo>;
 //    function GetSmartLastTransactions(ATicker: string;
 //      var Amount: Integer): TArray<TExplorerTransactionInfo>;
 //    function GetSmartLastUserTransactions(AUserID: Integer; ATicker: string;
@@ -164,7 +164,12 @@ type
     function DoTokenTransfer(AReqID, AAddrTETFrom, AAddrTETTo, ASmartAddr: string;
       AAmount: Double; APrKey, APubKey: string): string; overload;
     function SendToConfirm(AReqID, AToSend: string): string;
-
+    function SearchTransactionsByBlockNum(const ABlockNum: Integer):
+      TArray<TExplorerTransactionInfo>;
+    function SearchTransactionByHash(const AHash: string;
+      out ATransaction: TExplorerTransactionInfo): Boolean;
+    function SearchTransactionsByAddress(
+      const ATETAddress: string): TArray<TExplorerTransactionInfo>;
 //    function GetLocalTokenBalance(ATokenID: Integer; AOwnerID: Int64): Extended;
 //    function DoGetTokenBalanceWithSmartAddress(AReqID,AAddressTET,ASmartAddress: string): string;
 //    function DoGetTokenBalanceWithTicker(AReqID,AAddressTET,ATicker: string): string;
@@ -959,21 +964,6 @@ end;
 //  Result := FBlockchain.GetLastSmartUserTransactions(AUserID,ATicker,Amount);
 //end;
 
-//function TAppCore.GetSmartTransactions(ATicker: string; ASkip: Integer;
-//  var ARows: Integer): TArray<TExplorerTransactionInfo>;
-//begin
-//  if not CheckTickerName(ATicker) then
-//    raise EValidError.Create('invalid ticker');
-//  if ASkip < 0 then
-//    raise EValidError.Create('invalid "skip" value');
-//  if ARows <= 0 then
-//    raise EValidError.Create('invalid "rows" value');
-//  if ARows > 50 then
-//    raise EValidError.Create('"rows" value can''t be more than 50');
-//
-//  Result := FBlockchain.GetSmartTransactions(ATicker,ASkip,ARows);
-//end;
-
 //function TAppCore.GetChainLastTransactions(var Amount: Integer): TArray<TExplorerTransactionInfo>;
 //begin
 //  Result := FBlockchain.GetLastChainTransactions(Amount);
@@ -1250,6 +1240,22 @@ begin
     Result := FBlockchain.GetTokenUserLastTransactions(ATokenID, AUserID, ARows);
 end;
 
+function TAppCore.GetTokenTransactions(ATokenID, ASkip, ARows: Integer;
+  AFromTheEnd: Boolean): TArray<TExplorerTransactionInfo>;
+begin
+  if ATokenID < 0 then
+    raise EValidError.Create('invalid "token id" value');
+  if ASkip < 0 then
+    raise EValidError.Create('invalid "skip" value');
+  if ARows <= 0 then
+    raise EValidError.Create('invalid "rows" value');
+  if ARows > 50 then
+    raise EValidError.Create('"rows" value can''t be more than 50');
+
+
+  Result := FBlockchain.GetTokenTransactions(ATokenID, ASkip, ARows, AFromTheEnd);
+end;
+
 function TAppCore.GetTokenChainBlocks(ATokenID: Integer; ASkip: Integer): TBytes;
 begin
   Result := FBlockchain.GetTokenChainBlocks(ATokenID, ASkip);
@@ -1337,6 +1343,24 @@ begin
   Path := Format('%s_%d.txt', [Path, FUserID]);
   TFile.AppendAllText(Path, 'public key:' + PubKey + sLineBreak);
   TFile.AppendAllText(Path, 'private key:' + APrivateKey + sLineBreak);
+end;
+
+function TAppCore.SearchTransactionByHash(const AHash: string;
+  out ATransaction: TExplorerTransactionInfo): Boolean;
+begin
+  Result := FBlockchain.SearchTransactionByHash(AHash, ATransaction);
+end;
+
+function TAppCore.SearchTransactionsByAddress(
+  const ATETAddress: string): TArray<TExplorerTransactionInfo>;
+begin
+  Result := FBlockchain.SearchTransactionsByAddress(ATETAddress);
+end;
+
+function TAppCore.SearchTransactionsByBlockNum(
+  const ABlockNum: Integer): TArray<TExplorerTransactionInfo>;
+begin
+  Result := FBlockchain.SearchTransactionsByBlockNum(ABlockNum);
 end;
 
 function TAppCore.SendToConfirm(AReqID, AToSend: string): string;

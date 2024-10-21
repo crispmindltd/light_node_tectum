@@ -7,6 +7,7 @@ uses
   Blockchain.BaseTypes,
   Blockchain.Intf,
   Classes,
+  Generics.Collections,
   IOUtils,
   Math,
   SysUtils;
@@ -30,6 +31,7 @@ type
     function ReadBlocksAsBytes(ASkipBlocks: Integer;
       ANumber: Integer = MaxBlocksNumber): TBytes; override;
 
+    procedure GetTETAddresses(var ADict: TDictionary<Integer, string>);
     function TryGet(AUserID: Integer; out ABlockNum: Integer;
       var ATETDyn: TTokenBase): Boolean; overload;
     function TryGet(ATETAddress: string; out ABlockNum: Integer;
@@ -93,6 +95,33 @@ end;
 function TBlockchainTETDynamic.GetBlockSize: Integer;
 begin
   Result := SizeOf(TTokenBase);
+end;
+
+procedure TBlockchainTETDynamic.GetTETAddresses(
+  var ADict: TDictionary<Integer, string>);
+var
+  NeedClose: Boolean;
+  i: Integer;
+  TokenBaseBlock: TTokenBase;
+begin
+  NeedClose := DoOpen;
+  try
+    for i := FileSize(FFile) - 1 downto 0 do
+    begin
+      Seek(FFile, i);
+      Read(FFile, TokenBaseBlock);
+      if TokenBaseBlock.TokenDatID <> 1 then
+        continue;
+
+      if ADict.ContainsKey(TokenBaseBlock.OwnerID) then
+        ADict.AddOrSetValue(TokenBaseBlock.OwnerID, TokenBaseBlock.Token);
+      if not ADict.ContainsValue('') then
+        break;
+    end;
+  finally
+    if NeedClose then
+      DoClose;
+  end;
 end;
 
 function TBlockchainTETDynamic.ReadBlocksAsBytes(ASkipBlocks,

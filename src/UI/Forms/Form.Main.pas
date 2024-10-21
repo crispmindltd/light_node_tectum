@@ -341,12 +341,6 @@ type
     procedure ExplorerVertScrollBoxResized(Sender: TObject);
     procedure HistoryTETVertScrollBoxResized(Sender: TObject);
     procedure HistoryTokenVertScrollBoxResized(Sender: TObject);
-    procedure HistoryTokenVertScrollBoxPaint(Sender: TObject; Canvas: TCanvas;
-      const ARect: TRectF);
-    procedure ExplorerVertScrollBoxPaint(Sender: TObject; Canvas: TCanvas;
-      const ARect: TRectF);
-    procedure HistoryTETVertScrollBoxPaint(Sender: TObject; Canvas: TCanvas;
-      const ARect: TRectF);
   const
     TransToDrawNumber = 18;
   private
@@ -354,8 +348,8 @@ type
     FTickersFrames: TList<TTickerFrame>;
     FSelectedFrame: TTickerFrame;
     FChosenToken: TListBoxItem;
-    FPageNum: Integer;
-    totalPagesAmount: Integer;
+    FSearchResultTrans: TArray<TExplorerTransactionInfo>;
+    FTotalPagesAmount, FPageNum: Integer;
 
     function DecimalsCount(const AValue: string): Integer;
     procedure RefreshTETBalance;
@@ -501,8 +495,10 @@ begin
       NewTickerFrame.Width + NewTickerFrame.Margins.Left;
 
     if ATicker = 'Search results' then
+    begin
+      NewTickerFrame.Align := TAlignLayout.MostLeft;
       NewTickerFrame.Visible := False
-    else
+    end else
       NewTickerFrame.RoundRect.OnMouseDown := RoundRectTickerMouseDown;
 
     FTickersFrames.Add(NewTickerFrame);
@@ -690,12 +686,6 @@ end;
 procedure TMainForm.ExplorerBackCircleMouseLeave(Sender: TObject);
 begin
   (Sender as TCircle).Fill.Kind := TBrushKind.None;
-end;
-
-procedure TMainForm.ExplorerVertScrollBoxPaint(Sender: TObject; Canvas: TCanvas;
-  const ARect: TRectF);
-begin
-  AlignExplorerHeaders(TickerExplorerHeaderLabel.Visible);
 end;
 
 procedure TMainForm.ExplorerVertScrollBoxResized(Sender: TObject);
@@ -943,13 +933,14 @@ var
 begin
   Caption := 'LNode' + ' ' + AppCore.GetVersion;
   FBalances := TDictionary<string, Double>.Create;
+  SetLength(FSearchResultTrans, 0);
   FSelectedFrame := nil;
   FTickersFrames := TList<TTickerFrame>.Create;
   FTickersFrames.Capacity := 200;
   AddTickerFrame('Search results');
   AddTickerFrame('Tectum');
   for SmartKey in AppCore.GetAllSmartKeyBlocks do
-    AddTickerFrame(SmartKey.Abreviature);
+    AddTickerFrame(SmartKey.Abreviature, SmartKey.SmartID);
   FChosenToken := nil;
 
   TETCopyLoginLayout.OnMouseEnter := StylesForm.OnCopyLayoutMouseEnter;
@@ -1037,21 +1028,9 @@ begin
   FloatAnimation4.Enabled := True;
 end;
 
-procedure TMainForm.HistoryTETVertScrollBoxPaint(Sender: TObject;
-  Canvas: TCanvas; const ARect: TRectF);
-begin
-  AlignTETHeaders;
-end;
-
 procedure TMainForm.HistoryTETVertScrollBoxResized(Sender: TObject);
 begin
   AlignTETHeaders;
-end;
-
-procedure TMainForm.HistoryTokenVertScrollBoxPaint(Sender: TObject;
-  Canvas: TCanvas; const ARect: TRectF);
-begin
-  AlignTokensHeaders;
 end;
 
 procedure TMainForm.HistoryTokenVertScrollBoxResized(Sender: TObject);
@@ -1071,17 +1050,20 @@ begin
       begin
         RefreshTETBalance;
         RefreshTETHistory;
+        AlignTETHeaders;
         SendTETToEdit.SetFocus;
       end;
     1:
       begin
         RefreshTokensBalances;
         RefreshTokenHistory;
+        AlignTokensHeaders;
         RecepientAddressEdit.SetFocus;
       end;
     2: CreateTokenShortNameEdit.SetFocus;
     3: begin
          ExplorerTabControl.TabIndex := 0;
+         AlignExplorerHeaders(TickerExplorerHeaderLabel.Visible);
          SearchEdit.SetFocus;
        end;
   end;
@@ -1197,7 +1179,7 @@ begin
   end;
 
   PrevPageLayout.Enabled := FPageNum > 1;
-  NextPageLayout.Enabled := FPageNum < totalPagesAmount;
+  NextPageLayout.Enabled := FPageNum < FTotalPagesAmount;
 end;
 
 procedure TMainForm.NewTokenBlocksEvent(ASmartKey: TCSmartKey;
@@ -1208,7 +1190,7 @@ begin
     AddOrRefreshBalance(ASmartKey);
     RefreshTokenHistory;
   end;
-  if (Tabs.TabIndex = 3) and (FSelectedFrame.Ticker = ASmartKey.Abreviature) then
+  if (Tabs.TabIndex = 3) and (FSelectedFrame.Tag = ASmartKey.SmartID) then
     RefreshPagesLayout;
 end;
 
@@ -1393,71 +1375,82 @@ begin
   if FSelectedFrame.Ticker = 'Tectum' then
   begin
     TotalBlocksNumber := AppCore.GetTETChainBlocksCount;
-    TotalPagesAmount := TotalBlocksNumber div TransToDrawNumber;
+    FTotalPagesAmount := TotalBlocksNumber div TransToDrawNumber;
     if TotalBlocksNumber mod TransToDrawNumber > 0 then
-      Inc(TotalPagesAmount);
+      Inc(FTotalPagesAmount);
 
     Transactions := AppCore.GetTETTransactions(TransToDrawNumber * (FPageNum - 1),
       TransToDrawNumber);
   end else
+  if Length(FSearchResultTrans) > 0 then
+  begin
+    TotalBlocksNumber := Length(FSearchResultTrans);
+    FTotalPagesAmount := TotalBlocksNumber div TransToDrawNumber;
+    if TotalBlocksNumber mod TransToDrawNumber > 0 then
+      Inc(FTotalPagesAmount);
+
+    Transactions := Copy(FSearchResultTrans, TransToDrawNumber * (FPageNum - 1), TransToDrawNumber);
+  end else
   begin
     TotalBlocksNumber := AppCore.GetTokenChainBlocksCount(FSelectedFrame.Tag);
-    TotalPagesAmount := TotalBlocksNumber div TransToDrawNumber;
+    FTotalPagesAmount := TotalBlocksNumber div TransToDrawNumber;
     if TotalBlocksNumber mod TransToDrawNumber > 0 then
-      Inc(TotalPagesAmount);
+      Inc(FTotalPagesAmount);
 
-//    Transactions := AppCore.GetTokenTransactions(TransToDrawNumber * (FPageNum - 1),
-//      TransToDrawNumber);
+    Transactions := AppCore.GetTokenTransactions(FSelectedFrame.Tag,
+      TransToDrawNumber * (FPageNum - 1), TransToDrawNumber);
   end;
+
 
   PaginationBottomLayout.BeginUpdate;
   PagesPanelLayout.BeginUpdate;
   try
     PagesPanelLayout.DestroyComponents;
     PagesPanelLayout.Width := 48;
-    PaginationBottomLayout.Visible := TotalPagesAmount > 1;
+    PaginationBottomLayout.Visible := FTotalPagesAmount > 1;
     if not PaginationBottomLayout.Visible then
       exit;
 
     PagesToDraw := 3 + AtTheEdges * 2;
     AddPageNum(1);
-    if (FPageNum - AtTheEdges > 3) and (TotalPagesAmount > PagesToDraw + 2) then
+    if (FPageNum - AtTheEdges > 3) and (FTotalPagesAmount > PagesToDraw + 2) then
     begin
       AddPageNum(-1);
       Dec(PagesToDraw);
     end;
-    if (FPageNum + AtTheEdges < TotalPagesAmount - 2) and
-      (TotalPagesAmount > PagesToDraw + 2) then
+    if (FPageNum + AtTheEdges < FTotalPagesAmount - 2) and
+      (FTotalPagesAmount > PagesToDraw + 2) then
       Dec(PagesToDraw);
-    PageNumToDraw := Max(2, Min(TotalPagesAmount - PagesToDraw,
+    PageNumToDraw := Max(2, Min(FTotalPagesAmount - PagesToDraw,
       FPageNum - AtTheEdges));
     if (FPageNum - AtTheEdges = 3) then
       Dec(PageNumToDraw);
     for i := PageNumToDraw to FPageNum do
     begin
-      if (i = 1) or (i = TotalPagesAmount) then
+      if (i = 1) or (i = FTotalPagesAmount) then
         continue;
       AddPageNum(i);
     end;
-    PageNumToDraw := Min(TotalPagesAmount - 1, Max(PagesToDraw + 1,
+    PageNumToDraw := Min(FTotalPagesAmount - 1, Max(PagesToDraw + 1,
       FPageNum + AtTheEdges));
-    if (FPageNum + AtTheEdges = TotalPagesAmount - 2) then
+    if (FPageNum + AtTheEdges = FTotalPagesAmount - 2) then
       Inc(PageNumToDraw);
     for i := FPageNum + 1 to PageNumToDraw do
     begin
-      if (i = 1) or (i = TotalPagesAmount) then
+      if (i = 1) or (i = FTotalPagesAmount) then
         continue;
       AddPageNum(i);
     end;
-    if (FPageNum + AtTheEdges < TotalPagesAmount - 2) and
-      (TotalPagesAmount > PagesToDraw + 2) then
+    if (FPageNum + AtTheEdges < FTotalPagesAmount - 2) and
+      (FTotalPagesAmount > PagesToDraw + 2) then
       AddPageNum(-1);
-    AddPageNum(TotalPagesAmount);
+    AddPageNum(FTotalPagesAmount);
     OnPageSelected;
   finally
     PagesPanelLayout.EndUpdate;
     PaginationBottomLayout.EndUpdate;
-    RefreshExplorer(Transactions, False);
+    RefreshExplorer(Transactions, Length(FSearchResultTrans) > 0);
+    AlignExplorerHeaders(Length(FSearchResultTrans) > 0);
   end;
 end;
 
@@ -1586,6 +1579,7 @@ begin
     FSelectedFrame.Selected := False;
   ParentFrame.Selected := True;
   FSelectedFrame := ParentFrame;
+  SetLength(FSearchResultTrans, 0);
 
   FPageNum := 1;
   RefreshPagesLayout;
@@ -1637,7 +1631,7 @@ begin
   var
     Transactions: TArray<TExplorerTransactionInfo>;
   begin
-//    Transactions := AppCore.SearchTransactionsByAddress(SearchEdit.Text);
+    Transactions := AppCore.SearchTransactionsByAddress(SearchEdit.Text);
     AniIndicator1.Enabled := False;
     AniIndicator1.Visible := False;
     TThread.Synchronize(nil,
@@ -1668,27 +1662,25 @@ begin
   
   TThread.CreateAnonymousThread(
   procedure
-  var
-    Transactions: TArray<TExplorerTransactionInfo>;
   begin
-//    Transactions := AppCore.SearchTransactionsByBlockNum(ABlockNumber);
+    FSearchResultTrans := AppCore.SearchTransactionsByBlockNum(ABlockNumber);
     AniIndicator1.Enabled := False;
     AniIndicator1.Visible := False;
     TThread.Synchronize(nil,
     procedure
     begin
-      onTransactionSearchingDone(Length(Transactions) > 0);
-      if Length(Transactions) > 0 then
+      onTransactionSearchingDone(Length(FSearchResultTrans) > 0);
+      if Length(FSearchResultTrans) > 0 then
       begin
         SearchEdit.Text := '';
         if not FTickersFrames.Items[0].Visible then
         begin
+          FSelectedFrame.Selected := False;
+          FSelectedFrame := FTickersFrames.Items[0];
+          FSelectedFrame.Selected := True;
           FTickersFrames.Items[0].Visible := True;
-          FTickersFrames.Items[0].Position.X := -1;
-          FTickersFrames.Items[0].RoundRect.OnMouseDown(FTickersFrames.Items[0],
-            TMouseButton.mbLeft, [], 0, 0);
-        end;           
-        RefreshExplorer(Transactions, True);
+        end;
+        RefreshPagesLayout;
       end;
     end);
   end).Start;
@@ -1709,7 +1701,7 @@ begin
     TransInfo: TExplorerTransactionInfo;
     Success: Boolean;
   begin
-//    Success := AppCore.SearchTransactionByHash(Hash, TransInfo);
+    Success := AppCore.SearchTransactionByHash(Hash, TransInfo);
     AniIndicator1.Enabled := False;
     AniIndicator1.Visible := False;
     TThread.Synchronize(nil,

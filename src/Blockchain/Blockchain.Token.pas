@@ -27,10 +27,12 @@ type
     procedure WriteBlocksAsBytes(ASkipBlocks: Integer; ABytes: TBytes); override;
     function ReadBlocksAsBytes(ASkipBlocks: Integer;
       ANumber: Integer = MaxBlocksNumber): TBytes; override;
-    function ReadBlocks(ASkip: Integer;
-      ANumber: Integer = MaxBlocksNumber): TArray<TCbc4>;
+    function ReadBlocks(ASkip: Integer; ANumber: Integer = MaxBlocksNumber;
+      AFromTheEnd: Boolean = False): TArray<TCbc4>;
 
-    function TryGet(ASkip: Integer; out ATokenBlock: TCbc4): Boolean;
+    function TryGet(ASkip: Integer; out ATokenBlock: TCbc4): Boolean; overload;
+    function TryGet(AHash: string; out ABlockNum: Integer;
+      out ATokenBlock: TCbc4): Boolean; overload;
   end;
 
 implementation
@@ -92,7 +94,8 @@ begin
   Result := SizeOf(TCbc4);
 end;
 
-function TBlockchainToken.ReadBlocks(ASkip, ANumber: Integer): TArray<TCbc4>;
+function TBlockchainToken.ReadBlocks(ASkip, ANumber: Integer;
+  AFromTheEnd: Boolean): TArray<TCbc4>;
 var
   NeedClose: Boolean;
   i: Integer;
@@ -102,10 +105,22 @@ begin
   try
     if (ASkip < 0) or (ASkip >= FileSize(FFile)) then
       exit;
-    Seek(FFile, ASkip);
-    SetLength(Result, Min(ANumber, FileSize(FFile) - ASkip));
-    for i := 0 to Length(Result) - 1 do
-      Read(FFile, Result[i]);
+
+    if AFromTheEnd then
+    begin
+      SetLength(Result, Min(ANumber, FileSize(FFile) - ASkip));
+      for i := 0 to Length(Result) - 1 do
+      begin
+        Seek(FFile, FileSize(FFile) - ASkip - i - 1);
+        Read(FFile, Result[i]);
+      end;
+    end else
+    begin
+      Seek(FFile, ASkip);
+      SetLength(Result, Min(ANumber, FileSize(FFile) - ASkip));
+      for i := 0 to Length(Result) - 1 do
+        Read(FFile, Result[i]);
+    end;
   finally
     if NeedClose then
       DoClose;
@@ -133,6 +148,35 @@ begin
     begin
       Read(FFile, TCbc4Block);
       Move(BlockBytes[0], Result[i * GetBlockSize], GetBlockSize);
+    end;
+  finally
+    if NeedClose then
+      DoClose;
+  end;
+end;
+
+function TBlockchainToken.TryGet(AHash: string; out ABlockNum: Integer;
+  out ATokenBlock: TCbc4): Boolean;
+var
+  NeedClose: Boolean;
+  HashHex: string;
+  i, j: Integer;
+begin
+  Result := False;
+  NeedClose := DoOpen;
+  try
+    Seek(FFile, 0);
+    for i := 0 to FileSize(FFile) - 1 do
+    begin
+      Read(FFile, ATokenBlock);
+      HashHex := '';
+      for j := 1 to TokenLength do
+        HashHex := HashHex + IntToHex(ATokenBlock.Hash[j], 2);
+      if HashHex.ToLower = AHash then
+      begin
+        ABlockNum := i;
+        exit(true);
+      end;
     end;
   finally
     if NeedClose then
