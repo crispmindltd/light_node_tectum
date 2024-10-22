@@ -10,11 +10,11 @@ uses
 type
   IUI = interface
     procedure Run;
-    procedure NullForm(var Form);
     procedure ShowMainForm;
     procedure ShowEnterPrivateKeyForm;
     procedure ShowTotalBlocksToDownload(const ABlocksNumberToLoad: UInt64);
     procedure ShowDownloadProgress;
+    procedure ShowDownloadingDone;
     procedure NotifyNewTETBlocks(const ANeedRefreshBalance: Boolean);
     procedure NotifyNewToken(const ASmartKey: TCSmartKey);
     procedure NotifyNewTokenBlocks(const ASmartKey: TCSmartKey;

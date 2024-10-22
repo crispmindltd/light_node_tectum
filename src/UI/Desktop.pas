@@ -34,6 +34,7 @@ type
       var Reference; AsMainForm: Boolean = False);
     procedure ReleaseForm(var Form);
     procedure DoReleaseForm(Form: TCommonCustomForm);
+    procedure NullForm(var Form);
   public
     constructor Create;
     destructor Destroy; override;
@@ -41,9 +42,9 @@ type
     procedure Run;
     procedure ShowMainForm;
     procedure ShowEnterPrivateKeyForm;
-    procedure NullForm(var Form);
     procedure ShowTotalBlocksToDownload(const ABlocksNumberToLoad: UInt64);
     procedure ShowDownloadProgress;
+    procedure ShowDownloadingDone;
     procedure NotifyNewTETBlocks(const ANeedRefreshBalance: Boolean);
     procedure NotifyNewToken(const ASmartKey: TCSmartKey);
     procedure NotifyNewTokenBlocks(const ASmartKey: TCSmartKey;
@@ -107,6 +108,16 @@ procedure TUICore.SetMainForm(const Reference);
 begin
 //  if Assigned(TObject(Reference)) then
   Application.MainForm := TCommonCustomForm(Reference);
+end;
+
+procedure TUICore.ShowDownloadingDone;
+begin
+  if not Application.Terminated and Assigned(StartForm) then
+    TThread.Synchronize(nil,
+    procedure
+    begin
+      StartForm.HideProgressBar;
+    end);
 end;
 
 procedure TUICore.ShowDownloadProgress;

@@ -494,7 +494,6 @@ function TAppCore.DoTokenTransfer(AReqID, AAddrTETFrom, AAddrTETTo,
 var
   AmountStr, Sign, SignLine: string;
   Splitted: TArray<string>;
-  RequestDone: TEvent;
   SmartKey: TCSmartKey;
 begin
   AAddrTETFrom := Remove0x(AAddrTETFrom);

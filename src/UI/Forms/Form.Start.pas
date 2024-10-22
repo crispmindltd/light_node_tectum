@@ -114,13 +114,13 @@ type
     procedure ShowLogInError(const AMessage: string);
     procedure HideLogInError;
     procedure ShowSignUpError(const AMessage: string);
-    procedure OnDownloadingDone;
 
     procedure RegCallBack(const AResponse: string);
     procedure LogInCallBack(const AResponse: string);
   public
     procedure SetProgressBarMaxValue(const ABlocksNumberToLoad: UInt64);
     procedure ShowProgress;
+    procedure HideProgressBar;
   end;
 
 var
@@ -209,7 +209,6 @@ procedure TStartForm.FloatAnimation3Finish(Sender: TObject);
 begin
   DownloadProgressBar.Visible := False;
   FloatAnimation3.Enabled := False;
-  OnDownloadingDone;
 end;
 
 procedure TStartForm.FormCreate(Sender: TObject);
@@ -249,6 +248,13 @@ begin
   ErrorLoginLabel.Opacity := 0;
   ErrorLoginLabel.Visible := False;
   LogInLayout.Height := 296;
+end;
+
+procedure TStartForm.HideProgressBar;
+begin
+  EmailEditChangeTracking(Self);
+  SignUpTabItem.Enabled := True;
+  FloatAnimation3.Enabled := True;
 end;
 
 procedure TStartForm.LogInAfterRegButtonClick(Sender: TObject);
@@ -338,13 +344,6 @@ begin
   end;
 end;
 
-procedure TStartForm.OnDownloadingDone;
-begin
-  EmailEditChangeTracking(Self);
-  SignUpTabItem.Enabled := True;
-  FloatAnimation3.Enabled := True;
-end;
-
 procedure TStartForm.RegCallBack(const AResponse: string);
 var
   Splitted: TArray<string>;
@@ -396,8 +395,6 @@ begin
   DownloadProgressBar.Value := CurrentBlocksNumber;
 
   AppCore.BlocksSyncDone := CurrentBlocksNumber = FTotalBlocksNumberToLoad;
-  if AppCore.BlocksSyncDone then
-    OnDownloadingDone;
 end;
 
 procedure TStartForm.SetProgressBarMaxValue(const ABlocksNumberToLoad: UInt64);

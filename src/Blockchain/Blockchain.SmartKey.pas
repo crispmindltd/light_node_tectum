@@ -31,7 +31,6 @@ type
       var ASmartKey: TCSmartKey): Boolean; overload;
     function TryGet(ATokenID: Integer;
       var ASmartKey: TCSmartKey): Boolean; overload;
-//    function TryGetSmartKeyByAddress(const AAddress: String; var sk: TCSmartKey): Boolean;
   end;
 
 implementation
@@ -171,7 +170,6 @@ end;
 procedure TBlockchainSmartKey.WriteBlocksAsBytes(ASkipBlocks: Integer;
   ABytes: TBytes);
 var
-  NeedClose: Boolean;
   BlockBytes: array[0..SizeOf(TCSmartKey) - 1] of Byte;
   SmartKeyBlock: TCSmartKey absolute BlockBytes;
   i: Integer;

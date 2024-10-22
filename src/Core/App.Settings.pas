@@ -41,8 +41,6 @@ implementation
 { TSettingsFile }
 
 procedure TSettingsFile.AddTokenToSync(ATokenID: Integer);
-var
-  TokensIDs: string;
 begin
   FSyncTokens.Add(ATokenID.ToString);
   FIni.WriteString('sync', 'tokens', Format('[%s]', [FSyncTokens.DelimitedText]));

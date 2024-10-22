@@ -235,7 +235,6 @@ var
   D: TBigInteger;
   RegeneratedPrivateKey: IECPrivateKeyParameters;
   recreatedPubKeyParameters: IECPublicKeyParameters;
-  qPoint: IECPoint;
 begin
   try
     FCurve := TCustomNamedCurves.GetByName(CurveName);

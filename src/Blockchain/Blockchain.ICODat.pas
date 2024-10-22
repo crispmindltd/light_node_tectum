@@ -92,7 +92,6 @@ end;
 function TBlockchainICODat.ReadBlocksAsBytes(ASkipBlocks,
   ANumber: Integer): TBytes;
 var
-  NeedClose: Boolean;
   BlockBytes: array[0..SizeOf(TTokenICODat) - 1] of Byte;
   TokenICODatBlock: TTokenICODat absolute BlockBytes;
   i: Integer;
@@ -122,7 +121,6 @@ end;
 procedure TBlockchainICODat.WriteBlocksAsBytes(ASkipBlocks: Integer;
   ABytes: TBytes);
 var
-  NeedClose: Boolean;
   BlockBytes: array[0..SizeOf(TTokenICODat) - 1] of Byte;
   TokenICODatBlock: TTokenICODat absolute BlockBytes;
   i: Integer;

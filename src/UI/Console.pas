@@ -3,6 +3,7 @@ unit Console;
 interface
 
 uses
+  Blockchain.BaseTypes,
   System.SysUtils,
   System.SyncObjs,
   App.Intf,
@@ -17,23 +18,23 @@ uses
 type
   TConsoleCore = class(TInterfacedObject, IUI)
   private
+    FTotalBlocksNumberToLoad: UInt64;
     FCS: TCriticalSection;
-
-    function IsChainNeedSync(const AName: String): Boolean;
   public
     constructor Create;
     destructor Destroy; override;
 
+    procedure DoMessage(const AMessage: string; ANewLine: Boolean = True);
     procedure Run;
-    procedure DoMessage(const AMessage: String);
     procedure ShowMainForm;
     procedure ShowEnterPrivateKeyForm;
-    procedure NullForm(var Form);
-    procedure AddNewChain(const AName: String; AIsSystemChain: Boolean);
-    procedure ShowTotalCountBlocksDownloadRemain;
+    procedure ShowTotalBlocksToDownload(const ABlocksNumberToLoad: UInt64);
     procedure ShowDownloadProgress;
-    procedure NotifyNewChainBlocks;
-    procedure NotifyNewSmartBlocks;
+    procedure ShowDownloadingDone;
+    procedure NotifyNewTETBlocks(const ANeedRefreshBalance: Boolean);
+    procedure NotifyNewToken(const ASmartKey: TCSmartKey);
+    procedure NotifyNewTokenBlocks(const ASmartKey: TCSmartKey;
+      ANeedRefreshBalance: Boolean);
   end;
 
 implementation
@@ -69,11 +70,6 @@ end;
 
 { TConsoleCore }
 
-procedure TConsoleCore.AddNewChain(const AName: String; AIsSystemChain: Boolean);
-begin
-  DoMessage('New chain: ' + AName);
-end;
-
 constructor TConsoleCore.Create;
 begin
   FCS := TCriticalSection.Create;
@@ -83,6 +79,8 @@ begin
   signal(SIGINT, @SignalHandler);
   signal(SIGTERM, @SignalHandler);
 {$ENDIF}
+
+  FTotalBlocksNumberToLoad := 0;
 end;
 
 destructor TConsoleCore.Destroy;
@@ -95,30 +93,38 @@ begin
   end;
 end;
 
-procedure TConsoleCore.DoMessage(const AMessage: String);
+procedure TConsoleCore.DoMessage(const AMessage: string; ANewLine: Boolean);
 begin
   FCS.Enter;
   try
-    Write(#13#10 + AMessage);
+    if ANewLine then
+      Write(sLineBreak + AMessage)
+    else
+      Write(AMessage);
   finally
     FCS.Leave;
   end;
 end;
 
-function TConsoleCore.IsChainNeedSync(const AName: String): Boolean;
+procedure TConsoleCore.NotifyNewTETBlocks(const ANeedRefreshBalance: Boolean);
 begin
+  if AppCore.BlocksSyncDone then
+    DoMessage('New TET blocks have been received');
 end;
 
-procedure TConsoleCore.NotifyNewChainBlocks;
+procedure TConsoleCore.NotifyNewToken(const ASmartKey: TCSmartKey);
 begin
+  if AppCore.BlocksSyncDone then
+    DoMessage(Format('Data synchronization for the %s token has begun',
+      [ASmartKey.Abreviature]));
 end;
 
-procedure TConsoleCore.NotifyNewSmartBlocks;
+procedure TConsoleCore.NotifyNewTokenBlocks(const ASmartKey: TCSmartKey;
+  ANeedRefreshBalance: Boolean);
 begin
-end;
-
-procedure TConsoleCore.NullForm(var Form);
-begin
+  if AppCore.BlocksSyncDone then
+    DoMessage(Format('New blocks of the %s token have been received',
+      [ASmartKey.Abreviature]));
 end;
 
 procedure TConsoleCore.Run;
@@ -126,22 +132,33 @@ begin
    DoMessage(Format('Tectum Light Node version %s. Copyright (c) 2024 CrispMind.',
     [AppCore.GetVersion]));
    DoMessage('Lite node is running. Press Ctrl-C to stop.');
-   while not ExitFlag do begin
+   DoMessage('Please wait until blocks are loaded...');
+
+   while not ExitFlag do
+   begin
      Sleep(100);
    end;
-   DoMessage('Terminating node ...');
+
+   DoMessage('Terminating node...');
+end;
+
+procedure TConsoleCore.ShowDownloadingDone;
+begin
+  if AppCore.BlocksSyncDone then
+    DoMessage(' Done', False);
 end;
 
 procedure TConsoleCore.ShowDownloadProgress;
+var
+  CurrentBlocksNumber: UInt64;
 begin
-  const Remain = AppCore.DownloadRemain;
+  CurrentBlocksNumber := AppCore.GetTETChainBlocksCount +
+    AppCore.GetDynTETChainBlocksCount;
 
-  FCS.Enter;
-  try
-    Write(Format('Downloading blocks ... %d left    '#13, [Remain]));
-  finally
-    FCS.Leave;
-  end;
+  DoMessage(Format('%d of %d blocks loaded...',
+    [CurrentBlocksNumber, FTotalBlocksNumberToLoad]));
+
+  AppCore.BlocksSyncDone := CurrentBlocksNumber = FTotalBlocksNumberToLoad;
 end;
 
 procedure TConsoleCore.ShowEnterPrivateKeyForm;
@@ -152,9 +169,12 @@ procedure TConsoleCore.ShowMainForm;
 begin
 end;
 
-procedure TConsoleCore.ShowTotalCountBlocksDownloadRemain;
+procedure TConsoleCore.ShowTotalBlocksToDownload(
+  const ABlocksNumberToLoad: UInt64);
 begin
-  DoMessage('');
+  FTotalBlocksNumberToLoad := ABlocksNumberToLoad;
+  AppCore.BlocksSyncDone := FTotalBlocksNumberToLoad =
+    (AppCore.GetTETChainBlocksCount + AppCore.GetDynTETChainBlocksCount);
 end;
 
 end.
