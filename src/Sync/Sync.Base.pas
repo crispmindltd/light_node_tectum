@@ -23,6 +23,7 @@ type
       ReconnectAttempts = 3;
     private
       FIsError: Boolean;
+      FOnDoTerminate: TNotifyEvent;
 
       function Connect: Boolean;
       procedure Disconnect;
@@ -33,21 +34,21 @@ type
       FName: string;
       FAddress: string;
       FPort: Word;
-      FDone: TEvent;
 
       procedure Execute; override;
       procedure GetResponse(var ABytes: array of Byte);
       procedure BreakableSleep(ADelayDuration: Integer);
       function DoTryReconnect: Boolean;
       procedure DoCantReconnect;
+      procedure DoTerminate; override;
     public
       constructor Create(AName, AAddress: string; APort: Word);
       destructor Destroy; override;
 
       property IsError: Boolean read FIsError write FIsError;
-      property SyncDoneEvent: TEvent write FDone;
       property Address: string read GetNodeAddress;
       property Name: string read FName;
+      property OnDoTerminate: TNotifyEvent write FOnDoTerminate;
   end;
 
 implementation
@@ -111,6 +112,13 @@ begin
   FIsError := True;
 end;
 
+procedure TSyncChain.DoTerminate;
+begin
+  inherited;
+
+  FOnDoTerminate(Self);
+end;
+
 function TSyncChain.DoTryReconnect: Boolean;
 var
   i: Integer;
@@ -135,12 +143,11 @@ procedure TSyncChain.Execute;
 begin
   inherited;
 
-  FDone.ResetEvent;
   if not Connect then
   begin
     Logs.DoLog(Format('<%s> Cant connect to %s', [Name, Address]), ERROR);
     FIsError := True;
-    BreakableSleep(5000);
+    BreakableSleep(3000);
     exit;
   end;
 

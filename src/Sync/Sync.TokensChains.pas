@@ -53,21 +53,17 @@ end;
 
 procedure TTokensChainsBlocksUpdater.Execute;
 begin
+  inherited;
+
   try
-    inherited;
+    while not (Terminated or IsError) do
+      DoRequests;
 
-    try
-      while not (Terminated or IsError) do
-        DoRequests;
-
-      if not IsError then
-        FSocket.Send([DisconnectingCode], 0, 1);
-    except
-      on E:EReceiveTimeout do
-        DoCantReconnect;
-    end;
-  finally
-    FDone.SetEvent;
+    if not IsError then
+      FSocket.Send([DisconnectingCode], 0, 1);
+  except
+    on E:EReceiveTimeout do
+      DoCantReconnect;
   end;
 end;
 

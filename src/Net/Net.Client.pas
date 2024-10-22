@@ -15,7 +15,6 @@ uses
   Sync.Base,
   Sync.TETChain,
   Sync.TokensChains,
-  SyncObjs,
   SysUtils;
 
 type
@@ -29,8 +28,6 @@ type
   private
     FTETChainBlocksUpdater: TTETChainBlocksUpdater;
     FTokensChainsBlocksUpdater: TTokensChainsBlocksUpdater;
-    FTETChainSyncDone: TEvent;
-    FTokensSyncDone: TEvent;
     FRemoteServer: TCustomSocket;
 
     procedure StartTETChainSync(AAddress: string);
@@ -63,8 +60,7 @@ begin
   Splitted := AAddress.Split([' ', ':']);
   FTETChainBlocksUpdater := TTETChainBlocksUpdater.Create(Splitted[0],
     Splitted[1].ToInteger);
-  FTETChainBlocksUpdater.SyncDoneEvent := FTETChainSyncDone;
-  FTETChainBlocksUpdater.OnTerminate := onTETChainUpdaterTerminate;
+  FTETChainBlocksUpdater.OnDoTerminate := onTETChainUpdaterTerminate;
   FTETChainBlocksUpdater.Resume;
 end;
 
@@ -78,8 +74,7 @@ begin
   Splitted := AAddress.Split([' ', ':']);
   FTokensChainsBlocksUpdater := TTokensChainsBlocksUpdater.Create(Splitted[0],
     Splitted[1].ToInteger);
-  FTokensChainsBlocksUpdater.SyncDoneEvent := FTokensSyncDone;
-  FTokensChainsBlocksUpdater.OnTerminate := onTokensChainsUpdaterTerminate;
+  FTokensChainsBlocksUpdater.OnDoTerminate := onTokensChainsUpdaterTerminate;
   FTokensChainsBlocksUpdater.Resume;
 end;
 
@@ -89,16 +84,12 @@ begin
 
   FRemoteServer := TCustomSocket.Create;
   FStatus := ssStoped;
-  FTETChainSyncDone := TEvent.Create;
-  FTokensSyncDone := TEvent.Create;
 end;
 
 destructor TNodeClient.Destroy;
 begin
   Stop;
   FRemoteServer.Free;
-  FTokensSyncDone.Free;
-  FTETChainSyncDone.Free;
 
   inherited;
 end;
@@ -218,8 +209,9 @@ begin
   FStatus := ssShuttingDown;
   KillTETChainUpdater;
   KillTokensChainsUpdater;
-  FTETChainSyncDone.WaitFor(ShuttingDownTimeout);
-  FTokensSyncDone.WaitFor(ShuttingDownTimeout);
+  FTETChainBlocksUpdater.Free;
+  FTokensChainsBlocksUpdater.Free;
+
   FStatus := ssStoped;
 end;
 

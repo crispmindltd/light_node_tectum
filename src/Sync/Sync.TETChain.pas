@@ -59,32 +59,31 @@ end;
 
 procedure TTETChainBlocksUpdater.Execute;
 begin
+  inherited;
+  if Terminated or IsError then
+    exit;
+
   try
-    inherited;
-    if Terminated or IsError then
-      exit;
+    DoTETChainsTotalBlocksNumberRequest;
+    while (FDynTETChainTotalBlocksToLoad > AppCore.GetDynTETChainBlocksCount) and
+      not Terminated do
+      DoDynTETChainBlocksRequest;
+    while (FTETChainTotalBlocksToLoad > AppCore.GetTETChainBlocksCount) and
+      not Terminated do
+      DoTETChainBlocksRequest;
+    UI.ShowDownloadingDone;
 
-    try
-      DoTETChainsTotalBlocksNumberRequest;
-      while (FDynTETChainTotalBlocksToLoad > AppCore.GetDynTETChainBlocksCount) and
-        not Terminated do
-        DoDynTETChainBlocksRequest;
-      while (FTETChainTotalBlocksToLoad > AppCore.GetTETChainBlocksCount) and
-        not Terminated do
-        DoTETChainBlocksRequest;
+    while not (Terminated or IsError) do
+      DoRequests;
 
-      while not (Terminated or IsError) do
-        DoRequests;
-
-      if not IsError then
-        FSocket.Send([DisconnectingCode], 0, 1);
-    except
-      on E:EReceiveTimeout do 
-        DoCantReconnect;
-    end;
-  finally
-    FDone.SetEvent;
+    if not IsError then
+      FSocket.Send([DisconnectingCode], 0, 1);
+  except
+    on E:EReceiveTimeout do
+      DoCantReconnect;
   end;
+
+
 end;
 
 procedure TTETChainBlocksUpdater.ReceiveDynTETChainBlocks(
