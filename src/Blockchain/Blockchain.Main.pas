@@ -278,8 +278,10 @@ var
   Transaction: THistoryTransactionInfo;
 begin
   Result := [];
-  if not (FTETChains.DynBlocks.TryGet(AUserID, TokenID, TETDyn) and
-          FTETChains.Trans.TryGet(TETDyn.LastBlock, TETBlock) and
+  if not FTETChains.DynBlocks.TryGet(AUserID, TokenID, TETDyn) then
+    raise EAddressNotExistsError.Create('Error Message');
+
+  if not (FTETChains.Trans.TryGet(TETDyn.LastBlock, TETBlock) and
           FTokenICO.TryGet(TETDyn.TokenDatID, ICODat)) then
     exit;
 
@@ -300,7 +302,7 @@ begin
     end;
   end;
 
-  while (i > 0) and (i > StartBlockNum) and (Length(Result) <= ARows) do
+  while (i > 0) and (i > StartBlockNum) and (Length(Result) < ARows) do
   begin
     FTETChains.Trans.TryGet(i, TETBlock);
     if TETBlock.Smart.tkn[1].TokenID = TokenID then

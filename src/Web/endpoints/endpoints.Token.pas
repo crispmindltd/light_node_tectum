@@ -189,11 +189,11 @@ begin
     else if not TryStrToInt(Params.Values['skip'], Skip) then
       raise EValidError.Create('request parameters error');
 
-    Transactions := AppCore.GetTETTransactions(Skip, Rows);
+    Transactions := AppCore.GetTETTransactions(Skip, Rows, False);
     JSON := TJSONObject.Create;
     try
       JSONArray := TJSONArray.Create;
-      for i := 0 to Rows - 1 do
+      for i := 0 to Length(Transactions) - 1 do
       begin
         JSONArray.AddElement(TJSONObject.Create);
         JSONNestedObject := JSONArray.Items[pred(JSONArray.Count)] as TJSONObject;
@@ -369,7 +369,7 @@ var
   JSON: TJSONObject;
   Params: TStringList;
   Value: Double;
-  TokenICODat: TTokenICODat;
+  FloatSize: Byte;
 begin
   Result.ReqID := AReqID;
   Params := TStringList.Create(dupIgnore, True, False);
@@ -379,15 +379,15 @@ begin
 
     Params.AddStrings(AParams);
     const TokenAddress = Params.Values['smart_address'];
-    const TETAddress = Params.Values['address_tet'];
+    const TETAddress = Params.Values['tet_address'];
 
     if TETAddress.IsEmpty or TokenAddress.IsEmpty then
       raise EValidError.Create('request parameters error');
 
-    Value := AppCore.GetTokenBalanceWithTokenAddress(TokenAddress, TETAddress);
+    Value := AppCore.GetTokenBalanceWithTokenAddress(TETAddress, TokenAddress, FloatSize);
     JSON := TJSONObject.Create;
     try
-      JSON.AddPair('balance', TJSONDecimal.Create(Value, TokenICODat.FloatSize));
+      JSON.AddPair('balance', TJSONDecimal.Create(Value, FloatSize));
       Result.Code := HTTP_SUCCESS;
       Result.Response := JSON.ToString;
     finally
@@ -407,7 +407,7 @@ var
   JSON: TJSONObject;
   Value: Double;
   Params: TStringList;
-  TokenICODat: TTokenICODat;
+  FloatSize: Byte;
 begin
   Result.ReqID := AReqID;
   Params := TStringList.Create(dupIgnore, True, False);
@@ -417,15 +417,15 @@ begin
 
     Params.AddStrings(AParams);
     const Ticker = Params.Values['ticker'];
-    const AddressTET = Params.Values['address_tet'];
+    const AddressTET = Params.Values['tet_address'];
 
     if AddressTET.IsEmpty or Ticker.IsEmpty then
       raise EValidError.Create('request parameters error');
 
-    Value := AppCore.GetTokenBalanceWithTicker(Ticker.ToUpper, AddressTET);
+    Value := AppCore.GetTokenBalanceWithTicker(AddressTET, Ticker.ToUpper, FloatSize);
     JSON := TJSONObject.Create;
     try
-      JSON.AddPair('balance', TJSONDecimal.Create(Value, TokenICODat.FloatSize));
+      JSON.AddPair('balance', TJSONDecimal.Create(Value, FloatSize));
       Result.Code := HTTP_SUCCESS;
       Result.Response := JSON.ToString;
     finally
@@ -714,7 +714,7 @@ begin
     if not AppCore.TryGetSmartKey(Ticker, SmartKey) then
       raise ESmartNotExistsError.Create('');
 
-    Transactions := AppCore.GetTokenTransactions(SmartKey.SmartID, Skip, Rows);
+    Transactions := AppCore.GetTokenTransactions(SmartKey.SmartID, Skip, Rows, False);
     JSON := TJSONObject.Create;
     try
       JSON.AddPair('ticker', Ticker);

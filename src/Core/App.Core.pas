@@ -93,8 +93,10 @@ type
     function GetSmartKeyBlocks(ASkip: Integer): TBytes;
     procedure SetSmartKeyBlocks(ASkip: Integer; ABytes: TBytes);
     function GetAllSmartKeyBlocks: TArray<TCSmartKey>;
-    function TryGetSmartKey(ATicker: string; out ASmartKey: TCSmartKey): Boolean; overload;
-    function TryGetSmartKey(ATokenID: Integer; out ASmartKey: TCSmartKey): Boolean; overload;
+    function TryGetSmartKey(ATickerOrAddress: string;
+      out ASmartKey: TCSmartKey): Boolean; overload;
+    function TryGetSmartKey(ATokenID: Integer;
+      out ASmartKey: TCSmartKey): Boolean; overload;
 
     //Tokens chains methods
     procedure UpdateTokensList;
@@ -106,8 +108,10 @@ type
     function GetTokenChainBlocks(ATokenID: Integer; ASkip: Integer): TBytes;
     procedure SetTokenChainBlocks(ATokenID: Integer; ASkip: Integer; ABytes: TBytes);
     function GetTokenBalance(ATokenID: Integer; ATETAddress: string): Double;
-    function GetTokenBalanceWithTokenAddress(ATETAddress, ATokenAddress: string): Double;
-    function GetTokenBalanceWithTicker(ATETAddress, ATicker: string): Double;
+    function GetTokenBalanceWithTokenAddress(ATETAddress, ATokenAddress: string;
+      out AFloatSize: Byte): Double;
+    function GetTokenBalanceWithTicker(ATETAddress, ATicker: string;
+      out AFloatSize: Byte): Double;
     function GetTokenUserTransactions(ATokenID: Integer; AUserID: Integer;
       ASkip: Integer; ARows: Integer; ALast: Boolean = False): TArray<THistoryTransactionInfo>;
     function GetTokenTransactions(ATokenID: Integer; ASkip: Integer; ARows: Integer;
@@ -670,23 +674,28 @@ begin
 end;
 
 function TAppCore.GetTokenBalanceWithTokenAddress(ATETAddress,
-  ATokenAddress: string): Double;
+  ATokenAddress: string; out AFloatSize: Byte): Double;
 var
   UserID: Integer;
   SmartKey: TCSmartKey;
+  TokenICO: TTokenICODat;
 begin
   if not FBlockchain.TryGetUserIDByTETAddress(ATETAddress, UserID) then
     raise EAddressNotExistsError.Create('');
-  if not FBlockchain.TryGetSmartKey(ATokenAddress, SmartKey) then
+  if not AppCore.TryGetSmartKey(ATokenAddress, SmartKey) then
     raise ESmartNotExistsError.Create('');
+  TryGetTokenICO(SmartKey.Abreviature, TokenICO);
+  AFloatSize := TokenICO.FloatSize;
 
   Result := GetTokenBalance(SmartKey.SmartID, ATETAddress);
 end;
 
-function TAppCore.GetTokenBalanceWithTicker(ATETAddress, ATicker: string): Double;
+function TAppCore.GetTokenBalanceWithTicker(ATETAddress, ATicker: string;
+  out AFloatSize: Byte): Double;
 var
   UserID: Integer;
   SmartKey: TCSmartKey;
+  TokenICO: TTokenICODat;
 begin
   if (Length(ATicker) = 0) or not CheckTickerName(Trim(ATicker).ToUpper) then
     raise EValidError.Create('invalid ticker');
@@ -695,6 +704,8 @@ begin
     raise EAddressNotExistsError.Create('');
   if not FBlockchain.TryGetSmartKey(ATicker, SmartKey) then
     raise ESmartNotExistsError.Create('');
+  TryGetTokenICO(SmartKey.Abreviature, TokenICO);
+  AFloatSize := TokenICO.FloatSize;
 
   Result := GetTokenBalance(SmartKey.SmartID, ATETAddress);
 end;
@@ -785,7 +796,6 @@ begin
   begin;
     Splitted := Result.Split([' ']);
     case Splitted[3].ToInteger of
-      20: raise EKeyExpiredError.Create('');
       31201: raise EAddressNotExistsError.Create('');
       31202: raise ENoInfoForThisAccountError.Create('');
       else raise EUnknownError.Create(Splitted[3]);
@@ -865,7 +875,7 @@ begin
   if (Length(ATicker) = 0) or not CheckTickerName(Trim(ATicker).ToUpper) then
     raise EValidError.Create('invalid ticker');
 
-  if FBlockchain.TryGetSmartKey(ATicker, SmartKey) then
+  if FBlockchain.TryGetSmartKey(ATicker.ToUpper, SmartKey) then
     Result := SmartKey.key1
   else
     raise ESmartNotExistsError.Create('');
@@ -903,8 +913,10 @@ var
   TETDyn: TTokenBase;
   BlockNum: Integer;
 begin
-  if not (FBlockchain.TryGetDynTETBlock(ATETAddress, BlockNum, TETDyn) and
-          FBlockchain.TryGetICOBlock(TETDyn.TokenDatID, ICODat) and
+  if not FBlockchain.TryGetDynTETBlock(ATETAddress, BlockNum, TETDyn) then
+    raise EAddressNotExistsError.Create('');
+
+  if not (FBlockchain.TryGetICOBlock(TETDyn.TokenDatID, ICODat) and
           FBlockchain.TryGetTETChainBlock(TETDyn.LastBlock, TETBlock)) then
     exit(0);
 
@@ -999,10 +1011,10 @@ begin
   Result := FBlockchain.GetSmartKeys(0, FBlockchain.GetSmartKeyBlocksCount);
 end;
 
-function TAppCore.TryGetSmartKey(ATicker: string;
+function TAppCore.TryGetSmartKey(ATickerOrAddress: string;
   out ASmartKey: TCSmartKey): Boolean;
 begin
-  Result := FBlockchain.TryGetSmartKey(ATicker, ASmartKey);
+  Result := FBlockchain.TryGetSmartKey(ATickerOrAddress, ASmartKey);
 end;
 
 function TAppCore.TryGetSmartKey(ATokenID: Integer;

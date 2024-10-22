@@ -62,8 +62,10 @@ type
     function GetSmartKeyBlocks(ASkip: Integer): TBytes;
     procedure SetSmartKeyBlocks(ASkip: Integer; ABytes: TBytes);
     function GetAllSmartKeyBlocks: TArray<TCSmartKey>;
-    function TryGetSmartKey(ATicker: string; out ASmartKey: TCSmartKey): Boolean; overload;
-    function TryGetSmartKey(ATokenID: Integer; out ASmartKey: TCSmartKey): Boolean; overload;
+    function TryGetSmartKey(ATickerOrAddress: string;
+      out ASmartKey: TCSmartKey): Boolean; overload;
+    function TryGetSmartKey(ATokenID: Integer;
+      out ASmartKey: TCSmartKey): Boolean; overload;
 
     //Tokens chains methods
     procedure UpdateTokensList;
@@ -75,8 +77,10 @@ type
     function GetTokenChainBlocks(ATokenID: Integer; ASkip: Integer): TBytes;
     procedure SetTokenChainBlocks(ATokenID: Integer; ASkip: Integer; ABytes: TBytes);
     function GetTokenBalance(ATokenID: Integer; ATETAddress: string): Double;
-    function GetTokenBalanceWithTokenAddress(ATETAddress, ATokenAddress: string): Double;
-    function GetTokenBalanceWithTicker(ATETAddress, ATicker: string): Double;
+    function GetTokenBalanceWithTokenAddress(ATETAddress, ATokenAddress: string;
+      out AFloatSize: Byte): Double;
+    function GetTokenBalanceWithTicker(ATETAddress, ATicker: string;
+      out AFloatSize: Byte): Double;
     function GetTokenUserTransactions(ATokenID: Integer; AUserID: Integer;
       ASkip: Integer; ARows: Integer; ALast: Boolean = False): TArray<THistoryTransactionInfo>;
     function GetTokenTransactions(ATokenID: Integer; ASkip: Integer; ARows: Integer;

@@ -26,14 +26,13 @@ type
       procedure SetHTTPPort(APort: string);
 
       procedure ReadTokensToSyncFromFile;
-      procedure WriteTokensToSyncToFile;
     public
       constructor Create;
       destructor Destroy; override;
 
       procedure Init;
       procedure AddTokenToSync(ATokenID: Integer);
-      function GetTokensToSynchronize: TArray<Integer>;
+      function GetTokensToSynchronize: TArray<Integer>; overload;
       procedure RemoveTokenToSync(ATokenID: Integer);
   end;
 
@@ -42,8 +41,12 @@ implementation
 { TSettingsFile }
 
 procedure TSettingsFile.AddTokenToSync(ATokenID: Integer);
+var
+  TokensIDs: string;
 begin
   FSyncTokens.Add(ATokenID.ToString);
+  FIni.WriteString('sync', 'tokens', Format('[%s]', [FSyncTokens.DelimitedText]));
+  FIni.UpdateFile;
 end;
 
 function TSettingsFile.CheckAddress(const AAddress: string): Boolean;
@@ -83,7 +86,6 @@ end;
 
 destructor TSettingsFile.Destroy;
 begin
-  WriteTokensToSyncToFile;
   FSyncTokens.Free;
   FIni.Free;
 
@@ -138,7 +140,11 @@ var
 begin
   Index := FSyncTokens.IndexOf(ATokenID.ToString);
   if Index > -1 then
+  begin
     FSyncTokens.Delete(Index);
+    FIni.WriteString('sync', 'tokens', Format('[%s]', [FSyncTokens.DelimitedText]));
+    FIni.UpdateFile;
+  end;
 end;
 
 procedure TSettingsFile.Init;
@@ -177,15 +183,6 @@ begin
     raise Exception.Create(Format('HTTP port "%s" is invalid', [APort]));
 
   HTTPPort := PortValue;
-end;
-
-procedure TSettingsFile.WriteTokensToSyncToFile;
-var
-  DelText: string;
-begin
-  DelText := FSyncTokens.DelimitedText;
-  FIni.WriteString('sync', 'tokens', Format('[%s]', [DelText]));
-  FIni.UpdateFile;
 end;
 
 end.
