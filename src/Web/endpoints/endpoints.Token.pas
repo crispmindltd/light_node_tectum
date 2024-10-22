@@ -417,12 +417,12 @@ begin
 
     Params.AddStrings(AParams);
     const Ticker = Params.Values['ticker'];
-    const AddressTET = Params.Values['tet_address'];
+    const TETAddress = Params.Values['tet_address'];
 
-    if AddressTET.IsEmpty or Ticker.IsEmpty then
+    if TETAddress.IsEmpty or Ticker.IsEmpty then
       raise EValidError.Create('request parameters error');
 
-    Value := AppCore.GetTokenBalanceWithTicker(AddressTET, Ticker.ToUpper, FloatSize);
+    Value := AppCore.GetTokenBalanceWithTicker(TETAddress, Ticker.ToUpper, FloatSize);
     JSON := TJSONObject.Create;
     try
       JSON.AddPair('balance', TJSONDecimal.Create(Value, FloatSize));
