@@ -2735,20 +2735,6 @@ object MainForm: TMainForm
             TabOrder = 8
             Viewport.Width = 1094.000000000000000000
             Viewport.Height = 50.000000000000000000
-            object TopExplorerHorzLayout: TLayout
-              Padding.Left = -10.000000000000000000
-              Size.Width = 0.000000000000000000
-              Size.Height = 35.000000000000000000
-              Size.PlatformDefault = False
-              TabOrder = 0
-              object HideTransactionNotFoundTimer: TTimer
-                Enabled = False
-                Interval = 3000
-                OnTimer = HideTransactionNotFoundTimerTimer
-                Left = 1064
-                Top = 168
-              end
-            end
           end
           object ExplorerVertScrollBox: TVertScrollBox
             Align = Client
@@ -2831,6 +2817,13 @@ object MainForm: TMainForm
                 end
               end
             end
+          end
+          object HideTransactionNotFoundTimer: TTimer
+            Enabled = False
+            Interval = 3000
+            OnTimer = HideTransactionNotFoundTimerTimer
+            Left = 1064
+            Top = 168
           end
         end
         object ExplorerTransactionDataTabItem: TTabItem

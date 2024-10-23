@@ -41,8 +41,10 @@ begin
   TickerText.AutoSize := True;
   Self.Width := TickerText.Width + 20;
   Name := 'TickerItem' + AName.Replace(' ', '');
-  FIsSelected := False;
   Tag := ATokenID;
+  if (AName = 'Search results') or (AName = 'Tectum') then
+    Align := TAlignLayout.MostLeft;
+  SetSelected(False);
 end;
 
 destructor TTickerFrame.Destroy;

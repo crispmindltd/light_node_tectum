@@ -25,7 +25,7 @@ uses
   System.Rtti, FMX.Grid.Style, FMX.ScrollBox, FMX.Grid, FMX.Memo.Types, FMX.Memo;
 
 type
-  TMainForm = class(TForm, IComparer<TTickerFrame>)
+  TMainForm = class(TForm)
     Tabs: TTabControl;
     TokensTabItem: TTabItem;
     ExplorerTabItem: TTabItem;
@@ -176,7 +176,6 @@ type
     CopyFromSvg: TPath;
     CopyToLayout: TLayout;
     CopyToSvg: TPath;
-    TopExplorerHorzLayout: TLayout;
     NoTETHistoryLabel: TLabel;
     StatusTETHeaderLabel: TLabel;
     NoTokenHistoryLabel: TLabel;
@@ -368,7 +367,6 @@ type
     procedure CleanScrollBox(AVertScrollBox: TVertScrollBox);
 
     procedure AddTickerFrame(const ATicker: string; ATokenID: Integer = -1);
-    procedure PlaceTickerFrame(const ANewTickerFrame: TTickerFrame);
     procedure AddTokenItem(ATokenID: Integer; AName: string; AValue: Double);
     procedure AddPageNum(APageNum: Integer);
     procedure ShowTETTransferStatus(const AMessage: string; AIsError: Boolean = False);
@@ -388,7 +386,6 @@ type
       Shift: TShiftState; X, Y: Single);
     procedure onTransactionSearchingDone(AIsFound: Boolean);
 
-    function Compare(const Left, Right: TTickerFrame): Integer;
     procedure TETTransferCallBack(const AResponse: string);
     procedure TokenCreatingCallBack(const AResponse: string);
     procedure TokenTransferCallBack(const AResponse: string);
@@ -417,6 +414,15 @@ begin
   Result := CompareValue(TextObjRight.Text.ToDouble, TextObjLeft.Text.ToDouble);
   if Result = 0 then
     Result := CompareStr((Left as TListBoxItem).Text, (Right as TListBoxItem).Text);
+end;
+
+function CustomSortCompareTickers(Left, Right: TFmxObject): Integer;
+var
+  LeftTicker, RightTicker: TTickerFrame;
+begin
+  LeftTicker := Left as TTickerFrame;
+  RightTicker := Right as TTickerFrame;
+  Result := CompareStr(LeftTicker.Ticker, RightTicker.Ticker);
 end;
 
 procedure TMainForm.TokenNameEditChange(Sender: TObject);
@@ -486,28 +492,19 @@ procedure TMainForm.AddTickerFrame(const ATicker: string; ATokenID: Integer);
 var
   NewTickerFrame: TTickerFrame;
 begin
-  TopExplorerHorzLayout.BeginUpdate;
+  ExplorerHorzScrollBox.BeginUpdate;
   try
-    NewTickerFrame := TTickerFrame.Create(TopExplorerHorzLayout,
+    NewTickerFrame := TTickerFrame.Create(ExplorerHorzScrollBox,
       ATicker, ATokenID);
-    NewTickerFrame.Parent := TopExplorerHorzLayout;
-      TopExplorerHorzLayout.Width := TopExplorerHorzLayout.Width +
-        NewTickerFrame.Width + NewTickerFrame.Margins.Left;
+    NewTickerFrame.Parent := ExplorerHorzScrollBox;
 
-    if ATicker = 'Search results' then
-    begin
-      NewTickerFrame.Align := TAlignLayout.MostLeft;
-      NewTickerFrame.Visible := False
-    end else
+    if ATicker <> 'Search results' then
       NewTickerFrame.RoundRect.OnMouseDown := RoundRectTickerMouseDown;
 
     FTickersFrames.Add(NewTickerFrame);
-    FTickersFrames.Sort(Self, Min(2, FTickersFrames.Count),
-      FTickersFrames.Count - Min(2, FTickersFrames.Count));
-    if FTickersFrames.Count > 1 then
-      PlaceTickerFrame(NewTickerFrame);
+    ExplorerHorzScrollBox.Sort(CustomSortCompareTickers);
   finally
-    TopExplorerHorzLayout.EndUpdate;
+    ExplorerHorzScrollBox.EndUpdate;
   end;
 end;
 
@@ -716,11 +713,6 @@ begin
   end;
 end;
 
-function TMainForm.Compare(const Left, Right: TTickerFrame): Integer;
-begin
-  Result := CompareStr(Left.TickerText.Text, Right.TickerText.Text);
-end;
-
 procedure TMainForm.CopyFromLayoutClick(Sender: TObject);
 var
   Service: IFMXClipBoardService;
@@ -867,16 +859,6 @@ begin
     Exit;
   end;
   Result := Length(TrimmedValue) - DecimalPos;
-end;
-
-procedure TMainForm.PlaceTickerFrame(const ANewTickerFrame: TTickerFrame);
-var
-  Index: Integer;
-  PrevTickerFrame: TTickerFrame;
-begin
-  Index := FTickersFrames.IndexOf(ANewTickerFrame);
-  PrevTickerFrame := FTickersFrames.Items[Index - 1];
-  ANewTickerFrame.Position.X := PrevTickerFrame.Position.X + PrevTickerFrame.Width;
 end;
 
 procedure TMainForm.TokenItemClick(Sender: TObject);
@@ -1579,12 +1561,6 @@ begin
     FSelectedFrame.Selected := False;
   ParentFrame.Selected := True;
   FSelectedFrame := ParentFrame;
-  if FSelectedFrame.Ticker = 'Search results' then
-    TopExplorerHorzLayout.Width := TopExplorerHorzLayout.Width +
-            FSelectedFrame.Width + FTickersFrames.Items[0].Margins.Left
-  else
-    TopExplorerHorzLayout.Width := TopExplorerHorzLayout.Width -
-            FTickersFrames.Items[0].Width - FTickersFrames.Items[0].Margins.Left;
   SetLength(FSearchResultTrans, 0);
 
   FPageNum := 1;
@@ -1651,9 +1627,7 @@ begin
           FSelectedFrame := FTickersFrames.Items[0];
           FSelectedFrame.Selected := True;
           FTickersFrames.Items[0].Visible := True;
-          TopExplorerHorzLayout.Width := TopExplorerHorzLayout.Width +
-            FTickersFrames.Items[0].Width + FTickersFrames.Items[0].Margins.Left;
-        end;           
+        end;
         RefreshPagesLayout;
       end;
     end);
@@ -1685,8 +1659,6 @@ begin
           FSelectedFrame := FTickersFrames.Items[0];
           FSelectedFrame.Selected := True;
           FTickersFrames.Items[0].Visible := True;
-          TopExplorerHorzLayout.Width := TopExplorerHorzLayout.Width +
-            FTickersFrames.Items[0].Width + FTickersFrames.Items[0].Margins.Left;
         end;
         RefreshPagesLayout;
       end;
@@ -1702,7 +1674,7 @@ begin
   AniIndicator1.Visible := True;
   AniIndicator1.Enabled := True;
   SearchEdit.Enabled := True;
-  
+
   TThread.CreateAnonymousThread(
   procedure
   var
