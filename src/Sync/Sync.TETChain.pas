@@ -82,8 +82,6 @@ begin
     on E:EReceiveTimeout do
       DoCantReconnect;
   end;
-
-
 end;
 
 procedure TTETChainBlocksUpdater.ReceiveDynTETChainBlocks(

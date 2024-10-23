@@ -145,7 +145,7 @@ end;
 procedure TConsoleCore.ShowDownloadingDone;
 begin
   if AppCore.BlocksSyncDone then
-    DoMessage(' Done', False);
+    DoMessage(' Done' + sLineBreak + 'HTTP requests are now available', False);
 end;
 
 procedure TConsoleCore.ShowDownloadProgress;
