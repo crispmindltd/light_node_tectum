@@ -491,8 +491,8 @@ begin
     NewTickerFrame := TTickerFrame.Create(TopExplorerHorzLayout,
       ATicker, ATokenID);
     NewTickerFrame.Parent := TopExplorerHorzLayout;
-    TopExplorerHorzLayout.Width := TopExplorerHorzLayout.Width +
-      NewTickerFrame.Width + NewTickerFrame.Margins.Left;
+      TopExplorerHorzLayout.Width := TopExplorerHorzLayout.Width +
+        NewTickerFrame.Width + NewTickerFrame.Margins.Left;
 
     if ATicker = 'Search results' then
     begin
@@ -1579,6 +1579,12 @@ begin
     FSelectedFrame.Selected := False;
   ParentFrame.Selected := True;
   FSelectedFrame := ParentFrame;
+  if FSelectedFrame.Ticker = 'Search results' then
+    TopExplorerHorzLayout.Width := TopExplorerHorzLayout.Width +
+            FSelectedFrame.Width + FTickersFrames.Items[0].Margins.Left
+  else
+    TopExplorerHorzLayout.Width := TopExplorerHorzLayout.Width -
+            FTickersFrames.Items[0].Width - FTickersFrames.Items[0].Margins.Left;
   SetLength(FSearchResultTrans, 0);
 
   FPageNum := 1;
@@ -1645,6 +1651,8 @@ begin
           FSelectedFrame := FTickersFrames.Items[0];
           FSelectedFrame.Selected := True;
           FTickersFrames.Items[0].Visible := True;
+          TopExplorerHorzLayout.Width := TopExplorerHorzLayout.Width +
+            FTickersFrames.Items[0].Width + FTickersFrames.Items[0].Margins.Left;
         end;           
         RefreshPagesLayout;
       end;
@@ -1677,6 +1685,8 @@ begin
           FSelectedFrame := FTickersFrames.Items[0];
           FSelectedFrame.Selected := True;
           FTickersFrames.Items[0].Visible := True;
+          TopExplorerHorzLayout.Width := TopExplorerHorzLayout.Width +
+            FTickersFrames.Items[0].Width + FTickersFrames.Items[0].Margins.Left;
         end;
         RefreshPagesLayout;
       end;

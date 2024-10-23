@@ -2610,7 +2610,7 @@ object MainForm: TMainForm
           end
           object ExplorerHeaderLayout: TLayout
             Align = Top
-            Margins.Top = 10.000000000000000000
+            Margins.Top = 5.000000000000000000
             Position.Y = 105.000000000000000000
             Size.Width = 1094.000000000000000000
             Size.Height = 28.000000000000000000
@@ -2725,18 +2725,20 @@ object MainForm: TMainForm
           end
           object ExplorerHorzScrollBox: THorzScrollBox
             Align = Top
+            Padding.Bottom = 6.000000000000000000
             Margins.Top = 10.000000000000000000
             Position.Y = 50.000000000000000000
             Size.Width = 1094.000000000000000000
-            Size.Height = 45.000000000000000000
+            Size.Height = 50.000000000000000000
             Size.PlatformDefault = False
+            StyleLookup = 'TickerScrollboxstyle'
             TabOrder = 8
             Viewport.Width = 1094.000000000000000000
-            Viewport.Height = 45.000000000000000000
+            Viewport.Height = 50.000000000000000000
             object TopExplorerHorzLayout: TLayout
               Padding.Left = -10.000000000000000000
               Size.Width = 0.000000000000000000
-              Size.Height = 40.000000000000000000
+              Size.Height = 35.000000000000000000
               Size.PlatformDefault = False
               TabOrder = 0
               object HideTransactionNotFoundTimer: TTimer
