@@ -407,11 +407,11 @@ implementation
 
 function CustomSortCompareStrings(Left, Right: TFmxObject): Integer;
 var
-  TextObjLeft, TextObjRight: TText;
+  LeftLabel, RightLabel: TLabel;
 begin
-  TextObjLeft := (Left as TListBoxItem).TagObject as TText;
-  TextObjRight := (Right as TListBoxItem).TagObject as TText;
-  Result := CompareValue(TextObjRight.Text.ToDouble, TextObjLeft.Text.ToDouble);
+  LeftLabel := (Left as TListBoxItem).TagObject as TLabel;
+  RightLabel := (Right as TListBoxItem).TagObject as TLabel;
+  Result := CompareValue(RightLabel.Text.ToDouble, LeftLabel.Text.ToDouble);
   if Result = 0 then
     Result := CompareStr((Left as TListBoxItem).Text, (Right as TListBoxItem).Text);
 end;
@@ -512,14 +512,14 @@ procedure TMainForm.AddTokenItem(ATokenID: Integer; AName: string;
   AValue: Double);
 var
   NewItem: TListBoxItem;
-  BalanceText: TText;
+  BalanceLabel: TLabel;
 begin
   NewItem := TListBoxItem.Create(TokensListBox);
   NewItem.BeginUpdate;
   try
     with NewItem do
     begin
-      Name := 'TokenItem' + TokensListBox.Count.ToString;
+      Name := AName + 'TokenItem';
       Margins.Top := 5;
       Margins.Right := 7;
       Height := 38;
@@ -532,7 +532,6 @@ begin
       HitTest := True;
 
       StyleLookup := 'TokenItemStyle';
-      ApplyStyleLookup;
       onMouseEnter := StylesForm.OnTokenItemMouseEnter;
       onMouseLeave := StylesForm.OnTokenItemMouseLeave;
       onMouseDown := StylesForm.OnTokenItemMouseDown;
@@ -540,24 +539,25 @@ begin
       onClick := TokenItemClick;
     end;
 
-    BalanceText := TText.Create(NewItem);
-    NewItem.TagObject := BalanceText;
-    with BalanceText do
+    BalanceLabel := TLabel.Create(NewItem);
+    NewItem.TagObject := BalanceLabel;
+    with BalanceLabel do
     begin
       Name := 'TokenBalanceText' + TokensListBox.Count.ToString;
-      Align := TAlignLayout.Right;
+      Align := TAlignLayout.Contents;
       Margins.Right := 10;
-      Parent := NewItem;
       HitTest := False;
+      StyledSettings := [TStyledSetting.Style, TStyledSetting.FontColor];
       TextSettings.Font.Family := 'Inter';
       TextSettings.Font.Size := 14;
       TextSettings.FontColor := TAlphaColorRec.Black;
+      TextSettings.HorzAlign := TTextAlign.Trailing;
       Text := FormatFloat('0.########', AValue);
-      AutoSize := True;
+      AutoSize := False;
+      Parent := NewItem;
     end;
   finally
     NewItem.EndUpdate;
-    BalanceText.AutoSize := False;
   end;
 
   TokensListBox.AddObject(NewItem);
@@ -1574,17 +1574,19 @@ var
 begin
   Value := AppCore.GetTokenBalance(ASmartKey.SmartID, AppCore.TETAddress);
   FBalances.AddOrSetValue(ASmartKey.Abreviature, Value);
-  Index := TokensListBox.Items.IndexOf(ASmartKey.Abreviature);
-  if Index >= 0 then
-  begin
-    (TokensListBox.ListItems[Index].TagObject as TText).Text :=
-      FormatFloat('0.########', Value);
-    if BalanceTokenValueLabel.Text.Contains(ASmartKey.Abreviature) then
-      RefreshHeaderBalance(ASmartKey.Abreviature);
-  end else
-  begin
+  TokensListBox.BeginUpdate;
+  try
+    Index := TokensListBox.Items.IndexOf(ASmartKey.Abreviature);
+    if Index >= 0 then
+    begin
+      TokensListBox.Items.Delete(Index);
+      if BalanceTokenValueLabel.Text.Contains(ASmartKey.Abreviature) then
+        RefreshHeaderBalance(ASmartKey.Abreviature);
+    end;
+  finally
     AddTokenItem(ASmartKey.SmartID, ASmartKey.Abreviature, Value);
     TokensListBox.Sort(CustomSortCompareStrings);
+    TokensListBox.EndUpdate;
   end;
 end;
 

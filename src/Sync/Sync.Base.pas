@@ -170,7 +170,7 @@ begin
   ToReceive := Length(ABytes);
   while ToReceive > 0 do
   begin
-    while FSocket.ReceiveLength = 0 do
+    while FSocket.ReceiveLength <= 0 do
     begin
       if Terminated then
         exit;
