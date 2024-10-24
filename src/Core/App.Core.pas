@@ -72,12 +72,16 @@ type
       ARows: Integer): TArray<THistoryTransactionInfo>;
     function GetTETTransactions(ASkip: Integer; ARows: Integer;
       AFromTheEnd: Boolean = True): TArray<TExplorerTransactionInfo>;
-    function GetTETBalance(ATETAddress: string): Double;
+    function GetTETBalance(ABlockNum: Integer; ATETDyn:
+      TTokenBase): Double; overload;
+    function GetTETBalance(ATETAddress: string): Double; overload;
     //TET dynamic blocks sync methods
     function GetDynTETChainBlockSize: Integer;
     function GetDynTETChainBlocksCount: Integer;
     function GetDynTETChainBlocks(ASkip: Integer): TBytes;
     procedure SetDynTETChainBlocks(ASkip: Integer; ABytes: TBytes);
+    function TryGetDynTETBlock(ATETAddress: string; var ABlockID: Integer;
+      out ATETDyn: TTokenBase): Boolean;
 
     //IcoDat blocks sync methods
     function GetTokenICOBlockSize: Integer;
@@ -107,7 +111,9 @@ type
     function GetTokenChainBlockSize: Integer;
     function GetTokenChainBlocks(ATokenID: Integer; ASkip: Integer): TBytes;
     procedure SetTokenChainBlocks(ATokenID: Integer; ASkip: Integer; ABytes: TBytes);
-    function GetTokenBalance(ATokenID: Integer; ATETAddress: string): Double;
+    function GetTokenBalance(ATokenID: Integer; ABlockNum: Integer;
+      ATETDyn: TTokenBase): Double; overload;
+    function GetTokenBalance(ATokenID: Integer; ATETAddress: string): Double; overload;
     function GetTokenBalanceWithTokenAddress(ATETAddress, ATokenAddress: string;
       out AFloatSize: Byte): Double;
     function GetTokenBalanceWithTicker(ATETAddress, ATicker: string;
@@ -905,26 +911,33 @@ begin
   FBlockchain.SetTETChainBlocks(ASkip, ABytes);
 end;
 
-function TAppCore.GetTETBalance(ATETAddress: string): Double;
+function TAppCore.GetTETBalance(ABlockNum: Integer;
+  ATETDyn: TTokenBase): Double;
 var
   TETBlock: Tbc2;
   ICODat: TTokenICODat;
+begin
+  if not (FBlockchain.TryGetICOBlock(ATETDyn.TokenDatID, ICODat) and
+          FBlockchain.TryGetTETChainBlock(ATETDyn.LastBlock, TETBlock)) then
+    exit(0);
+
+  if ABlockNum = TETBlock.Smart.tkn[1].TokenID then
+		Result := TETBlock.Smart.tkn[1].Amount / Power(10, ICODat.FloatSize)
+	else if ABlockNum = TETBlock.Smart.tkn[2].TokenID then
+		Result := TETBlock.Smart.tkn[2].Amount / Power(10, ICODat.FloatSize)
+	else
+    raise EUnknownError.Create('');
+end;
+
+function TAppCore.GetTETBalance(ATETAddress: string): Double;
+var
   TETDyn: TTokenBase;
   BlockNum: Integer;
 begin
   if not FBlockchain.TryGetDynTETBlock(ATETAddress, BlockNum, TETDyn) then
     raise EAddressNotExistsError.Create('');
 
-  if not (FBlockchain.TryGetICOBlock(TETDyn.TokenDatID, ICODat) and
-          FBlockchain.TryGetTETChainBlock(TETDyn.LastBlock, TETBlock)) then
-    exit(0);
-
-  if BlockNum = TETBlock.Smart.tkn[1].TokenID then
-		Result := TETBlock.Smart.tkn[1].Amount / Power(10, ICODat.FloatSize)
-	else if BlockNum = TETBlock.Smart.tkn[2].TokenID then
-		Result := TETBlock.Smart.tkn[2].Amount / Power(10, ICODat.FloatSize)
-	else
-    raise EUnknownError.Create('');
+  Result := GetTETBalance(BlockNum, TETDyn);
 end;
 
 function TAppCore.GetDynTETChainBlockSize: Integer;
@@ -1016,6 +1029,12 @@ begin
   Result := FBlockchain.TryGetSmartKey(ATickerOrAddress, ASmartKey);
 end;
 
+function TAppCore.TryGetDynTETBlock(ATETAddress: string; var ABlockID: Integer;
+  out ATETDyn: TTokenBase): Boolean;
+begin
+  Result := FBlockchain.TryGetDynTETBlock(ATETAddress, ABlockID, ATETDyn);
+end;
+
 function TAppCore.TryGetSmartKey(ATokenID: Integer;
   out ASmartKey: TCSmartKey): Boolean;
 begin
@@ -1052,24 +1071,35 @@ begin
   Result := SizeOf(TCbc4);
 end;
 
-function TAppCore.GetTokenBalance(ATokenID: Integer; ATETAddress: string): Double;
+function TAppCore.GetTokenBalance(ATokenID, ABlockNum: Integer;
+  ATETDyn: TTokenBase): Double;
 var
   TokenBlock: TCbc4;
   ICODat: TTokenICODat;
   TokenDyn: TCTokensBase;
-  BlockNum: Integer;
 begin
-  if not (FBlockchain.TryGetDynTokenBlock(ATokenID, ATETAddress, BlockNum, TokenDyn) and
+  if not (FBlockchain.TryGetDynTokenBlock(ATokenID, ATETDyn, ABlockNum, TokenDyn) and
           FBlockchain.TryGetTokenChainBlock(ATokenID, TokenDyn.LastBlock, TokenBlock) and
           FBlockchain.TryGetICOBlock(ATokenID, ICODat)) then
     exit(0);
 
-  if BlockNum = TokenBlock.Smart.tkn[1].TokenID then
+  if ABlockNum = TokenBlock.Smart.tkn[1].TokenID then
 		Result := TokenBlock.Smart.tkn[1].Amount / Power(10, ICODat.FloatSize)
-	else if BlockNum = TokenBlock.Smart.tkn[2].TokenID then
+	else if ABlockNum = TokenBlock.Smart.tkn[2].TokenID then
 		Result := TokenBlock.Smart.tkn[2].Amount / Power(10, ICODat.FloatSize)
 	else
     raise EUnknownError.Create('');
+end;
+
+function TAppCore.GetTokenBalance(ATokenID: Integer; ATETAddress: string): Double;
+var
+  TETDyn: TTokenBase;
+  BlockNum: Integer;
+begin
+  if not FBlockchain.TryGetDynTETBlock(ATETAddress, BlockNum, TETDyn) then
+    exit(0)
+  else
+    Result := GetTokenBalance(ATokenID, BlockNum, TETDyn);
 end;
 
 function TAppCore.GetTokenUserTransactions(ATokenID, AUserID, ASkip,

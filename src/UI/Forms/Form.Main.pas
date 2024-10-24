@@ -274,7 +274,7 @@ type
     TransactionNotFoundLabel: TLabel;
     FloatAnimation4: TFloatAnimation;
     HideTransactionNotFoundTimer: TTimer;
-    AniIndicator1: TAniIndicator;
+    SearchAniIndicator: TAniIndicator;
     TickerExplorerHeaderLabel: TLabel;
     TransTETAniIndicator: TAniIndicator;
     CreateTokenAniIndicator: TAniIndicator;
@@ -350,6 +350,8 @@ type
     FSearchResultTrans: TArray<TExplorerTransactionInfo>;
     FTotalPagesAmount, FPageNum: Integer;
 
+    FDynTETBlockNum: Integer;
+    FDynTET: TTokenBase;
     function DecimalsCount(const AValue: string): Integer;
     procedure RefreshTETBalance;
     procedure RefreshTETHistory;
@@ -924,6 +926,7 @@ begin
   for SmartKey in AppCore.GetAllSmartKeyBlocks do
     AddTickerFrame(SmartKey.Abreviature, SmartKey.SmartID);
   FChosenToken := nil;
+  AppCore.TryGetDynTETBlock(AppCore.TETAddress, FDynTETBlockNum, FDynTET);
 
   TETCopyLoginLayout.OnMouseEnter := StylesForm.OnCopyLayoutMouseEnter;
   TETCopyLoginLayout.OnMouseLeave := StylesForm.OnCopyLayoutMouseLeave;
@@ -980,6 +983,7 @@ procedure TMainForm.FormShow(Sender: TObject);
 begin
   AddressTETLabel.Text := AppCore.TETAddress;
   AddressTokenLabel.Text := AppCore.TETAddress;
+  RefreshTokensBalances;
   Tabs.TabIndex := 0;
   Tabs.OnChange(nil);
   FTickersFrames.Items[1].RoundRect.OnMouseDown(FTickersFrames.Items[1].RoundRect,
@@ -1037,7 +1041,6 @@ begin
       end;
     1:
       begin
-        RefreshTokensBalances;
         RefreshTokenHistory;
         AlignTokensHeaders;
         RecepientAddressEdit.SetFocus;
@@ -1167,7 +1170,7 @@ end;
 procedure TMainForm.NewTokenBlocksEvent(ASmartKey: TCSmartKey;
   ANeedRefreshBalance: Boolean);
 begin
-  if ANeedRefreshBalance and (Tabs.TabIndex = 1) then
+  if ANeedRefreshBalance then
   begin
     AddOrRefreshBalance(ASmartKey);
     RefreshTokenHistory;
@@ -1441,7 +1444,7 @@ var
   val: Double;
 begin
   try
-    val := AppCore.GetTETBalance(AppCore.TETAddress);
+    val := AppCore.GetTETBalance(FDynTETBlockNum, FDynTET);
     FBalances.AddOrSetValue('TET', val);
     BalanceTETValueLabel.Text := FormatFloat('0.########', val) + ' TET';
   except
@@ -1572,7 +1575,7 @@ var
   Value: Double;
   Index: Integer;
 begin
-  Value := AppCore.GetTokenBalance(ASmartKey.SmartID, AppCore.TETAddress);
+  Value := AppCore.GetTokenBalance(ASmartKey.SmartID, FDynTETBlockNum, FDynTET);
   FBalances.AddOrSetValue(ASmartKey.Abreviature, Value);
   TokensListBox.BeginUpdate;
   try
@@ -1605,17 +1608,17 @@ begin
 end;
 
 procedure TMainForm.SearchByAddress;
-begin            
-  AniIndicator1.Visible := True;
-  AniIndicator1.Enabled := True;
+begin
+  SearchAniIndicator.Visible := True;
+  SearchAniIndicator.Enabled := True;
   SearchEdit.Enabled := True;
   
   TThread.CreateAnonymousThread(
   procedure
   begin
     FSearchResultTrans := AppCore.SearchTransactionsByAddress(SearchEdit.Text);
-    AniIndicator1.Enabled := False;
-    AniIndicator1.Visible := False;
+    SearchAniIndicator.Enabled := False;
+    SearchAniIndicator.Visible := False;
     TThread.Synchronize(nil,
     procedure
     begin
@@ -1630,6 +1633,7 @@ begin
           FSelectedFrame.Selected := True;
           FTickersFrames.Items[0].Visible := True;
         end;
+        FPageNum := 1;
         RefreshPagesLayout;
       end;
     end);
@@ -1638,16 +1642,16 @@ end;
 
 procedure TMainForm.SearchByBlockNumber(const ABlockNumber: Integer);
 begin            
-  AniIndicator1.Visible := True;
-  AniIndicator1.Enabled := True;
+  SearchAniIndicator.Visible := True;
+  SearchAniIndicator.Enabled := True;
   SearchEdit.Enabled := True;
   
   TThread.CreateAnonymousThread(
   procedure
   begin
     FSearchResultTrans := AppCore.SearchTransactionsByBlockNum(ABlockNumber);
-    AniIndicator1.Enabled := False;
-    AniIndicator1.Visible := False;
+    SearchAniIndicator.Enabled := False;
+    SearchAniIndicator.Visible := False;
     TThread.Synchronize(nil,
     procedure
     begin
@@ -1662,6 +1666,7 @@ begin
           FSelectedFrame.Selected := True;
           FTickersFrames.Items[0].Visible := True;
         end;
+        FPageNum := 1;
         RefreshPagesLayout;
       end;
     end);
@@ -1673,8 +1678,8 @@ var
   Hash: string;
 begin
   Hash := SearchEdit.Text;
-  AniIndicator1.Visible := True;
-  AniIndicator1.Enabled := True;
+  SearchAniIndicator.Visible := True;
+  SearchAniIndicator.Enabled := True;
   SearchEdit.Enabled := True;
 
   TThread.CreateAnonymousThread(
@@ -1684,8 +1689,8 @@ begin
     Success: Boolean;
   begin
     Success := AppCore.SearchTransactionByHash(Hash, TransInfo);
-    AniIndicator1.Enabled := False;
-    AniIndicator1.Visible := False;
+    SearchAniIndicator.Enabled := False;
+    SearchAniIndicator.Visible := False;
     TThread.Synchronize(nil,
     procedure
     begin

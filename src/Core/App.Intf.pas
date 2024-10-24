@@ -42,11 +42,15 @@ type
       ARows: Integer): TArray<THistoryTransactionInfo>;
     function GetTETTransactions(ASkip: Integer; ARows: Integer;
       AFromTheEnd: Boolean = True): TArray<TExplorerTransactionInfo>;
-    function GetTETBalance(ATETAddress: string): Double;
+    function GetTETBalance(ABlockNum: Integer; ATETDyn:
+      TTokenBase): Double; overload;
+    function GetTETBalance(ATETAddress: string): Double; overload;
     function GetDynTETChainBlockSize: Integer;
     function GetDynTETChainBlocksCount: Integer;
     function GetDynTETChainBlocks(ASkip: Integer): TBytes;
     procedure SetDynTETChainBlocks(ASkip: Integer; ABytes: TBytes);
+    function TryGetDynTETBlock(ATETAddress: string; var ABlockID: Integer;
+      out ATETDyn: TTokenBase): Boolean;
 
     //IcoDat blocks sync methods
     function GetTokenICOBlockSize: Integer;
@@ -76,7 +80,9 @@ type
     function GetTokenChainBlockSize: Integer;
     function GetTokenChainBlocks(ATokenID: Integer; ASkip: Integer): TBytes;
     procedure SetTokenChainBlocks(ATokenID: Integer; ASkip: Integer; ABytes: TBytes);
-    function GetTokenBalance(ATokenID: Integer; ATETAddress: string): Double;
+    function GetTokenBalance(ATokenID: Integer; ABlockNum: Integer;
+      ATETDyn: TTokenBase): Double; overload;
+    function GetTokenBalance(ATokenID: Integer; ATETAddress: string): Double; overload;
     function GetTokenBalanceWithTokenAddress(ATETAddress, ATokenAddress: string;
       out AFloatSize: Byte): Double;
     function GetTokenBalanceWithTicker(ATETAddress, ATicker: string;
@@ -85,7 +91,7 @@ type
       ASkip: Integer; ARows: Integer; ALast: Boolean = False): TArray<THistoryTransactionInfo>;
     function GetTokenTransactions(ATokenID: Integer; ASkip: Integer; ARows: Integer;
       AFromTheEnd: Boolean = True): TArray<TExplorerTransactionInfo>;
-    //Tokens dynamic blocks sync methods
+    //Tokens dynamic blocks methods
     function GetDynTokenChainBlocksCount(ATokenID: Integer): Integer;
     function GetDynTokenChainBlockSize: Integer;
     function GetDynTokenChainBlocks(ATokenID: Integer; ASkip: Integer): TBytes;
