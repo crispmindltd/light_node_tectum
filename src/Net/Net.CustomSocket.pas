@@ -25,7 +25,7 @@ type
       constructor Create;
       destructor Destroy; override;
 
-      procedure Connect(AAddress: string = '89.39.104.213'; APort: Word = 8769);
+      procedure Connect(AAddress: string = '185.180.223.168'; APort: Word = 8760);
       function DoRequest(AReqID, ARequest: string): string;
       procedure Disconnect;
   end;
