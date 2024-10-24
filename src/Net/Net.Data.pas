@@ -7,22 +7,22 @@ uses
   SysUtils;
 
 const
-  DEFAULT_NODE_ADDRESS = '185.180.223.168:50000';
-  DEFAULT_TCP_LISTEN_TO = '127.0.0.1:50000';
-  DEFAULT_HTTP_PORT = 8917;
+  DefaultNodeAddress = '89.39.104.213:50005';
+  DefaultTCPListenTo = '127.0.0.1:50000';
+  DefaultPortHTTP = 8917;
 
-  DISCONNECTING_CODE = 0;
-  CONNECT_ERROR_CODE = 1;
-  ERROR_CODE = 2;
-  SUCCESS_CODE = 3;
-  VALIDATE_COMMAND_CODE = 100;
-  CHAIN_SYNC_COMMAND_CODE = 101;
-  CHAIN_DYN_SYNC_COMMAND_CODE = 102;
-  TOKEN_ICO_SYNC_COMMAND_CODE = 103;
-  SMART_SYNC_COMMAND_CODE = 104;
-  SMART_DYN_SYNC_COMMAND_CODE = 105;
-  CHAIN_TOTAL_COUNT_COMMAND_CODE = 106;
-  DYN_CHAIN_TOTAL_COUNT_COMMAND_CODE = 107;
+  DisconnectingCode = 0;
+  ConnectErrorCode = 1;
+  ErrorCode = 2;
+  SuccessCode = 3;
+  ValidateCommandCode = 100;
+  TETChainsTotalNumberCode = 101;
+  TETChainSyncCommandCode = 102;
+  DynTETChainSyncCommandCode = 103;
+  TokenICOSyncCommandCode = 104;
+  SmartKeySyncCommandCode = 105;
+  TokenChainSyncCommandCode = 106;
+  DynTokenChainSyncCommandCode = 107;
 
 type
   TNodesConnectManager = class

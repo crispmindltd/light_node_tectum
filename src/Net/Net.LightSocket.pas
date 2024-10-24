@@ -11,31 +11,31 @@ uses
 type
   TLightSocket = class(TSocket)
     const
-      RECEIVE_ANSWER_TIMEOUT = 10000;
+      ReceiveResponseTimeout = 10000;
     private
-      FAddress: String;
+      FAddress: string;
       FPort: Word;
 
-      function GetFullAddress: String;
+      function GetFullAddress: string;
     public
       constructor Create;
       destructor Destroy; override;
 
-      function Connect(AAddress: String; APort: Word): Boolean;
-      function DoRequest(ACommandCode: Byte; ARequest: String): String;
+      function Connect(AAddress: string; APort: Word): Boolean;
+      function DoRequest(ACommandCode: Byte; ARequest: string): string;
       procedure Disconnect;
 
-      property AddrPort: String read GetFullAddress;
+      property AddrPort: string read GetFullAddress;
   end;
 
 implementation
 
 { TLightSocket }
 
-function TLightSocket.Connect(AAddress: String; APort: Word): Boolean;
+function TLightSocket.Connect(AAddress: string; APort: Word): Boolean;
 begin
   try
-    inherited Connect('',AAddress,'',APort);
+    inherited Connect('', AAddress, '', APort);
 
     FAddress := AAddress;
     FPort := APort;
@@ -49,7 +49,7 @@ constructor TLightSocket.Create;
 begin
   inherited Create(TSocketType.TCP, TEncoding.ANSI);
 
-  ReceiveTimeout := RECEIVE_ANSWER_TIMEOUT;
+  ReceiveTimeout := ReceiveResponseTimeout;
 end;
 
 destructor TLightSocket.Destroy;
@@ -69,37 +69,37 @@ begin
   {$ENDIF}
 end;
 
-function TLightSocket.DoRequest(ACommandCode: Byte; ARequest: String): String;
+function TLightSocket.DoRequest(ACommandCode: Byte; ARequest: string): string;
 var
-  bytesToSend: TBytes;
-  infoBytes: array[0..4] of Byte;
-  amountBytes: array[0..3] of Byte;
-  bAmount: Integer absolute amountBytes;
-  answer: TBytes;
+  ToSend: TBytes;
+  InfoBytes: array[0..4] of Byte;
+  AmountBytes: array[0..3] of Byte;
+  Amount: Integer absolute AmountBytes;
+  Response: TBytes;
 begin
-  infoBytes[0] := ACommandCode;
-  bytesToSend := TEncoding.ANSI.GetBytes(ARequest);
-  bAmount := Length(bytesToSend);
-  Move(amountBytes[0],infoBytes[1],4);
-  Send(infoBytes,0,5);
-  Send(bytesToSend,0,Length(bytesToSend));
-  Logs.DoLog(Format('<To %s>[%d]: %s',[GetFullAddress,VALIDATE_COMMAND_CODE,
-    ARequest]),OUTGO,tcp);
+  InfoBytes[0] := ACommandCode;
+  ToSend := TEncoding.ANSI.GetBytes(ARequest);
+  Amount := Length(ToSend);
+  Move(AmountBytes[0], InfoBytes[1], 4);
+  Send(InfoBytes, 0, 5);
+  Send(ToSend, 0, Length(ToSend));
+  Logs.DoLog(Format('<To %s>[%d]: %s', [GetFullAddress, ValidateCommandCode,
+    ARequest]), OUTGO, tcp);
 
-  Receive(amountBytes,0,4,[TSocketFlag.WAITALL]);
-  SetLength(answer,bAmount);
-  Receive(answer,0,bAmount,[TSocketFlag.WAITALL]);
-  Send([DISCONNECTING_CODE],0,1);
+  Receive(AmountBytes, 0, 4, [TSocketFlag.WAITALL]);
+  SetLength(Response, Amount);
+  Receive(Response, 0, Amount, [TSocketFlag.WAITALL]);
+  Send([DisconnectingCode], 0, 1);
   Disconnect;
 
-  Result := TEncoding.ANSI.GetString(answer);
-  Logs.DoLog(Format('<From %s>[%d]: %s',[GetFullAddress,VALIDATE_COMMAND_CODE,
-    Result]),INCOM,tcp);
+  Result := TEncoding.ANSI.GetString(Response);
+  Logs.DoLog(Format('<From %s>[%d]: %s', [GetFullAddress, ValidateCommandCode,
+    Result]), INCOM, tcp);
 end;
 
-function TLightSocket.GetFullAddress: String;
+function TLightSocket.GetFullAddress: string;
 begin
-  Result := Format('%s:%d',[FAddress,FPort]);
+  Result := Format('%s:%d', [FAddress, FPort]);
 end;
 
 end.

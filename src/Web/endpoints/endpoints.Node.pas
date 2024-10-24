@@ -37,7 +37,7 @@ function TNodeEndpoints.BlocksCount(AReqID: string; AEvent: TEvent;
 var
   JSON: TJSONObject;
   Response: string;
-  BlocksNumber: Int64;
+  BlocksNumber: Integer;
 begin
   Result.ReqID := AReqID;
   try
@@ -46,7 +46,7 @@ begin
 
     JSON := TJSONObject.Create;
     try
-      Response := AppCore.GetBlocksCount(AReqID);
+      Response := AppCore.GetTETBlocksTotalCount(AReqID);
       BlocksNumber := Response.Split([' '])[2].ToInt64;
       JSON.AddPair('blocksCount', TJSONNumber.Create(BlocksNumber));
       Result.Code := HTTP_SUCCESS;
@@ -72,7 +72,7 @@ begin
       raise ENotSupportedError.Create('');
     try
       JSON.AddPair('blocksCount',
-        TJSONNumber.Create(AppCore.GetChainBlocksCount));
+        TJSONNumber.Create(AppCore.GetTETChainBlocksCount));
       Result.Code := HTTP_SUCCESS;
       Result.Response := JSON.ToString;
     finally

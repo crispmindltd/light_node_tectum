@@ -89,6 +89,8 @@ type
     Num11Text: TText;
     Num12Text: TText;
     EyeSvg: TPath;
+    LogInIndicator: TAniIndicator;
+    RegIndicator: TAniIndicator;
     procedure FormCreate(Sender: TObject);
     procedure EyeLayoutMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single);
@@ -107,14 +109,18 @@ type
     procedure EmailEditKeyDown(Sender: TObject; var Key: Word;
       var KeyChar: WideChar; Shift: TShiftState);
   private
-    phrase: String;
-    procedure ShowLogInError(const AMessage: String);
+    FTotalBlocksNumberToLoad: UInt64;
+    FSeedPhrase: string;
+    procedure ShowLogInError(const AMessage: string);
     procedure HideLogInError;
-    procedure ShowSignUpError(const AMessage: String);
-    procedure OnDownloadingDone;
+    procedure ShowSignUpError(const AMessage: string);
+
+    procedure RegCallBack(const AResponse: string);
+    procedure LogInCallBack(const AResponse: string);
   public
-    procedure ShowProgressBar(const ADownloadRemainTotal:Int64);
+    procedure SetProgressBarMaxValue(const ABlocksNumberToLoad: UInt64);
     procedure ShowProgress;
+    procedure HideProgressBar;
   end;
 
 var
@@ -126,12 +132,12 @@ implementation
 
 procedure TStartForm.AuthTabControlChange(Sender: TObject);
 var
-  splt: TArray<String>;
+  splt: TArray<string>;
 begin
   if AuthTabControl.TabIndex = 1 then
   begin
-    phrase := GenSeedPhrase;
-    splt := phrase.Split([' ']);
+    FSeedPhrase := GenSeedPhrase;
+    splt := FSeedPhrase.Split([' ']);
 
     Word1Edit.Text := splt[0];
     Word2Edit.Text := splt[1];
@@ -157,7 +163,7 @@ var
   Service: IFMXClipBoardService;
 begin
   if TPlatformServices.Current.SupportsPlatformService(IFMXClipBoardService, Service) then
-    Service.SetClipboard(Copy(NewLogInLabel.Text,14,Length(NewLogInLabel.Text)));
+    Service.SetClipboard(Copy(NewLogInLabel.Text, 14, Length(NewLogInLabel.Text)));
 end;
 
 procedure TStartForm.CopyPassLayoutClick(Sender: TObject);
@@ -165,7 +171,7 @@ var
   Service: IFMXClipBoardService;
 begin
   if TPlatformServices.Current.SupportsPlatformService(IFMXClipBoardService, Service) then
-    Service.SetClipboard(Copy(NewPassLabel.Text,11,Length(NewPassLabel.Text)));
+    Service.SetClipboard(Copy(NewPassLabel.Text, 11, Length(NewPassLabel.Text)));
 end;
 
 procedure TStartForm.EmailEditChangeTracking(Sender: TObject);
@@ -175,7 +181,7 @@ begin
   ind := EmailEdit.Text.IndexOf('@');
   LogInButton.Enabled := (ind >= 1) and
     (EmailEdit.Text.LastIndexOf('.') > ind) and (EmailEdit.Text.Length >= 5) and
-    (not PasswordEdit.Text.IsEmpty) and (AppCore.DownloadRemain = 0);
+    (not PasswordEdit.Text.IsEmpty) and (not DownloadProgressBar.Visible);
 end;
 
 procedure TStartForm.EmailEditKeyDown(Sender: TObject; var Key: Word;
@@ -189,14 +195,14 @@ procedure TStartForm.EyeLayoutMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Single);
 begin
   PasswordEdit.Password := False;
-  StylesForm.OnCopyLayoutMouseDown(Sender,Button,Shift,X,Y);
+  StylesForm.OnCopyLayoutMouseDown(Sender,Button,Shift, X, Y);
 end;
 
 procedure TStartForm.EyeLayoutMouseUp(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Single);
 begin
   PasswordEdit.Password := True;
-  StylesForm.OnCopyLayoutMouseUp(Sender,Button,Shift,X,Y);
+  StylesForm.OnCopyLayoutMouseUp(Sender,Button,Shift, X, Y);
 end;
 
 procedure TStartForm.FloatAnimation3Finish(Sender: TObject);
@@ -209,6 +215,7 @@ procedure TStartForm.FormCreate(Sender: TObject);
 begin
   Caption := 'LNode' + ' ' + AppCore.GetVersion;
   AuthTabControl.TabHeight := 64;
+  FTotalBlocksNumberToLoad := 0;
 
   EyeLayout.OnMouseEnter := StylesForm.OnCopyLayoutMouseEnter;
   EyeLayout.OnMouseLeave := StylesForm.OnCopyLayoutMouseLeave;
@@ -233,8 +240,7 @@ begin
   Tabs.TabIndex := 0;
   AuthTabControl.TabIndex := 0;
   DownloadProgressBar.StyleLookup := 'DownloadProgressBarStyle';
-  DownloadProgressBar.NeedStyleLookup;
-  DownloadProgressBar.ApplyStyleLookup;
+  EmailEdit.SetFocus;
 end;
 
 procedure TStartForm.HideLogInError;
@@ -244,9 +250,16 @@ begin
   LogInLayout.Height := 296;
 end;
 
+procedure TStartForm.HideProgressBar;
+begin
+  EmailEditChangeTracking(Self);
+  SignUpTabItem.Enabled := True;
+  FloatAnimation3.Enabled := True;
+end;
+
 procedure TStartForm.LogInAfterRegButtonClick(Sender: TObject);
 begin
-  EmailEdit.Text := Copy(NewLoginLabel.Text,14,Length(NewLoginLabel.Text));
+  EmailEdit.Text := Copy(NewLoginLabel.Text, 14, Length(NewLoginLabel.Text));
   HideLogInError;
   PasswordEdit.Text := '';
   AuthTabControl.TabIndex := 0;
@@ -255,74 +268,115 @@ begin
 end;
 
 procedure TStartForm.LogInButtonClick(Sender: TObject);
-var
-  splt: TArray<String>;
-  response: String;
 begin
+  LogInButton.Enabled := False;
+  LogInIndicator.Visible := True;
+  LogInIndicator.Enabled := True;
+
   try
-    response := AppCore.DoAuth('*',EmailEdit.Text,PasswordEdit.Text);
-    splt := response.Split([' ']);
-    AppCore.SessionKey := splt[2];
-    AppCore.UserID := splt[4].ToInt64;
-    UI.ShowMainForm;
+    AppCore.DoAuth('*', EmailEdit.Text, PasswordEdit.Text, LogInCallBack);
   except
-    on E:ESocketError do
-      ShowLogInError('Server did not respond, try later');
     on E:EValidError do
       ShowLogInError(E.Message);
-    on E:EAuthError do
-      ShowLogInError(LOGIN_ERROR_TEXT);
-    on E:EUnknownError do
-    begin
-      Logs.DoLog('Unknown error during auth with code ' + E.Message,TLogType.ERROR,tcp);
-      ShowLogInError('Unknown error, try later');
-    end;
     on E:Exception do
     begin
-      Logs.DoLog('Unknown error during auth with message: ' + E.Message,TLogType.ERROR,tcp);
+      Logs.DoLog('Unknown error during auth with message: ' + E.Message,
+        TLogType.ERROR, tcp);
       ShowLogInError('Unknown error, try later');
+    end;
+  end;
+end;
+
+procedure TStartForm.LogInCallBack(const AResponse: string);
+var
+  Splitted: TArray<string>;
+begin
+  LogInButton.Enabled := True;
+  LogInIndicator.Enabled := False;
+  LogInIndicator.Visible := False;
+
+  if not (AResponse.StartsWith('URKError')) then
+  begin
+    Splitted := AResponse.Split([' ']);
+    AppCore.SessionKey := Splitted[2];
+    AppCore.UserID := Splitted[4].ToInt64;
+    UI.ShowMainForm;
+  end else
+  begin
+    Splitted := AResponse.Split([' ']);
+    case Splitted[3].ToInteger of
+      15: ShowLogInError('Server did not respond, try later');
+      93: ShowLogInError(LogInErrorText);
+      816: ShowLogInError(LogInErrorText);
+      else
+        begin
+          Logs.DoLog('Unknown error during auth with code ' +
+            Splitted[3], TLogType.ERROR, tcp);
+          ShowLogInError('Unknown error with code ' + Splitted[3]);
+        end;
     end;
   end;
 end;
 
 procedure TStartForm.NextButtonClick(Sender: TObject);
-var
-  response: String;
-  pubKey,prKey,login,pass,addr,sPath: String;
 begin
+  NextButton.Text := '';
+  NextButton.Enabled := False;
+  RegIndicator.Visible := True;
+  RegIndicator.Enabled := True;
   try
-    response := AppCore.DoReg('*',phrase,pubKey,prKey,login,pass,addr,sPath);
-    NewLoginLabel.Text := 'Your Log In: ' + login;
-    NewPassLabel.Text := 'Password: ' + pass;
-    PathMemo.Text := sPath;
-    Tabs.Next;
+    AppCore.DoReg('*', FSeedPhrase, RegCallBack);
   except
-    on E:ESocketError do
-      ShowSignUpError('Server did not respond, try later');
     on E:EValidError do
       ShowSignUpError(E.Message);
-    on E:EAuthError do
-      ShowSignUpError(LOGIN_ERROR_TEXT);
     on E:EUnknownError do
     begin
-      Logs.DoLog('Unknown error during auth with code ' + E.Message,TLogType.ERROR,tcp);
+      Logs.DoLog('Unknown error during reg with code ' + E.Message,
+        TLogType.ERROR, tcp);
       ShowSignUpError('Unknown error, try later');
     end;
     on E:Exception do
     begin
-      Logs.DoLog('Unknown error during auth with message: ' + E.Message,TLogType.ERROR,tcp);
+      Logs.DoLog('Unknown error during reg with message: ' + E.Message,
+        TLogType.ERROR, tcp);
       ShowSignUpError('Unknown error, try later');
     end;
   end;
 end;
 
-procedure TStartForm.OnDownloadingDone;
+procedure TStartForm.RegCallBack(const AResponse: string);
+var
+  Splitted: TArray<string>;
 begin
-  EmailEditChangeTracking(Self);
-  SignUpTabItem.Enabled := True;
+  RegIndicator.Enabled := False;
+  RegIndicator.Visible := False;
+  NextButton.Enabled := True;
+  NextButton.Text := 'Next';
+
+  Splitted := AResponse.Split([' '], '"');
+  if not (AResponse.StartsWith('URKError')) then
+  begin
+    NewLoginLabel.Text := 'Your Log In: ' + Splitted[2];
+    NewPassLabel.Text := 'Password: ' + Splitted[3];
+    PathMemo.Text := Splitted[5].Trim(['"']);
+    Tabs.Next;
+  end else
+  begin
+    Splitted := AResponse.Split([' ']);
+    case Splitted[3].ToInteger of
+      15: ShowLogInError('Server did not respond, try later');
+      829: ShowLogInError('Account already exists, try again');
+      else
+        begin
+          Logs.DoLog('Unknown error during reg with code ' + Splitted[3],
+            TLogType.ERROR, tcp);
+          ShowSignUpError('Unknown error eith code ' + Splitted[3]);
+        end;
+    end;
+  end;
 end;
 
-procedure TStartForm.ShowLogInError(const AMessage: String);
+procedure TStartForm.ShowLogInError(const AMessage: string);
 begin
   ErrorLoginLabel.Text := AMessage;
   ErrorLoginLabel.Visible := True;
@@ -332,34 +386,27 @@ end;
 
 procedure TStartForm.ShowProgress;
 var
-  totalCount,remain: Int64;
+  CurrentBlocksNumber: UInt64;
 begin
-  totalCount := Round(DownloadProgressBar.Max);
-  remain := totalCount - AppCore.DownloadRemain;
-
+  CurrentBlocksNumber := AppCore.GetTETChainBlocksCount +
+    AppCore.GetDynTETChainBlocksCount;
   ProgressLabel.Text := Format('%d of %d blocks loaded',
-    [remain,totalCount]);
-  DownloadProgressBar.Value := remain;
+    [CurrentBlocksNumber, FTotalBlocksNumberToLoad]);
+  DownloadProgressBar.Value := CurrentBlocksNumber;
 
-  if remain = totalCount then
-  begin
-    OnDownloadingDone;
-    FloatAnimation3.Enabled := True;
-  end;
+  AppCore.BlocksSyncDone := CurrentBlocksNumber = FTotalBlocksNumberToLoad;
 end;
 
-procedure TStartForm.ShowProgressBar(const ADownloadRemainTotal: Int64);
+procedure TStartForm.SetProgressBarMaxValue(const ABlocksNumberToLoad: UInt64);
 begin
-  if ADownloadRemainTotal > 0 then
-  begin
-    DownloadProgressBar.Max := ADownloadRemainTotal;
-    ProgressLabel.Text := Format('%d of %d blocks loaded',[0,ADownloadRemainTotal]);
-    DownloadProgressBar.Visible := True;
-  end else
-    OnDownloadingDone;
+  FTotalBlocksNumberToLoad := ABlocksNumberToLoad;
+  DownloadProgressBar.Max := FTotalBlocksNumberToLoad;
+  DownloadProgressBar.Visible := FTotalBlocksNumberToLoad >
+    AppCore.GetTETChainBlocksCount + AppCore.GetDynTETChainBlocksCount;
+  ShowProgress;
 end;
 
-procedure TStartForm.ShowSignUpError(const AMessage: String);
+procedure TStartForm.ShowSignUpError(const AMessage: string);
 begin
   ErrorSignUpLabel.Text := AMessage;
   ErrorSignUpLabel.Visible := True;

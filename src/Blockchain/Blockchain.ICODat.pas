@@ -6,40 +6,43 @@ uses
   App.Constants,
   Blockchain.BaseTypes,
   Blockchain.Intf,
-  System.SyncObjs,
-  System.Math;
+  Classes,
+  IOUtils,
+  Math,
+  SysUtils;
 
 type
-  TBlockchainICODat = class(TChainFileWorker)
+  TBlockchainICODat = class(TChainFileBase)
   private
     FFile: file of TTokenICODat;
   public
-    constructor Create(AFileName: String);
-    destructor Destory;
+    constructor Create;
+    destructor Destroy;
 
     function GetBlockSize: Integer; override;
     function GetBlocksCount: Integer; override;
-    function ReadBlocks(AFrom: Int64; var AAmount: Integer): TBytesBlocks; override;
-    function ReadBlocks(var AAmount: Integer): TBytesBlocks; override;
-    function GetOneBlock(AFrom: Int64): TOneBlockBytes; override;
-    procedure WriteBlocks(APos: Int64; ABytes: TBytesBlocks; AAmount: Integer); override;
-    procedure WriteOneBlock(APos: Int64; ABytes: TOneBlockBytes); override;
+    procedure WriteBlocksAsBytes(ASkipBlocks: Integer; ABytes: TBytes); override;
+    function ReadBlocksAsBytes(ASkipBlocks: Integer;
+      ANumber: Integer = MaxBlocksNumber): TBytes; override;
+    function ReadBlocks(ASkip, ANumber: Integer): TArray<TTokenICODat>;
 
-    function TryGetTokenICO(AFrom: Int64; var ICOBlock: TTokenICODat): Boolean; overload;
-    function TryGetTokenICO(ATicker: String; var ICOBlock: TTokenICODat): Boolean; overload;
+    function TryGet(ASkip: Integer; out AICOBlock: TTokenICODat): Boolean; overload;
+    function TryGet(ATicker: string; out AICOBlock: TTokenICODat): Boolean; overload;
   end;
 
 implementation
 
-{ TBlockchainDynamic }
+{ TBlockchainICODat }
 
-constructor TBlockchainICODat.Create(AFileName: String);
+constructor TBlockchainICODat.Create;
 begin
-  inherited Create(ConstStr.DBCPath, AFileName);
+  inherited Create(ConstStr.DBCPath, ConstStr.ICODatFileName);
 
+  if not FileExists(FFullFilePath) then
+    TFile.WriteAllBytes(FFullFilePath, []);
 end;
 
-destructor TBlockchainICODat.Destory;
+destructor TBlockchainICODat.Destroy;
 begin
 
   inherited;
@@ -48,19 +51,12 @@ end;
 function TBlockchainICODat.GetBlocksCount: Integer;
 begin
   FLock.Enter;
+  AssignFile(FFile, FFullFilePath);
+  Reset(FFile);
   try
-    try
-      AssignFile(FFile, FFullFilePath);
-      Reset(FFile);
-      try
-        Result := FileSize(FFile);
-      finally
-        CloseFile(FFile);
-      end;
-    except
-      Result := 0;
-    end;
+    Result := FileSize(FFile);
   finally
+    CloseFile(FFile);
     FLock.Leave;
   end;
 end;
@@ -70,38 +66,51 @@ begin
   Result := SizeOf(TTokenICODat);
 end;
 
-function TBlockchainICODat.GetOneBlock(AFrom: Int64): TOneBlockBytes;
+function TBlockchainICODat.ReadBlocks(ASkip,
+  ANumber: Integer): TArray<TTokenICODat>;
 var
-  tico: TTokenICODat;
+  i: Integer;
 begin
+  Result := [];
   FLock.Enter;
   AssignFile(FFile, FFullFilePath);
   Reset(FFile);
   try
-    Seek(FFile,AFrom);
-    Read(FFile,tico);
-    Move(tico, Result[0], GetBlockSize);
+    if (ASkip >= FileSize(FFile) - 2) or (ASkip < 0) then
+      exit;
+
+    Seek(FFile, ASkip + 2);
+    SetLength(Result, Min(ANumber, FileSize(FFile) - ASkip - 2));
+    for i := 0 to Length(Result) - 1 do
+      Read(FFile, Result[i]);
   finally
     CloseFile(FFile);
     FLock.Leave;
   end;
 end;
 
-function TBlockchainICODat.ReadBlocks(var AAmount: Integer): TBytesBlocks;
+function TBlockchainICODat.ReadBlocksAsBytes(ASkipBlocks,
+  ANumber: Integer): TBytes;
 var
+  BlockBytes: array[0..SizeOf(TTokenICODat) - 1] of Byte;
+  TokenICODatBlock: TTokenICODat absolute BlockBytes;
   i: Integer;
-  tico: TTokenICODat;
 begin
+  Result := [];
   FLock.Enter;
   AssignFile(FFile, FFullFilePath);
   Reset(FFile);
   try
-    AAmount := Max(0,Min(FileSize(FFile),Min(MAX_BLOCKS_REQUEST,AAmount)));
-    Seek(FFile,FileSize(FFile)-AAmount);
-    for i := 0 to AAmount-1 do
+    if (ASkipBlocks >= FileSize(FFile)) or
+      (ASkipBlocks < 0) then
+      exit;
+
+    Seek(FFile, ASkipBlocks);
+    SetLength(Result, Min(ANumber, FileSize(FFile) - ASkipBlocks) * GetBlockSize);
+    for i := 0 to (Length(Result) div GetBlockSize) - 1 do
     begin
-      Read(FFile,tico);
-      Move(tico, Result[i * SizeOf(TTokenICODat)], SizeOf(tico));
+      Read(FFile, TokenICODatBlock);
+      Move(BlockBytes[0], Result[i * GetBlockSize], GetBlockSize);
     end;
   finally
     CloseFile(FFile);
@@ -109,107 +118,68 @@ begin
   end;
 end;
 
-function TBlockchainICODat.TryGetTokenICO(ATicker: String;
-  var ICOBlock: TTokenICODat): Boolean;
+procedure TBlockchainICODat.WriteBlocksAsBytes(ASkipBlocks: Integer;
+  ABytes: TBytes);
+var
+  BlockBytes: array[0..SizeOf(TTokenICODat) - 1] of Byte;
+  TokenICODatBlock: TTokenICODat absolute BlockBytes;
+  i: Integer;
+begin
+  if (Length(ABytes) mod GetBlockSize <> 0) or (ASkipBlocks < 0) then
+    exit;
+
+  FLock.Enter;
+  AssignFile(FFile, FFullFilePath);
+  Reset(FFile);
+  try
+    Seek(FFile, ASkipBlocks);
+    for i := 0 to (Length(ABytes) div GetBlockSize) - 1 do
+    begin
+      Move(ABytes[i * GetBlockSize], BlockBytes[0], GetBlockSize);
+      Write(FFile, TokenICODatBlock);
+    end;
+  finally
+    CloseFile(FFile);
+    FLock.Leave;
+  end;
+end;
+
+function TBlockchainICODat.TryGet(ASkip: Integer;
+  out AICOBlock: TTokenICODat): Boolean;
+begin
+  FLock.Enter;
+  AssignFile(FFile, FFullFilePath);
+  Reset(FFile);
+  try
+    Result := (ASkip >= 0) and (ASkip < FileSize(FFile));
+    if Result then
+    begin
+      Seek(FFile, ASkip);
+      Read(FFile, AICOBlock);
+    end;
+  finally
+    CloseFile(FFile);
+    FLock.Leave;
+  end;
+end;
+
+function TBlockchainICODat.TryGet(ATicker: string;
+  out AICOBlock: TTokenICODat): Boolean;
 var
   i: Integer;
 begin
-  FLock.Enter;
   Result := False;
+  FLock.Enter;
   AssignFile(FFile, FFullFilePath);
   Reset(FFile);
   try
-    for i := 0 to FileSize(FFile)-1 do
+    Seek(FFile, 0);
+    for i := 0 to FileSize(FFile) - 1 do
     begin
-      Seek(FFile,i);
-      Read(FFile,ICOBlock);
-      if (ICOBlock.Abreviature = ATicker) then
-        Exit(True);
+      Read(FFile, AICOBlock);
+      if (AICOBlock.Abreviature = ATicker) then
+        exit(True);
     end;
-  finally
-    CloseFile(FFile);
-    FLock.Leave;
-  end;
-end;
-
-function TBlockchainICODat.TryGetTokenICO(AFrom: Int64;
-  var ICOBlock: TTokenICODat): Boolean;
-begin
-  FLock.Enter;
-  Result := False;
-  AssignFile(FFile, FFullFilePath);
-  Reset(FFile);
-  try
-    if AFrom >= FileSize(FFile) then Exit(False);
-
-    Seek(FFile,AFrom);
-    Read(FFile,ICOBlock);
-    Result := True;
-  finally
-    CloseFile(FFile);
-    FLock.Leave;
-  end;
-end;
-
-function TBlockchainICODat.ReadBlocks(AFrom: Int64; var AAmount: Integer): TBytesBlocks;
-var
-  i: Integer;
-  tico: TTokenICODat;
-begin
-  FLock.Enter;
-  AssignFile(FFile, FFullFilePath);
-  Reset(FFile);
-  try
-    Seek(FFile,AFrom);
-    AAmount := Min(FileSize(FFile)-AFrom,MAX_BLOCKS_REQUEST);
-    AAmount := Max(0,AAmount);
-    for i := 0 to AAmount-1 do
-    begin
-      Read(FFile,tico);
-      Move(tico, Result[i * SizeOf(TTokenICODat)], SizeOf(tico));
-    end;
-  finally
-    CloseFile(FFile);
-    FLock.Leave;
-  end;
-end;
-
-procedure TBlockchainICODat.WriteBlocks(APos: Int64; ABytes: TBytesBlocks;
-  AAmount: Integer);
-var
-  i: Integer;
-  ticoArr: array[0..SizeOf(TTokenICODat)-1] of Byte;
-  tico: TTokenICODat absolute ticoArr;
-begin
-  FLock.Enter;
-  AssignFile(FFile, FFullFilePath);
-  Reset(FFile);
-  try
-    Seek(FFile,APos);
-    AAmount := Max(AAmount,0);                  // <=0
-    for i := 0 to AAmount - 1 do
-    begin
-      Move(ABytes[i*SizeOf(tico)],ticoArr[0],SizeOf(tico));
-      Write(FFile,tico);
-    end;
-  finally
-    CloseFile(FFile);
-    FLock.Leave;
-  end;
-end;
-
-procedure TBlockchainICODat.WriteOneBlock(APos: Int64; ABytes: TOneBlockBytes);
-var
-  ticoArr: array[0..SizeOf(TTokenICODat)-1] of Byte;
-  tico: TTokenICODat absolute ticoArr;
-begin
-  FLock.Enter;
-  AssignFile(FFile, FFullFilePath);
-  Reset(FFile);
-  try
-    Seek(FFile,APos);
-    Move(ABytes[0],ticoArr[0],SizeOf(tico));
-    Write(FFile,tico);
   finally
     CloseFile(FFile);
     FLock.Leave;

@@ -26,14 +26,10 @@ uses
   endpoints.Base in 'Web\endpoints\endpoints.Base.pas',
   Blockchain.Main in 'Blockchain\Blockchain.Main.pas',
   Blockchain.Intf in 'Blockchain\Blockchain.Intf.pas',
-  Blockchain.Token.chn in 'Blockchain\Blockchain.Token.chn.pas',
+  Blockchain.TET in 'Blockchain\Blockchain.TET.pas',
   Blockchain.BaseTypes in 'Blockchain\Blockchain.BaseTypes.pas',
-  Blockchain.Smartcontracts in 'Blockchain\Blockchain.Smartcontracts.pas',
-  Sync.Chain in 'Sync\Sync.Chain.pas',
-  Sync.Smartcontratcs in 'Sync\Sync.Smartcontratcs.pas',
   Net.Data in 'Net\Net.Data.pas',
   Net.LightSocket in 'Net\Net.LightSocket.pas',
-  Blockchain.SmartKey in 'Blockchain\Blockchain.SmartKey.pas',
   endpoints.Account in 'Web\endpoints\endpoints.Account.pas',
   App.Exceptions in 'Core\App.Exceptions.pas',
   endpoints.Token in 'Web\endpoints\endpoints.Token.pas',
@@ -43,7 +39,6 @@ uses
   Styles in 'UI\Forms\Styles.pas' {StylesForm},
   WordsPool in 'Crypto\SeedPhrase\WordsPool.pas',
   Blockchain.TETDynamic in 'Blockchain\Blockchain.TETDynamic.pas',
-  Blockchain.TokenDynamic in 'Blockchain\Blockchain.TokenDynamic.pas',
   Blockchain.ICODat in 'Blockchain\Blockchain.ICODat.pas',
   Frame.Ticker in 'UI\Forms\Frame.Ticker.pas' {TickerFrame: TFrame},
   Frame.Explorer in 'UI\Forms\Frame.Explorer.pas' {ExplorerTransactionFrame: TFrame},
@@ -51,12 +46,17 @@ uses
   Form.EnterKey in 'UI\Forms\Form.EnterKey.pas' {EnterPrivateKeyForm},
   App.Constants in 'Core\App.Constants.pas',
   OpenURL in 'UI\OpenURL.pas',
-  Frame.PageNum in 'UI\Forms\Frame.PageNum.pas' {PageNumFrame: TFrame};
+  Sync.TETChain in 'Sync\Sync.TETChain.pas',
+  Frame.PageNum in 'UI\Forms\Frame.PageNum.pas' {PageNumFrame: TFrame},
+  Blockchain.SmartKey in 'Blockchain\Blockchain.SmartKey.pas',
+  Sync.TokensChains in 'Sync\Sync.TokensChains.pas',
+  Blockchain.Token in 'Blockchain\Blockchain.Token.pas',
+  Blockchain.TokenDynamic in 'Blockchain\Blockchain.TokenDynamic.pas';
 
 {$R *.res}
 
 var
-  LPidFileName: String;
+  LPidFileName: string;
 begin
   {$IFDEF DEBUG}
   ReportMemoryLeaksOnShutdown:=True;

@@ -6,32 +6,12 @@
         <Base>True</Base>
         <Config Condition="'$(Config)'==''">Release</Config>
         <Platform Condition="'$(Platform)'==''">Win64</Platform>
-        <TargetedPlatforms>32915</TargetedPlatforms>
+        <TargetedPlatforms>131</TargetedPlatforms>
         <AppType>Application</AppType>
         <MainSource>LNode.dpr</MainSource>
         <ProjectName Condition="'$(ProjectName)'==''">LNode</ProjectName>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
-        <Base>true</Base>
-    </PropertyGroup>
-    <PropertyGroup Condition="('$(Platform)'=='Android' and '$(Base)'=='true') or '$(Base_Android)'!=''">
-        <Base_Android>true</Base_Android>
-        <CfgParent>Base</CfgParent>
-        <Base>true</Base>
-    </PropertyGroup>
-    <PropertyGroup Condition="('$(Platform)'=='Android64' and '$(Base)'=='true') or '$(Base_Android64)'!=''">
-        <Base_Android64>true</Base_Android64>
-        <CfgParent>Base</CfgParent>
-        <Base>true</Base>
-    </PropertyGroup>
-    <PropertyGroup Condition="('$(Platform)'=='iOSDevice64' and '$(Base)'=='true') or '$(Base_iOSDevice64)'!=''">
-        <Base_iOSDevice64>true</Base_iOSDevice64>
-        <CfgParent>Base</CfgParent>
-        <Base>true</Base>
-    </PropertyGroup>
-    <PropertyGroup Condition="('$(Platform)'=='iOSSimARM64' and '$(Base)'=='true') or '$(Base_iOSSimARM64)'!=''">
-        <Base_iOSSimARM64>true</Base_iOSSimARM64>
-        <CfgParent>Base</CfgParent>
         <Base>true</Base>
     </PropertyGroup>
     <PropertyGroup Condition="('$(Platform)'=='Linux64' and '$(Base)'=='true') or '$(Base_Linux64)'!=''">
@@ -66,6 +46,12 @@
     </PropertyGroup>
     <PropertyGroup Condition="('$(Platform)'=='Win32' and '$(Cfg_1)'=='true') or '$(Cfg_1_Win32)'!=''">
         <Cfg_1_Win32>true</Cfg_1_Win32>
+        <CfgParent>Cfg_1</CfgParent>
+        <Cfg_1>true</Cfg_1>
+        <Base>true</Base>
+    </PropertyGroup>
+    <PropertyGroup Condition="('$(Platform)'=='Win64' and '$(Cfg_1)'=='true') or '$(Cfg_1_Win64)'!=''">
+        <Cfg_1_Win64>true</Cfg_1_Win64>
         <CfgParent>Cfg_1</CfgParent>
         <Cfg_1>true</Cfg_1>
         <Base>true</Base>
@@ -163,23 +149,15 @@
         <DCC_IntegerOverflowCheck>true</DCC_IntegerOverflowCheck>
         <DCC_RangeChecking>true</DCC_RangeChecking>
     </PropertyGroup>
-    <PropertyGroup Condition="'$(Cfg_1_Linux64)'!=''">
-        <Debugger_Launcher>/usr/bin/gnome-terminal -- &quot;%debuggee%&quot;</Debugger_Launcher>
-        <Manifest_File>(None)</Manifest_File>
-        <AppDPIAwarenessMode>none</AppDPIAwarenessMode>
-    </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
         <DCC_RemoteDebug>false</DCC_RemoteDebug>
         <AppDPIAwarenessMode>PerMonitorV2</AppDPIAwarenessMode>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>
         <DCC_ExeOutput>.\$(Platform)\$(Config)\exe</DCC_ExeOutput>
-        <VerInfo_MajorVer>0</VerInfo_MajorVer>
-        <VerInfo_MinorVer>9</VerInfo_MinorVer>
         <VerInfo_DLL>true</VerInfo_DLL>
         <VerInfo_AutoGenVersion>true</VerInfo_AutoGenVersion>
-        <VerInfo_Keys>CompanyName=Crispmind Ltd;FileDescription=$(MSBuildProjectName);FileVersion=0.9.1.0;InternalName=Light node for tectum blockchain;LegalCopyright=2024 Crispmind;LegalTrademarks=;OriginalFilename=Light node;ProgramID=light.node.tectum;ProductName=Light node for tectum blockchain;ProductVersion=0.9.1.0;Comments=https://tectum.io/</VerInfo_Keys>
-        <VerInfo_Release>1</VerInfo_Release>
+        <VerInfo_Keys>CompanyName=Crispmind Ltd;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.0;InternalName=Light node for tectum blockchain;LegalCopyright=2024 Crispmind;LegalTrademarks=;OriginalFilename=Light node;ProgramID=light.node.tectum;ProductName=Light node for tectum blockchain;ProductVersion=1.0.0.0;Comments=https://tectum.io/</VerInfo_Keys>
         <Icns_MainIcns>..\icon\Windows\AppIcon.icns</Icns_MainIcns>
         <Icon_MainIcon>..\icon\Windows\AppIcon.ico</Icon_MainIcon>
         <UWP_DelphiLogo44>..\icon\Windows\Uwp_44.png</UWP_DelphiLogo44>
@@ -188,21 +166,14 @@
     <PropertyGroup Condition="'$(Cfg_1_Win64)'!=''">
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>
-        <Icns_MainIcns>..\icon\Windows\AppIcon.icns</Icns_MainIcns>
         <Icon_MainIcon>..\icon\Windows\AppIcon.ico</Icon_MainIcon>
-        <UWP_DelphiLogo44>..\icon\Windows\Uwp_44.png</UWP_DelphiLogo44>
-        <UWP_DelphiLogo150>..\icon\Windows\Uwp_150.png</UWP_DelphiLogo150>
+        <Icns_MainIcns>..\icon\Windows\AppIcon.icns</Icns_MainIcns>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2)'!=''">
         <DCC_LocalDebugSymbols>false</DCC_LocalDebugSymbols>
         <DCC_Define>RELEASE;$(DCC_Define)</DCC_Define>
         <DCC_SymbolReferenceInfo>0</DCC_SymbolReferenceInfo>
         <DCC_DebugInformation>0</DCC_DebugInformation>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(Cfg_2_Linux64)'!=''">
-        <Debugger_Launcher>/usr/bin/gnome-terminal -- &quot;%debuggee%&quot;</Debugger_Launcher>
-        <Manifest_File>(None)</Manifest_File>
-        <AppDPIAwarenessMode>none</AppDPIAwarenessMode>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_2_Win32)'!=''">
         <AppDPIAwarenessMode>PerMonitorV2</AppDPIAwarenessMode>
@@ -217,10 +188,7 @@
         <AppDPIAwarenessMode>PerMonitorV2</AppDPIAwarenessMode>
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
         <VerInfo_Locale>1033</VerInfo_Locale>
-        <VerInfo_Keys>CompanyName=Crispmind Ltd;FileDescription=$(MSBuildProjectName);FileVersion=0.9.1.0;InternalName=Light node for tectum blockchain;LegalCopyright=2024 Crispmind;LegalTrademarks=;OriginalFilename=Light node;ProgramID=light.node.tectum;ProductName=Light node for tectum blockchain;ProductVersion=0.9.1.0;Comments=https://tectum.io/</VerInfo_Keys>
-        <VerInfo_MajorVer>0</VerInfo_MajorVer>
-        <VerInfo_MinorVer>9</VerInfo_MinorVer>
-        <VerInfo_Release>1</VerInfo_Release>
+        <VerInfo_Keys>CompanyName=Crispmind Ltd;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.0;InternalName=Light node for tectum blockchain;LegalCopyright=2024 Crispmind;LegalTrademarks=;OriginalFilename=Light node;ProgramID=light.node.tectum;ProductName=Light node for tectum blockchain;ProductVersion=1.0.0.0;Comments=https://tectum.io/</VerInfo_Keys>
         <Icon_MainIcon>..\icon\Windows\AppIcon.ico</Icon_MainIcon>
         <Icns_MainIcns>..\icon\Windows\AppIcon.icns</Icns_MainIcns>
         <UWP_DelphiLogo44>..\icon\Windows\Uwp_44.png</UWP_DelphiLogo44>
@@ -247,14 +215,10 @@
         <DCCReference Include="Web\endpoints\endpoints.Base.pas"/>
         <DCCReference Include="Blockchain\Blockchain.Main.pas"/>
         <DCCReference Include="Blockchain\Blockchain.Intf.pas"/>
-        <DCCReference Include="Blockchain\Blockchain.Token.chn.pas"/>
+        <DCCReference Include="Blockchain\Blockchain.TET.pas"/>
         <DCCReference Include="Blockchain\Blockchain.BaseTypes.pas"/>
-        <DCCReference Include="Blockchain\Blockchain.Smartcontracts.pas"/>
-        <DCCReference Include="Sync\Sync.Chain.pas"/>
-        <DCCReference Include="Sync\Sync.Smartcontratcs.pas"/>
         <DCCReference Include="Net\Net.Data.pas"/>
         <DCCReference Include="Net\Net.LightSocket.pas"/>
-        <DCCReference Include="Blockchain\Blockchain.SmartKey.pas"/>
         <DCCReference Include="Web\endpoints\endpoints.Account.pas"/>
         <DCCReference Include="Core\App.Exceptions.pas"/>
         <DCCReference Include="Web\endpoints\endpoints.Token.pas"/>
@@ -273,7 +237,6 @@
         </DCCReference>
         <DCCReference Include="Crypto\SeedPhrase\WordsPool.pas"/>
         <DCCReference Include="Blockchain\Blockchain.TETDynamic.pas"/>
-        <DCCReference Include="Blockchain\Blockchain.TokenDynamic.pas"/>
         <DCCReference Include="Blockchain\Blockchain.ICODat.pas"/>
         <DCCReference Include="UI\Forms\Frame.Ticker.pas">
             <Form>TickerFrame</Form>
@@ -295,11 +258,16 @@
         </DCCReference>
         <DCCReference Include="Core\App.Constants.pas"/>
         <DCCReference Include="UI\OpenURL.pas"/>
+        <DCCReference Include="Sync\Sync.TETChain.pas"/>
         <DCCReference Include="UI\Forms\Frame.PageNum.pas">
             <Form>PageNumFrame</Form>
             <FormType>fmx</FormType>
             <DesignClass>TFrame</DesignClass>
         </DCCReference>
+        <DCCReference Include="Blockchain\Blockchain.SmartKey.pas"/>
+        <DCCReference Include="Sync\Sync.TokensChains.pas"/>
+        <DCCReference Include="Blockchain\Blockchain.Token.pas"/>
+        <DCCReference Include="Blockchain\Blockchain.TokenDynamic.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>
@@ -707,6 +675,12 @@
                 <DeployFile LocalName="Win32\Debug\Retranslator.exe" Configuration="Debug" Class="ProjectOutput"/>
                 <DeployFile LocalName="Win32\Debug\RetranslatorLinux.exe" Configuration="Debug" Class="ProjectOutput"/>
                 <DeployFile LocalName="Win32\Debug\exe\LNode.exe" Configuration="Debug" Class="ProjectOutput">
+                    <Platform Name="Win32">
+                        <RemoteName>LNode.exe</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="Win32\Release\LNode.exe" Configuration="Release" Class="ProjectOutput">
                     <Platform Name="Win32">
                         <RemoteName>LNode.exe</RemoteName>
                         <Overwrite>true</Overwrite>
@@ -1679,10 +1653,6 @@
                 <ProjectRoot Platform="Win64x" Name="$(PROJECTNAME)"/>
             </Deployment>
             <Platforms>
-                <Platform value="Android">True</Platform>
-                <Platform value="Android64">True</Platform>
-                <Platform value="iOSDevice64">False</Platform>
-                <Platform value="iOSSimARM64">False</Platform>
                 <Platform value="Linux64">True</Platform>
                 <Platform value="OSX64">False</Platform>
                 <Platform value="OSXARM64">False</Platform>

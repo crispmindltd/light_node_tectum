@@ -13,6 +13,7 @@ uses
   Frame.PageNum,
   Frame.Ticker,
   Generics.Collections,
+  Generics.Defaults,
   Math,
   Net.Data,
   Net.Socket,
@@ -175,7 +176,6 @@ type
     CopyFromSvg: TPath;
     CopyToLayout: TLayout;
     CopyToSvg: TPath;
-    TopExplorerHorzLayout: TLayout;
     NoTETHistoryLabel: TLabel;
     StatusTETHeaderLabel: TLabel;
     NoTokenHistoryLabel: TLabel;
@@ -276,6 +276,9 @@ type
     HideTransactionNotFoundTimer: TTimer;
     AniIndicator1: TAniIndicator;
     TickerExplorerHeaderLabel: TLabel;
+    TransTETAniIndicator: TAniIndicator;
+    CreateTokenAniIndicator: TAniIndicator;
+    TransTokenAniIndicator: TAniIndicator;
     procedure MainRectangleMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single);
     procedure TokenItemClick(Sender: TObject);
@@ -284,26 +287,20 @@ type
     procedure FormShow(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
-    procedure TokenItemApplyStyleLookup(Sender: TObject);
-    procedure TokenNameEditChangeTracking(Sender: TObject);
     procedure RecepientAddressEditChangeTracking(Sender: TObject);
     procedure AmountTokenEditChangeTracking(Sender: TObject);
     procedure SendTokenButtonClick(Sender: TObject);
     procedure FloatAnimation1Finish(Sender: TObject);
     procedure HideTokenMessageTimerTimer(Sender: TObject);
-    procedure RoundRectMouseDown(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Single);
     procedure RoundRectTickerMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single);
     procedure AmountTETEditChangeTracking(Sender: TObject);
     procedure SendTETButtonClick(Sender: TObject);
     procedure FloatAnimation2Finish(Sender: TObject);
     procedure HideTETMessageTimerTimer(Sender: TObject);
-    procedure ExplorerVertScrollBoxResized(Sender: TObject);
     procedure CreateTokenAmountEditChange(Sender: TObject);
     procedure CreateTokenButtonClick(Sender: TObject);
     procedure CreateTokenEditChangeTracking(Sender: TObject);
-    procedure TabsChange(Sender: TObject);
     procedure HideCreatingMessageTimerTimer(Sender: TObject);
     procedure FloatAnimation3Finish(Sender: TObject);
     procedure ExplorerBackCircleMouseEnter(Sender: TObject);
@@ -314,14 +311,6 @@ type
     procedure CopyFromLayoutClick(Sender: TObject);
     procedure CopyToLayoutClick(Sender: TObject);
     procedure CreateTokenSymbolEditChangeTracking(Sender: TObject);
-    procedure HistoryTETVertScrollBoxResized(Sender: TObject);
-    procedure HistoryTETVertScrollBoxPaint(Sender: TObject; Canvas: TCanvas;
-      const ARect: TRectF);
-    procedure ExplorerVertScrollBoxPaint(Sender: TObject; Canvas: TCanvas;
-      const ARect: TRectF);
-    procedure HistoryTokenVertScrollBoxResized(Sender: TObject);
-    procedure HistoryTokenVertScrollBoxPaint(Sender: TObject; Canvas: TCanvas;
-      const ARect: TRectF);
     procedure TETBackCircleMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single);
     procedure TETCopyLoginLayoutClick(Sender: TObject);
@@ -341,37 +330,48 @@ type
       var KeyChar: WideChar; Shift: TShiftState);
     procedure FloatAnimation4Finish(Sender: TObject);
     procedure HideTransactionNotFoundTimerTimer(Sender: TObject);
+    procedure TabsChange(Sender: TObject);
+    procedure SendTETToEditKeyDown(Sender: TObject; var Key: Word;
+      var KeyChar: WideChar; Shift: TShiftState);
+    procedure CreateTokenShortNameEditKeyDown(Sender: TObject; var Key: Word;
+      var KeyChar: WideChar; Shift: TShiftState);
+    procedure TokenNameEditChangeTracking(Sender: TObject);
+    procedure TokenNameEditChange(Sender: TObject);
+    procedure ExplorerVertScrollBoxResized(Sender: TObject);
+    procedure HistoryTETVertScrollBoxResized(Sender: TObject);
+    procedure HistoryTokenVertScrollBoxResized(Sender: TObject);
   const
     TransToDrawNumber = 18;
   private
-    FBalances: TDictionary<string, Extended>;
-    chosenToken, chosenTicker: string;
-    totalPagesAmount, pageNum: Integer;
-    FSearchResultsFrame: TTickerFrame;
+    FBalances: TDictionary<string, Double>;
+    FTickersFrames: TList<TTickerFrame>;
+    FSelectedFrame: TTickerFrame;
+    FChosenToken: TListBoxItem;
+    FSearchResultTrans: TArray<TExplorerTransactionInfo>;
+    FTotalPagesAmount, FPageNum: Integer;
 
     function DecimalsCount(const AValue: string): Integer;
     procedure RefreshTETBalance;
     procedure RefreshTETHistory;
     procedure AlignTETHeaders;
-    procedure RefreshHeaderBalance(AName: String);
+    procedure RefreshHeaderBalance(ATicker: string);
     procedure RefreshTokensBalances;
+    procedure AddOrRefreshBalance(ASmartKey: TCSmartKey);
     procedure RefreshTokenHistory;
     procedure AlignTokensHeaders;
     procedure RefreshPagesLayout;
     procedure OnPageSelected;
-    procedure DrawTransactions(ATransactions: TArray<TExplorerTransactionInfo>;
-      AShowTicker: Boolean = False);
-    procedure RefreshExplorer;
+    procedure RefreshExplorer(ATransactions: TArray<TExplorerTransactionInfo>;
+      AShowTicker: Boolean);
     procedure AlignExplorerHeaders(AShowTicker: Boolean);
     procedure CleanScrollBox(AVertScrollBox: TVertScrollBox);
 
-    procedure AddTokenItem(AName: String; AValue: Extended);
-    procedure AddTicker(AName: String);
+    procedure AddTickerFrame(const ATicker: string; ATokenID: Integer = -1);
+    procedure AddTokenItem(ATokenID: Integer; AName: string; AValue: Double);
     procedure AddPageNum(APageNum: Integer);
-    procedure ShowTETTransferStatus(const AMessage: String; AIsError: Boolean = False);
-    procedure ShowTokenTransferStatus(const AMessage: String; AIsError: Boolean = False);
-    procedure ShowTokenCreatingStatus(const AMessage: String; AIsError: Boolean = False);
-    procedure AddOrRefreshBalance(AName: String; AValue: Extended);
+    procedure ShowTETTransferStatus(const AMessage: string; AIsError: Boolean = False);
+    procedure ShowTokenTransferStatus(const AMessage: string; AIsError: Boolean = False);
+    procedure ShowTokenCreatingStatus(const AMessage: string; AIsError: Boolean = False);
     procedure ShowExplorerTransactionDetails(ATicker, ADateTime, ABlockNum,
       AHash, ATransFrom, ATransTo, AAmount: string); overload;
     procedure ShowExplorerTransactionDetails(ATransaction: TExplorerTransactionInfo); overload;
@@ -385,9 +385,15 @@ type
     procedure onPageNumFrameClick(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Single);
     procedure onTransactionSearchingDone(AIsFound: Boolean);
+
+    procedure TETTransferCallBack(const AResponse: string);
+    procedure TokenCreatingCallBack(const AResponse: string);
+    procedure TokenTransferCallBack(const AResponse: string);
   public
-    procedure NewChainBlocksEvent;
-    procedure NewSmartBlocksEvent;
+    procedure NewTETChainBlocksEvent(ANeedRefreshBalance: Boolean);
+    procedure NewTokenEvent(ASmartKey: TCSmartKey);
+    procedure NewTokenBlocksEvent(ASmartKey: TCSmartKey;
+      ANeedRefreshBalance: Boolean);
     procedure onKeysSaved;
     procedure onKeysSavingError;
   end;
@@ -397,153 +403,213 @@ var
 
 implementation
 
-function CustomSortCompare(Left, Right: TFmxObject): Integer;
+{$R *.fmx}
+
+function CustomSortCompareStrings(Left, Right: TFmxObject): Integer;
+var
+  LeftLabel, RightLabel: TLabel;
 begin
-  Result := CompareStr((Left as TListBoxItem).Text,(Right as TListBoxItem).Text);
+  LeftLabel := (Left as TListBoxItem).TagObject as TLabel;
+  RightLabel := (Right as TListBoxItem).TagObject as TLabel;
+  Result := CompareValue(RightLabel.Text.ToDouble, LeftLabel.Text.ToDouble);
+  if Result = 0 then
+    Result := CompareStr((Left as TListBoxItem).Text, (Right as TListBoxItem).Text);
 end;
 
-{$R *.fmx}
+function CustomSortCompareTickers(Left, Right: TFmxObject): Integer;
+var
+  LeftTicker, RightTicker: TTickerFrame;
+begin
+  LeftTicker := Left as TTickerFrame;
+  RightTicker := Right as TTickerFrame;
+  Result := CompareStr(LeftTicker.Ticker, RightTicker.Ticker);
+end;
+
+procedure TMainForm.TokenNameEditChange(Sender: TObject);
+begin
+  RefreshTokenHistory;
+end;
 
 procedure TMainForm.TokenNameEditChangeTracking(Sender: TObject);
 begin
   AmountTokenEditChangeTracking(nil);
-  NoTokenHistoryLabel.Text := Format('No %s transactions yet',[TokenNameEdit.Text]);
-  RefreshTokenHistory;
+  NoTokenHistoryLabel.Text := Format('No %s transactions yet', [TokenNameEdit.Text]);
 end;
 
 procedure TMainForm.TokenNameEditClick(Sender: TObject);
-var
-  i: Integer;
 begin
-  for i := 0 to TokensListBox.Count-1 do
-    TokensListBox.ListItems[i].OnApplyStyleLookup(TokensListBox.ListItems[i]);
   MainRectangle.Visible := True;
+end;
+
+procedure TMainForm.TokenTransferCallBack(const AResponse: string);
+var
+  Splitted: TArray<string>;
+begin
+  TransTokenAniIndicator.Enabled := False;
+  TransTokenAniIndicator.Visible := False;
+
+  if not AResponse.StartsWith('URKError') then
+  begin
+    RecepientAddressEdit.Text := '';
+    AmountTokenEdit.Text := '';
+    ShowTokenTransferStatus('Transaction accepted for processing');
+  end else
+  begin
+    Splitted := AResponse.Split([' ']);
+    case Splitted[3].ToInteger of
+      110: ShowTokenTransferStatus(InsufficientFundsErrorText, True);
+      41502: ShowTokenTransferStatus(InvalidSignErrorText, True);
+      41500: ShowTokenTransferStatus(ServerDidNotRespondErrorText, True);
+      41501: ShowTokenTransferStatus(ValidatorFailedErrorText, True);
+      41503: ShowTokenTransferStatus(ValidatorDidNotRespondErrorText, True);
+      41505: ShowTokenTransferStatus(TransactionInProgressErrorText, True);
+      else
+        begin
+          Logs.DoLog('Unknown error during token transfer with code ' +
+            Splitted[3], TLogType.ERROR, tcp);
+          ShowTokenTransferStatus('Unknown error with code ' + Splitted[3], True);
+        end;
+    end;
+  end;
 end;
 
 procedure TMainForm.AddPageNum(APageNum: Integer);
 var
-  pageNumFrame: TPageNumFrame;
+  PageNumFrame: TPageNumFrame;
 begin
-  pageNumFrame := TPageNumFrame.Create(PagesPanelLayout,APageNum,APageNum = pageNum);
-  pageNumFrame.Parent := PagesPanelLayout;
+  PageNumFrame := TPageNumFrame.Create(PagesPanelLayout, APageNum,
+    APageNum = FPageNum);
+  PageNumFrame.Parent := PagesPanelLayout;
   PagesPanelLayout.Width := PagesPanelLayout.Width + PageNumFrame.Width;
-  pageNumFrame.Position.Y := -2;
-  pageNumFrame.Position.X := PagesPanelLayout.Width - NextPageLayout.Width -
+  PageNumFrame.Position.Y := -2;
+  PageNumFrame.Position.X := PagesPanelLayout.Width - NextPageLayout.Width -
     PageNumFrame.Width;
   if APageNum > 0 then
-    pageNumFrame.OnMouseDown := onPageNumFrameClick;
+    PageNumFrame.OnMouseDown := onPageNumFrameClick;
 end;
 
-procedure TMainForm.AddTicker(AName: String);
+procedure TMainForm.AddTickerFrame(const ATicker: string; ATokenID: Integer);
 var
-  ticker: TTickerFrame;
+  NewTickerFrame: TTickerFrame;
 begin
-  ticker := TTickerFrame.Create(TopExplorerHorzLayout, AName);
-  ticker.Parent := TopExplorerHorzLayout;
-  ticker.Position.X := Single.MaxValue;
-  TopExplorerHorzLayout.Width := TopExplorerHorzLayout.Width + ticker.Width +
-    ticker.Margins.Left;
+  ExplorerHorzScrollBox.BeginUpdate;
+  try
+    NewTickerFrame := TTickerFrame.Create(ExplorerHorzScrollBox,
+      ATicker, ATokenID);
+    NewTickerFrame.Parent := ExplorerHorzScrollBox;
 
-  if AName <> 'Search result' then
-  begin
-    ticker.RoundRect.OnMouseDown := RoundRectTickerMouseDown;
-    if AName = 'Tectum' then
-      ticker.RoundRect.OnMouseDown(ticker,TMouseButton.mbLeft, [], 0, 0);
-  end else         
-  begin       
-    ticker.RoundRect.OnMouseDown := RoundRectMouseDown;
-    ticker.Visible := False;     
-    FSearchResultsFrame := ticker;
+    if ATicker <> 'Search results' then
+      NewTickerFrame.RoundRect.OnMouseDown := RoundRectTickerMouseDown;
+
+    FTickersFrames.Add(NewTickerFrame);
+    ExplorerHorzScrollBox.Sort(CustomSortCompareTickers);
+  finally
+    ExplorerHorzScrollBox.EndUpdate;
   end;
 end;
 
-procedure TMainForm.AddTokenItem(AName: String; AValue: Extended);
+procedure TMainForm.AddTokenItem(ATokenID: Integer; AName: string;
+  AValue: Double);
 var
-  newItem: TListBoxItem;
+  NewItem: TListBoxItem;
+  BalanceLabel: TLabel;
 begin
-  newItem := TListBoxItem.Create(TokensListBox);
-  newItem.Parent := TokensListBox;
-  PopupRectangle.Height := SearchTokenEdit.Height +
-    40 * (Min(TokensListBox.Count,3)) + 32;
-  newItem.StyleLookup := 'TokenItemStyle';
-
-  newItem.BeginUpdate;
+  NewItem := TListBoxItem.Create(TokensListBox);
+  NewItem.BeginUpdate;
   try
-    with newItem do
+    with NewItem do
     begin
-      Name := 'TokenItem' + TokensListBox.Count.ToString;
+      Name := AName + 'TokenItem';
       Margins.Top := 5;
+      Margins.Right := 7;
+      Height := 38;
       Text := AName;
+      Tag := ATokenID;
+      Cursor := crHandPoint;
       TextSettings.Font.Family := 'Inter';
       TextSettings.Font.Size := 14;
       TextSettings.FontColor := $FF323130;
       HitTest := True;
 
+      StyleLookup := 'TokenItemStyle';
       onMouseEnter := StylesForm.OnTokenItemMouseEnter;
       onMouseLeave := StylesForm.OnTokenItemMouseLeave;
       onMouseDown := StylesForm.OnTokenItemMouseDown;
       onMouseUp := StylesForm.OnTokenItemMouseUp;
       onClick := TokenItemClick;
-      onApplyStyleLookup := TokenItemApplyStyleLookup;
+    end;
+
+    BalanceLabel := TLabel.Create(NewItem);
+    NewItem.TagObject := BalanceLabel;
+    with BalanceLabel do
+    begin
+      Name := 'TokenBalanceText' + TokensListBox.Count.ToString;
+      Align := TAlignLayout.Contents;
+      Margins.Right := 10;
+      HitTest := False;
+      StyledSettings := [TStyledSetting.Style, TStyledSetting.FontColor];
+      TextSettings.Font.Family := 'Inter';
+      TextSettings.Font.Size := 14;
+      TextSettings.FontColor := TAlphaColorRec.Black;
+      TextSettings.HorzAlign := TTextAlign.Trailing;
+      Text := FormatFloat('0.########', AValue);
+      AutoSize := False;
+      Parent := NewItem;
     end;
   finally
-    newItem.EndUpdate;
+    NewItem.EndUpdate;
   end;
-  AddTicker(AName);
+
+  TokensListBox.AddObject(NewItem);
+  PopupRectangle.Height := SearchTokenEdit.Height +
+    40 * (Min(TokensListBox.Count, 3)) + 36;
 end;
 
 procedure TMainForm.AlignExplorerHeaders(AShowTicker: Boolean);
 var
-  frame: TExplorerTransactionFrame;
-  i: Integer;
+  Width, ContentWidth: Single;
 begin
-  ExplorerVertScrollBox.BeginUpdate;
+  ExplorerHeaderLayout.BeginUpdate;
   try
-    frame := nil;
-    for i := 0 to ExplorerVertScrollBox.ComponentCount-1 do
-      if ExplorerVertScrollBox.Components[i] is TExplorerTransactionFrame then
-      begin
-        frame := ExplorerVertScrollBox.Components[i] as TExplorerTransactionFrame;
-        break;
-      end;
-    if not Assigned(frame) then exit;
+    if ExplorerVertScrollBox.ContentBounds.Width <= 0 then
+      ContentWidth := 1094
+    else
+      ContentWidth := ExplorerVertScrollBox.ContentBounds.Width;
 
     TickerExplorerHeaderLabel.Visible := AShowTicker;
+    Width := ContentWidth - DateTimeLabelWidth -
+        BlockLabelWidth - ValueLabelWidth - 75;
     if AShowTicker then
+    begin
+      Width := Width - TickerLabelWidth - 15;
       TickerExplorerHeaderLabel.Position.X := FromExplorerHeaderLabel.Position.X - 1;
-    DateTimeExplorerHeaderLabel.Width := frame.DateTimeLabel.Width;
-    TickerExplorerHeaderLabel.Width := frame.TickerLabel.Width;
-    BlockNumExplorerHeaderLabel.Width := frame.BlockLabel.Width;
-    FromExplorerHeaderLabel.Width := frame.FromLabel.Width;
-    ToExplorerHeaderLabel.Width := frame.ToLabel.Width;
-    HashExplorerHeaderLabel.Width := frame.HashLabel.Width;
-    AmountExplorerHeaderLabel.Width := frame.AmountLabel.Width;
+    end;
+
+    FromExplorerHeaderLabel.Width := Width * 0.25;
+    ToExplorerHeaderLabel.Width := Width * 0.25;
+    HashExplorerHeaderLabel.Width := Width * 0.5;
+    AmountExplorerHeaderLabel.Position.X := HashExplorerHeaderLabel.Position.X +
+      HashExplorerHeaderLabel.Width + 1;
   finally
-    ExplorerVertScrollBox.EndUpdate;
+    ExplorerHeaderLayout.EndUpdate;
   end;
 end;
 
 procedure TMainForm.AlignTETHeaders;
 var
-  frame: THistoryTransactionFrame;
-  i: Integer;
+  Width, ContentWidth: Single;
 begin
   HistoryTETVertScrollBox.BeginUpdate;
   try
-    frame := nil;
-    for i := 0 to HistoryTETVertScrollBox.ComponentCount-1 do
-      if HistoryTETVertScrollBox.Components[i] is THistoryTransactionFrame then
-      begin
-        frame := HistoryTETVertScrollBox.Components[i] as THistoryTransactionFrame;
-        break;
-      end;
-    if not Assigned(frame) then exit;
+    if HistoryTETVertScrollBox.ContentBounds.Width <= 0 then
+      ContentWidth := 1078
+    else
+      ContentWidth := HistoryTETVertScrollBox.ContentBounds.Width;
 
-    DateTimeTETHeaderLabel.Width := frame.DateTimeLabel.Width;
-    BlockNumTETHeaderLabel.Width := frame.BlockLabel.Width;
-    AddressTETHeaderLabel.Width := frame.AddressLabel.Width;
-    HashTETHeaderLabel.Width := frame.HashLabel.Width;
-    AmountTETHeaderLabel.Width := frame.AmountLabel.Width;
+    Width := ContentWidth - DateTimeLabelWidth -
+      BlockLabelWidth - ValueLabelWidth - IncomRectWidth - 85;
+    AddressTETHeaderLabel.Width := Width * 0.4;
+    HashTETHeaderLabel.Width := Width * 0.6;
   finally
     HistoryTETVertScrollBox.EndUpdate;
   end;
@@ -551,25 +617,19 @@ end;
 
 procedure TMainForm.AlignTokensHeaders;
 var
-  frame: THistoryTransactionFrame;
-  i: Integer;
+  Width, ContentWidth: Single;
 begin
   HistoryTokenVertScrollBox.BeginUpdate;
   try
-    frame := nil;
-    for i := 0 to HistoryTokenVertScrollBox.ComponentCount-1 do
-      if HistoryTokenVertScrollBox.Components[i] is THistoryTransactionFrame then
-      begin
-        frame := HistoryTokenVertScrollBox.Components[i] as THistoryTransactionFrame;
-        break;
-      end;
-    if not Assigned(frame) then exit;
+    if HistoryTokenVertScrollBox.ContentBounds.Width = 0 then
+      ContentWidth := 1094
+    else
+      ContentWidth := HistoryTokenVertScrollBox.ContentBounds.Width;
 
-    DateTimeTokenHeaderLabel.Width := frame.DateTimeLabel.Width;
-    BlockNumTokenHeaderLabel.Width := frame.BlockLabel.Width;
-    AddressTokenHeaderLabel.Width := frame.AddressLabel.Width;
-    HashTokenHeaderLabel.Width := frame.HashLabel.Width;
-    AmountTokenHeaderLabel.Width := frame.AmountLabel.Width;
+    Width := ContentWidth - DateTimeLabelWidth -
+      BlockLabelWidth - ValueLabelWidth - IncomRectWidth - 85;
+    AddressTokenHeaderLabel.Width := Width * 0.4;
+    HashTokenHeaderLabel.Width := Width * 0.6;
   finally
     HistoryTokenVertScrollBox.EndUpdate;
   end;
@@ -578,7 +638,7 @@ end;
 procedure TMainForm.AmountTokenEditChangeTracking(Sender: TObject);
 var
   isNumber: Boolean;
-  val,balance: Extended;
+  val,balance: Double;
   tICO:TTokenICODat;
 begin
   const isGetTokenSuccess = AppCore.TryGetTokenICO(TokenNameEdit.Text, tICO);
@@ -625,6 +685,11 @@ begin
   (Sender as TCircle).Fill.Kind := TBrushKind.None;
 end;
 
+procedure TMainForm.ExplorerVertScrollBoxResized(Sender: TObject);
+begin
+  AlignExplorerHeaders(TickerExplorerHeaderLabel.Visible);
+end;
+
 procedure TMainForm.TETBackCircleMouseDown(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Single);
 begin
@@ -633,22 +698,18 @@ end;
 
 procedure TMainForm.CleanScrollBox(AVertScrollBox: TVertScrollBox);
 var
-  component: TComponent;
+  Frame: TComponent;
   i: Integer;
 begin
-  AVertScrollBox.BeginUpdate;
-  try
-    i := 0;
-    repeat
-      component := AVertScrollBox.Components[i];
-      if (AVertScrollBox.Components[i] is TExplorerTransactionFrame) or
-         (AVertScrollBox.Components[i] is THistoryTransactionFrame) then
-        component.Free
-      else
-        Inc(i);
-    until i = AVertScrollBox.ComponentCount;
-  finally
-    AVertScrollBox.EndUpdate;
+  i := 0;
+  while i < AVertScrollBox.ComponentCount do
+  begin
+    Frame := AVertScrollBox.Components[i];
+    if (AVertScrollBox.Components[i] is THistoryTransactionFrame) or
+       (AVertScrollBox.Components[i] is TExplorerTransactionFrame) then
+      Frame.Free
+    else
+      Inc(i);
   end;
 end;
 
@@ -685,39 +746,56 @@ begin
 end;
 
 procedure TMainForm.CreateTokenButtonClick(Sender: TObject);
-var
-  response: string;
 begin
+  CreateTokenButton.Enabled := False;
+  CreateTokenAniIndicator.Visible := True;
+  CreateTokenAniIndicator.Enabled := True;
+
   try
-    response := AppCore.DoNewToken('*',AppCore.SessionKey,
+    AppCore.DoNewToken('*', AppCore.SessionKey,
       CreateTokenInformationMemo.Text, CreateTokenShortNameEdit.Text,
       CreateTokenSymbolEdit.Text, CreateTokenAmountEdit.Text.ToInt64,
-      DecimalsEdit.Text.ToInteger);
+      DecimalsEdit.Text.ToInteger, TokenCreatingCallBack);
+  except
+    on E:EValidError do
+      ShowTokenCreatingStatus(E.Message, True);
+    on E:Exception do
+    begin
+      ShowTokenCreatingStatus('Unknown error', True);
+      Logs.DoLog('Unknown error during token creating with message: '
+        + E.Message, ERROR, tcp);
+    end;
+  end;
+end;
 
+procedure TMainForm.TokenCreatingCallBack(const AResponse: string);
+var
+  Splitted: TArray<string>;
+begin
+  CreateTokenAniIndicator.Enabled := False;
+  CreateTokenAniIndicator.Visible := False;
+
+  if not AResponse.StartsWith('URKError') then
+  begin
     CreateTokenShortNameEdit.Text := '';
     CreateTokenSymbolEdit.Text := '';
     CreateTokenAmountEdit.Text := '';
     DecimalsEdit.Text := '';
     CreateTokenInformationMemo.Text := '';
     ShowTokenCreatingStatus('Token successfully created');
-  except
-    on E:EValidError do
-      ShowTokenCreatingStatus(E.Message,True);
-    on E:EKeyExpiredError do
-      ShowTokenCreatingStatus('Session key expired, please relogin',True);
-    on E:ETokenAlreadyExists do
-      ShowTokenCreatingStatus('Token already exists',True);
-    on E:EInsufficientFundsError do
-      ShowTokenCreatingStatus('Insufficient funds to pay the fee',True);
-    on E:EUnknownError do
-    begin
-      ShowTokenCreatingStatus('Unknown error with code ' + E.Message,True);
-      Logs.DoLog('Unknown error during token creating with code ' + E.Message,ERROR,tcp);
-    end;
-    on E:Exception do
-    begin
-      ShowTokenCreatingStatus('Unknown error',True);
-      Logs.DoLog('Unknown error during token creating  with message: ' + E.Message,ERROR,tcp);
+  end else
+  begin
+    Splitted := AResponse.Split([' ']);
+    case Splitted[3].ToInteger of
+      20: ShowTokenCreatingStatus(KeyExpiredErrorText, True);
+      44: ShowTokenCreatingStatus(TokenAlreadyExistsErrorText, True);
+      3203: ShowTokenCreatingStatus(InsufficientFundsErrorText, True);
+      else
+        begin
+          Logs.DoLog('Unknown error during token creating with code ' +
+            Splitted[3], TLogType.ERROR, tcp);
+          ShowTokenCreatingStatus('Unknown error with code ' + Splitted[3], True);
+        end;
     end;
   end;
 end;
@@ -755,6 +833,13 @@ begin
     TokenCreationFeeLabel.Text := 'Creation token fee: 0 TET';
 end;
 
+procedure TMainForm.CreateTokenShortNameEditKeyDown(Sender: TObject;
+  var Key: Word; var KeyChar: WideChar; Shift: TShiftState);
+begin
+  if CreateTokenButton.Enabled and (Key = 13) then
+    CreateTokenButtonClick(Self);
+end;
+
 procedure TMainForm.CreateTokenSymbolEditChangeTracking(Sender: TObject);
 begin
   CreateTokenSymbolEdit.Text := CreateTokenSymbolEdit.Text.ToUpper;
@@ -776,62 +861,19 @@ begin
   Result := Length(TrimmedValue) - DecimalPos;
 end;
 
-procedure TMainForm.DrawTransactions(
-  ATransactions: TArray<TExplorerTransactionInfo>; AShowTicker: Boolean);
-var
-  NewTransFrame: TExplorerTransactionFrame;
-  i: Integer;
-  Format: string;
-begin
-  CleanScrollBox(ExplorerVertScrollBox);
-  ExplorerVertScrollBox.BeginUpdate;
-  try
-    for i := Length(ATransactions) - 1 downto 0 do
-    begin
-      Format := '0.' + string.Create('0', ATransactions[i].FloatSize);
-      NewTransFrame := TExplorerTransactionFrame.Create(ExplorerVertScrollBox,
-                                                        ATransactions[i].DateTime,
-                                                        ATransactions[i].BlockNum,
-                                                        ATransactions[i].Ticker,
-                                                        ATransactions[i].TransFrom,
-                                                        ATransactions[i].TransTo,
-                                                        ATransactions[i].Hash,
-                                                        FormatFloat(Format,
-                                                          ATransactions[i].Amount),
-                                                        AShowTicker);
-      NewTransFrame.OnClick := onExplorerFrameClick;
-      NewTransFrame.Parent := ExplorerVertScrollBox;
-    end;
-  finally
-    ExplorerVertScrollBox.EndUpdate;
-    AlignExplorerHeaders(AShowTicker);
-  end;
-end;
-
-procedure TMainForm.ExplorerVertScrollBoxPaint(Sender: TObject; Canvas: TCanvas;
-  const ARect: TRectF);
-begin
-  AlignExplorerHeaders(TickerExplorerHeaderLabel.Visible);
-end;
-
-procedure TMainForm.ExplorerVertScrollBoxResized(Sender: TObject);
-begin
-  AlignExplorerHeaders(TickerExplorerHeaderLabel.Visible);
-end;
-
 procedure TMainForm.TokenItemClick(Sender: TObject);
 var
-  tICO: TTokenICODat;
+  TokenICO: TTokenICODat;
 begin
-  TokenNameEdit.Text := (Sender as TListBoxItem).Text;
-  chosenToken := (Sender as TListBoxItem).Text;
+  FChosenToken := Sender as TListBoxItem;
+  TokenNameEdit.Text := FChosenToken.Text;
   RefreshHeaderBalance(TokenNameEdit.Text);
-  MainRectangleMouseDown(nil,TMouseButton.mbLeft,[],0,0);
+  MainRectangleMouseDown(nil, TMouseButton.mbLeft, [], 0, 0);
 
-  if AppCore.TryGetTokenICO(TokenNameEdit.Text,tICO) then
+  if AppCore.TryGetTokenICO(TokenNameEdit.Text, TokenICO) then
   begin
-    TokenShortNameEdit.Text := tICO.ShortName;
-    TokenInfoMemo.Text := tICO.FullName;
+    TokenShortNameEdit.Text := TokenICO.ShortName;
+    TokenInfoMemo.Text := TokenICO.FullName;
   end else
   begin
     TokenShortNameEdit.Text := '';
@@ -868,10 +910,20 @@ begin
 end;
 
 procedure TMainForm.FormCreate(Sender: TObject);
+var
+  SmartKey: TCSmartKey;
 begin
   Caption := 'LNode' + ' ' + AppCore.GetVersion;
-  FBalances := TDictionary<String,Extended>.Create;
-  FBalances.Add('TET',0);
+  FBalances := TDictionary<string, Double>.Create;
+  SetLength(FSearchResultTrans, 0);
+  FSelectedFrame := nil;
+  FTickersFrames := TList<TTickerFrame>.Create;
+  FTickersFrames.Capacity := 200;
+  AddTickerFrame('Search results');
+  AddTickerFrame('Tectum');
+  for SmartKey in AppCore.GetAllSmartKeyBlocks do
+    AddTickerFrame(SmartKey.Abreviature, SmartKey.SmartID);
+  FChosenToken := nil;
 
   TETCopyLoginLayout.OnMouseEnter := StylesForm.OnCopyLayoutMouseEnter;
   TETCopyLoginLayout.OnMouseLeave := StylesForm.OnCopyLayoutMouseLeave;
@@ -913,11 +965,6 @@ begin
   NextPageLayout.OnMouseEnter := StylesForm.OnCopyLayoutMouseEnter;
   NextPageLayout.OnMouseLeave := StylesForm.OnCopyLayoutMouseLeave;
 
-  chosenToken := '';
-  chosenTicker := '';
-  AddTicker('Search result');
-  AddTicker('Tectum');
-
   const Digitals = '0123456789' + FormatSettings.DecimalSeparator;
   AmountTETEdit.FilterChar := Digitals;
   AmountTokenEdit.FilterChar := Digitals;
@@ -925,15 +972,18 @@ end;
 
 procedure TMainForm.FormDestroy(Sender: TObject);
 begin
+  FTickersFrames.Free;
   FBalances.Free;
 end;
 
 procedure TMainForm.FormShow(Sender: TObject);
 begin
-  RefreshTETBalance;
   AddressTETLabel.Text := AppCore.TETAddress;
-  RefreshTokensBalances;
-  RefreshTETHistory;
+  AddressTokenLabel.Text := AppCore.TETAddress;
+  Tabs.TabIndex := 0;
+  Tabs.OnChange(nil);
+  FTickersFrames.Items[1].RoundRect.OnMouseDown(FTickersFrames.Items[1].RoundRect,
+    TMouseButton.mbLeft, [], 0, 0);
 end;
 
 procedure TMainForm.HideCreatingMessageTimerTimer(Sender: TObject);
@@ -960,21 +1010,9 @@ begin
   FloatAnimation4.Enabled := True;
 end;
 
-procedure TMainForm.HistoryTETVertScrollBoxPaint(Sender: TObject;
-  Canvas: TCanvas; const ARect: TRectF);
-begin
-  AlignTETHeaders;
-end;
-
 procedure TMainForm.HistoryTETVertScrollBoxResized(Sender: TObject);
 begin
   AlignTETHeaders;
-end;
-
-procedure TMainForm.HistoryTokenVertScrollBoxPaint(Sender: TObject;
-  Canvas: TCanvas; const ARect: TRectF);
-begin
-  AlignTokensHeaders;
 end;
 
 procedure TMainForm.HistoryTokenVertScrollBoxResized(Sender: TObject);
@@ -990,11 +1028,24 @@ end;
 procedure TMainForm.TabsChange(Sender: TObject);
 begin
   case Tabs.TabIndex of
-    0: SendTETToEdit.SetFocus;
-    1: RecepientAddressEdit.SetFocus;
+    0:
+      begin
+        RefreshTETBalance;
+        RefreshTETHistory;
+        AlignTETHeaders;
+        SendTETToEdit.SetFocus;
+      end;
+    1:
+      begin
+        RefreshTokensBalances;
+        RefreshTokenHistory;
+        AlignTokensHeaders;
+        RecepientAddressEdit.SetFocus;
+      end;
     2: CreateTokenShortNameEdit.SetFocus;
     3: begin
          ExplorerTabControl.TabIndex := 0;
+         AlignExplorerHeaders(TickerExplorerHeaderLabel.Visible);
          SearchEdit.SetFocus;
        end;
   end;
@@ -1014,6 +1065,36 @@ var
 begin
   if TPlatformServices.Current.SupportsPlatformService(IFMXClipBoardService, Service) then
     Service.SetClipboard(TETHashDetailsText.Text);
+end;
+
+procedure TMainForm.TETTransferCallBack(const AResponse: string);
+var
+  Splitted: TArray<string>;
+begin
+  TransTETAniIndicator.Enabled := False;
+  TransTETAniIndicator.Visible := False;
+
+  if not AResponse.StartsWith('URKError') then
+  begin
+    SendTETToEdit.Text := '';
+    AmountTETEdit.Text := '';
+    ShowTETTransferStatus('Transaction successful');
+  end else
+  begin
+    Splitted := AResponse.Split([' ']);
+    case Splitted[3].ToInteger of
+      20: ShowTETTransferStatus(KeyExpiredErrorText, True);
+      55: ShowTETTransferStatus(AddressNotExistsErrorText, True);
+      110: ShowTETTransferStatus(InsufficientFundsErrorText, True);
+      4042: ShowTETTransferStatus(UnableSendToTyourselfErrorText, True);
+      else
+        begin
+          Logs.DoLog('Unknown error during TET transfer with code ' +
+            Splitted[3], TLogType.ERROR, tcp);
+          ShowTETTransferStatus('Unknown error with code ' + Splitted[3], True);
+        end;
+    end;
+  end;
 end;
 
 procedure TMainForm.TokenBackCircleMouseDown(Sender: TObject;
@@ -1038,28 +1119,6 @@ begin
     Service.SetClipboard(TokenHashDetailsText.Text);
 end;
 
-procedure TMainForm.TokenItemApplyStyleLookup(Sender: TObject);
-var
-  item: TListBoxItem;
-  rect: TRectangle;
-  valueLabel: TLabel;
-  value: Extended;
-begin
-  item := Sender as TListBoxItem;
-  item.BeginUpdate;
-  try
-    rect := item.FindStyleResource('RectangleStyle') as TRectangle;
-    if Assigned(rect) then
-    begin
-      valueLabel := rect.FindStyleResource('TokenAmountLabelStyle') as TLabel;
-      if FBalances.TryGetValue(item.Text,value) then
-        valueLabel.Text := FormatFloat('0.########',value);
-    end;
-  finally
-    item.EndUpdate;
-  end;
-end;
-
 procedure TMainForm.MainRectangleMouseDown(Sender: TObject;
   Button: TMouseButton; Shift: TShiftState; X, Y: Single);
 begin
@@ -1067,12 +1126,21 @@ begin
   SearchTokenEdit.Text := '';
 end;
 
-procedure TMainForm.NewChainBlocksEvent;
+procedure TMainForm.NewTETChainBlocksEvent(ANeedRefreshBalance: Boolean);
 begin
-  RefreshTETBalance;
-  RefreshTETHistory;
-  RefreshPagesLayout;
-  RefreshExplorer;
+  if ANeedRefreshBalance and (Tabs.TabIndex = 0) then
+  begin
+    RefreshTETBalance;
+    RefreshTETHistory;
+  end;
+  if (Tabs.TabIndex = 3) and (FSelectedFrame.Ticker = 'Tectum') then
+    RefreshPagesLayout;
+end;
+
+procedure TMainForm.NewTokenEvent(ASmartKey: TCSmartKey);
+begin
+  AddTickerFrame(ASmartKey.Abreviature, ASmartKey.SmartID);
+  AddOrRefreshBalance(ASmartKey);
 end;
 
 procedure TMainForm.OnPageSelected;
@@ -1085,29 +1153,33 @@ begin
     if (PagesPanelLayout.Components[i] is TPageNumFrame) then
     begin
       frame := PagesPanelLayout.Components[i] as TPageNumFrame;
-      if ((PagesPanelLayout.Components[i] as TPageNumFrame).Tag = pageNum) then
+      if ((PagesPanelLayout.Components[i] as TPageNumFrame).Tag = FPageNum) then
         frame.PageNumText.TextSettings.FontColor := $FF4285F4
       else
         frame.PageNumText.TextSettings.FontColor := MOUSE_LEAVE_COLOR;
     end;
   end;
 
-  PrevPageLayout.Enabled := pageNum > 1;
-  NextPageLayout.Enabled := pageNum < totalPagesAmount;
+  PrevPageLayout.Enabled := FPageNum > 1;
+  NextPageLayout.Enabled := FPageNum < FTotalPagesAmount;
 end;
 
-procedure TMainForm.NewSmartBlocksEvent;
+procedure TMainForm.NewTokenBlocksEvent(ASmartKey: TCSmartKey;
+  ANeedRefreshBalance: Boolean);
 begin
-  RefreshTokensBalances;
-  RefreshTokenHistory;
-  RefreshPagesLayout;
-  RefreshExplorer;
+  if ANeedRefreshBalance and (Tabs.TabIndex = 1) then
+  begin
+    AddOrRefreshBalance(ASmartKey);
+    RefreshTokenHistory;
+  end;
+  if (Tabs.TabIndex = 3) and (FSelectedFrame.Tag = ASmartKey.SmartID) then
+    RefreshPagesLayout;
 end;
 
 procedure TMainForm.NextPageLayoutMouseDown(Sender: TObject;
   Button: TMouseButton; Shift: TShiftState; X, Y: Single);
 begin
-  Inc(pageNum);
+  Inc(FPageNum);
   RefreshPagesLayout;
 end;
 
@@ -1135,66 +1207,43 @@ end;
 procedure TMainForm.onPageNumFrameClick(Sender: TObject; Button: TMouseButton;
   Shift: TShiftState; X, Y: Single);
 begin
-  if pageNum = (Sender as TPageNumFrame).Tag then
+  if FPageNum = (Sender as TPageNumFrame).Tag then
     exit;
-  pageNum := (Sender as TPageNumFrame).Tag;
+  FPageNum := (Sender as TPageNumFrame).Tag;
   RefreshPagesLayout;
 end;
 
 procedure TMainForm.onTETHistoryFrameClick(Sender: TObject);
 var
-  ticker: String;
-  tICO: TTokenICODat;
+  ICOBlock: TTokenICODat;
 begin
-  if not AppCore.TryGetTokenICO('TET',tICO) then
+  if not AppCore.TryGetTokenICO('TET', ICOBlock) then
     exit;
 
   with (Sender as THistoryTransactionFrame) do
   begin
-    TETDateTimeDetailsText.AutoSize := False;
-    TETDateTimeDetailsText.Text := DateTimeLabel.Text;
-    TETDateTimeDetailsText.AutoSize := True;
-
-    TETBlockDetailsText.AutoSize := False;
-    TETBlockDetailsText.Text := BlockLabel.Text;
-    TETBlockDetailsText.AutoSize := True;
-
+    SetText(TETDateTimeDetailsText, DateTimeLabel.Text);
+    SetText(TETBlockDetailsText, BlockLabel.Text);
+    SetText(TETAddressDetailsText, AddressLabel.Text);
+    SetText(TETHashDetailsText, HashLabel.Text);
+    SetText(TETAmountDetailsText, AmountLabel.Text);
+    SetText(TETDetailsText, Format('%s (%s)', [ICOBlock.Abreviature,
+      ICOBlock.ShortName]));
+    SetText(TETInfoDetailsLabelValue, ICOBlock.FullName);
     if IncomText.Text = 'OUT' then
       TETAddressDetailsLabel.Text := 'To'
     else
       TETAddressDetailsLabel.Text := 'From';
-
-    TETAddressDetailsText.AutoSize := False;
-    TETAddressDetailsText.Text := AddressLabel.Text;
-    TETAddressDetailsText.AutoSize := True;
-
-    TETHashDetailsText.AutoSize := False;
-    TETHashDetailsText.Text := HashLabel.Text;
-    TETHashDetailsText.AutoSize := True;
-
-    TETAmountDetailsText.AutoSize := False;
-    TETAmountDetailsText.Text := AmountLabel.Text;
-    TETAmountDetailsText.AutoSize := True;
-
-    TETDetailsText.AutoSize := False;
-    TETDetailsText.Text := Format('%s (%s)',[tICO.Abreviature,tICO.ShortName]);
-    TETDetailsText.AutoSize := True;
-
-    TETInfoDetailsLabelValue.AutoSize := False;
-    TETInfoDetailsLabelValue.Text := tICO.FullName;
-    TETInfoDetailsLabelValue.AutoSize := True;
   end;
   TETTransactionDetailsRectangle.Height := TETInfoDetailsLabelValue.Height + 381;
-
   TETTabControl.Next;
 end;
 
 procedure TMainForm.onTokenHistoryFrameClick(Sender: TObject);
 var
-  ticker: String;
-  tICO: TTokenICODat;
+  TokenICO: TTokenICODat;
 begin
-  if not AppCore.TryGetTokenICO(TokenNameEdit.Text,tICO) then
+  if not AppCore.TryGetTokenICO(TokenNameEdit.Text, TokenICO) then
     exit;
 
   with (Sender as THistoryTransactionFrame) do
@@ -1225,11 +1274,12 @@ begin
     TokenAmountDetailsText.AutoSize := True;
 
     TokenDetailsAdvText.AutoSize := False;
-    TokenDetailsAdvText.Text := Format('%s (%s)',[tICO.Abreviature,tICO.ShortName]);
+    TokenDetailsAdvText.Text := Format('%s (%s)',
+      [TokenICO.Abreviature, TokenICO.ShortName]);
     TokenDetailsAdvText.AutoSize := True;
 
     TokenInfoDetailsAdvLabelValue.AutoSize := False;
-    TokenInfoDetailsAdvLabelValue.Text := tICO.FullName;
+    TokenInfoDetailsAdvLabelValue.Text := TokenICO.FullName;
     TokenInfoDetailsAdvLabelValue.AutoSize := True;
   end;
   TokenTransactionDetailsRectangle.Height := TokenInfoDetailsAdvLabelValue.Height + 381;
@@ -1245,7 +1295,7 @@ end;
 procedure TMainForm.PrevPageLayoutMouseDown(Sender: TObject;
   Button: TMouseButton; Shift: TShiftState; X, Y: Single);
 begin
-  Dec(pageNum);
+  Dec(FPageNum);
   RefreshPagesLayout;
 end;
 
@@ -1257,136 +1307,143 @@ begin
     SendTokenButton.Enabled := False;
 end;
 
-procedure TMainForm.RefreshExplorer;
+procedure TMainForm.RefreshExplorer(
+  ATransactions: TArray<TExplorerTransactionInfo>; AShowTicker: Boolean);
 var
-  Transactions: TArray<TExplorerTransactionInfo>;
-  i,TransNumber: Integer;
-  TokenICO: TTokenICODat;
-  SmartKey: TCSmartKey;
+  NewTransFrame: TExplorerTransactionFrame;
+  i: Integer;
+  Format: string;
 begin
-  if chosenTicker.IsEmpty then
-    exit;
-
-  TransNumber := TransToDrawNumber;
-  if chosenTicker = 'Tectum' then
-  begin
-    i := AppCore.GetChainBlocksCount - pageNum * TransNumber;
-    if i < 0 then
+  CleanScrollBox(ExplorerVertScrollBox);
+  ExplorerVertScrollBox.BeginUpdate;
+  try
+    for i := 0 to Length(ATransactions) - 1 do
     begin
-      Inc(TransNumber, i);
-      i := 0;
+      Format := '0.' + string.Create('0', ATransactions[i].FloatSize);
+      NewTransFrame := TExplorerTransactionFrame.Create(ExplorerVertScrollBox,
+                                                        ATransactions[i].DateTime,
+                                                        ATransactions[i].BlockNum,
+                                                        ATransactions[i].Ticker,
+                                                        ATransactions[i].TransFrom,
+                                                        ATransactions[i].TransTo,
+                                                        ATransactions[i].Hash,
+                                                        FormatFloat(Format,
+                                                          ATransactions[i].Amount),
+                                                        AShowTicker);
+      NewTransFrame.OnClick := onExplorerFrameClick;
+      NewTransFrame.Parent := ExplorerVertScrollBox;
     end;
-    Transactions := AppCore.GetChainTransations(i, TransNumber);
-    if not AppCore.TryGetTokenICO('TET', TokenICO) then
-      exit;
-  end else
-  begin
-    if not AppCore.TryGetTokenBase(chosenTicker, SmartKey) then exit;
-    i := AppCore.GetSmartBlocksCount(SmartKey.SmartID) - pageNum * TransNumber;
-    if i < 0 then
-    begin
-      Inc(TransNumber, i);
-      i := 0;
-    end;
-    Transactions := AppCore.GetSmartTransactions(chosenTicker, i, TransNumber);
-    if not AppCore.TryGetTokenICO(chosenTicker, TokenICO) then
-      exit;
+  finally
+    ExplorerVertScrollBox.EndUpdate;
   end;
-
-  DrawTransactions(Transactions);
 end;
 
-procedure TMainForm.RefreshHeaderBalance(AName: String);
+procedure TMainForm.RefreshHeaderBalance(ATicker: string);
 var
-  value: Extended;
+  Value: Double;
 begin
-  if FBalances.TryGetValue(AName,value) then
+  if FBalances.TryGetValue(ATicker, Value) then
     BalanceTokenValueLabel.Text :=
-      Format('%s %s',[FormatFloat('0.########',value), AName]);
-
-  AddressTokenLabel.Text := AppCore.GetSmartAddressByTicker(AName);
+      Format('%s %s', [FormatFloat('0.########', Value), ATicker]);
 end;
 
 procedure TMainForm.RefreshPagesLayout;
 const
   AtTheEdges = 5;
 var
-  i,PageNumToDraw,PagesToDraw,TotalBlocksNumber: Integer;
-  TokenBase: TCSmartKey;
+  Transactions: TArray<TExplorerTransactionInfo>;
+  i, PageNumToDraw, PagesToDraw, TotalBlocksNumber: Integer;
 begin
-  if chosenTicker = 'Tectum' then
+  if FSelectedFrame.Ticker = 'Tectum' then
   begin
-    TotalBlocksNumber := AppCore.GetChainBlocksCount;
-    TotalPagesAmount := TotalBlocksNumber div TransToDrawNumber;
+    TotalBlocksNumber := AppCore.GetTETChainBlocksCount;
+    FTotalPagesAmount := TotalBlocksNumber div TransToDrawNumber;
     if TotalBlocksNumber mod TransToDrawNumber > 0 then
-      Inc(TotalPagesAmount);
+      Inc(FTotalPagesAmount);
+
+    Transactions := AppCore.GetTETTransactions(TransToDrawNumber * (FPageNum - 1),
+      TransToDrawNumber);
+  end else
+  if Length(FSearchResultTrans) > 0 then
+  begin
+    TotalBlocksNumber := Length(FSearchResultTrans);
+    FTotalPagesAmount := TotalBlocksNumber div TransToDrawNumber;
+    if TotalBlocksNumber mod TransToDrawNumber > 0 then
+      Inc(FTotalPagesAmount);
+
+    Transactions := Copy(FSearchResultTrans, TransToDrawNumber * (FPageNum - 1), TransToDrawNumber);
   end else
   begin
-    if not AppCore.TryGetTokenBase(chosenTicker,TokenBase) then
-      exit;
-    TotalBlocksNumber := AppCore.GetSmartBlocksCount(TokenBase.SmartID);
-    TotalPagesAmount := TotalBlocksNumber div TransToDrawNumber;
+    TotalBlocksNumber := AppCore.GetTokenChainBlocksCount(FSelectedFrame.Tag);
+    FTotalPagesAmount := TotalBlocksNumber div TransToDrawNumber;
     if TotalBlocksNumber mod TransToDrawNumber > 0 then
-      Inc(TotalPagesAmount);
+      Inc(FTotalPagesAmount);
+
+    Transactions := AppCore.GetTokenTransactions(FSelectedFrame.Tag,
+      TransToDrawNumber * (FPageNum - 1), TransToDrawNumber);
   end;
+
 
   PaginationBottomLayout.BeginUpdate;
   PagesPanelLayout.BeginUpdate;
   try
     PagesPanelLayout.DestroyComponents;
     PagesPanelLayout.Width := 48;
-    PaginationBottomLayout.Visible := TotalPagesAmount > 1;
+    PaginationBottomLayout.Visible := FTotalPagesAmount > 1;
     if not PaginationBottomLayout.Visible then
       exit;
 
     PagesToDraw := 3 + AtTheEdges * 2;
     AddPageNum(1);
-    if (pageNum - AtTheEdges > 3) and (TotalPagesAmount > PagesToDraw + 2) then
+    if (FPageNum - AtTheEdges > 3) and (FTotalPagesAmount > PagesToDraw + 2) then
     begin
       AddPageNum(-1);
       Dec(PagesToDraw);
     end;
-    if (pageNum + AtTheEdges < TotalPagesAmount - 2) and
-      (TotalPagesAmount > PagesToDraw + 2) then
+    if (FPageNum + AtTheEdges < FTotalPagesAmount - 2) and
+      (FTotalPagesAmount > PagesToDraw + 2) then
       Dec(PagesToDraw);
-    PageNumToDraw := Max(2,Min(TotalPagesAmount - PagesToDraw,pageNum - AtTheEdges));
-    if (pageNum - AtTheEdges = 3) then
+    PageNumToDraw := Max(2, Min(FTotalPagesAmount - PagesToDraw,
+      FPageNum - AtTheEdges));
+    if (FPageNum - AtTheEdges = 3) then
       Dec(PageNumToDraw);
-    for i := PageNumToDraw to pageNum do
+    for i := PageNumToDraw to FPageNum do
     begin
-      if (i = 1) or (i = TotalPagesAmount) then
+      if (i = 1) or (i = FTotalPagesAmount) then
         continue;
       AddPageNum(i);
     end;
-    PageNumToDraw := Min(TotalPagesAmount - 1,Max(PagesToDraw + 1,pageNum + AtTheEdges));
-    if (pageNum + AtTheEdges = TotalPagesAmount - 2) then
+    PageNumToDraw := Min(FTotalPagesAmount - 1, Max(PagesToDraw + 1,
+      FPageNum + AtTheEdges));
+    if (FPageNum + AtTheEdges = FTotalPagesAmount - 2) then
       Inc(PageNumToDraw);
-    for i := pageNum + 1 to PageNumToDraw do
+    for i := FPageNum + 1 to PageNumToDraw do
     begin
-      if (i = 1) or (i = TotalPagesAmount) then
+      if (i = 1) or (i = FTotalPagesAmount) then
         continue;
       AddPageNum(i);
     end;
-    if (pageNum + AtTheEdges < TotalPagesAmount - 2) and
-      (TotalPagesAmount > PagesToDraw + 2) then
+    if (FPageNum + AtTheEdges < FTotalPagesAmount - 2) and
+      (FTotalPagesAmount > PagesToDraw + 2) then
       AddPageNum(-1);
-    AddPageNum(TotalPagesAmount);
+    AddPageNum(FTotalPagesAmount);
     OnPageSelected;
   finally
     PagesPanelLayout.EndUpdate;
     PaginationBottomLayout.EndUpdate;
-    RefreshExplorer;
+    RefreshExplorer(Transactions, Length(FSearchResultTrans) > 0);
+    AlignExplorerHeaders(Length(FSearchResultTrans) > 0);
   end;
 end;
 
 procedure TMainForm.RefreshTETBalance;
 var
-  val: Extended;
+  val: Double;
 begin
   try
-    FBalances.AddOrSetValue('TET',AppCore.GetLocalTETBalance);
-    FBalances.TryGetValue('TET',val);
-    BalanceTETValueLabel.Text := FormatFloat('0.########',val) + ' TET';
+    val := AppCore.GetTETBalance(AppCore.TETAddress);
+    FBalances.AddOrSetValue('TET', val);
+    BalanceTETValueLabel.Text := FormatFloat('0.########', val) + ' TET';
   except
     on E:ENoInfoForThisAccountError do
       BalanceTETValueLabel.Text := '<ERROR: DATA NOT FOUND>';
@@ -1396,34 +1453,33 @@ begin
 end;
 
 procedure TMainForm.RefreshTETHistory;
+const
+  MaxTransactionsNumber = 20;
 var
-  transArray: TArray<THistoryTransactionInfo>;
+  TETTransactions: TArray<THistoryTransactionInfo>;
+  TETTransactionFrame: THistoryTransactionFrame;
   i: Integer;
-  newTransFrame: THistoryTransactionFrame;
-  amount: Integer;
 begin
-  amount := 20;
-  transArray := AppCore.GetChainLastUserTransactions(AppCore.UserID,amount);
+  TETTransactions := AppCore.GetTETUserLastTransactions(AppCore.UserID, 0,
+    MaxTransactionsNumber);
 
-  NoTETHistoryLabel.Visible := amount = 0;
+  NoTETHistoryLabel.Visible := Length(TETTransactions) = 0;
   HistoryTETHeaderLayout.Visible := not NoTETHistoryLabel.Visible;
   HistoryTETVertScrollBox.Visible := not NoTETHistoryLabel.Visible;
-  if NoTETHistoryLabel.Visible then exit;
+  if NoTETHistoryLabel.Visible then
+    exit;
 
-  CleanScrollBox(HistoryTETVertScrollBox);
   HistoryTETVertScrollBox.BeginUpdate;
+  CleanScrollBox(HistoryTETVertScrollBox);
   try
-    for i := 0 to amount-1 do
+    for i := 0 to Length(TETTransactions) - 1 do
     begin
-      newTransFrame := THistoryTransactionFrame.Create(HistoryTETVertScrollBox,
-                                                       transArray[i].DateTime,
-                                                       transArray[i].BlockNum,
-                                                       transArray[i].Address,
-                                                       transArray[i].Hash,
-                                                       FormatFloat('0.00000000',transArray[i].Amount),
-                                                       transArray[i].Incom);
-      newTransFrame.OnClick := onTETHistoryFrameClick;
-      newTransFrame.Parent := HistoryTETVertScrollBox;
+      with TETTransactions[i] do
+        TETTransactionFrame := THistoryTransactionFrame.Create(
+          HistoryTETVertScrollBox, DateTime, BlockNum, Address, Hash,
+          FormatFloat('0.00000000', Value), Incom);
+      TETTransactionFrame.OnClick := onTETHistoryFrameClick;
+      TETTransactionFrame.Parent := HistoryTETVertScrollBox;
     end;
   finally
     HistoryTETVertScrollBox.EndUpdate;
@@ -1432,141 +1488,105 @@ begin
 end;
 
 procedure TMainForm.RefreshTokenHistory;
+const
+  MaxTransactionsNumber = 20;
 var
-  transArray: TArray<THistoryTransactionInfo>;
+  TokenTransactions: TArray<THistoryTransactionInfo>;
+  TokenTransactionFrame: THistoryTransactionFrame;
   i: Integer;
-  newTransFrame: THistoryTransactionFrame;
-  amount: Integer;
-  format: String;
-  tICO: TTokenICODat;
+  Format: string;
+  TokenICO: TTokenICODat;
 begin
-  if not AppCore.TryGetTokenICO(TokenNameEdit.Text,tICO) then
-    exit;
+  TokenTransactions := AppCore.GetTokenUserTransactions(FChosenToken.Tag,
+    AppCore.UserID, 0, MaxTransactionsNumber, True);
 
-  amount := 20;
-  transArray := AppCore.GetSmartLastUserTransactions(AppCore.UserID,TokenNameEdit.Text,amount);
+  NoTokenHistoryLabel.Visible := Length(TokenTransactions) = 0;
 
-  NoTokenHistoryLabel.Visible := amount = 0;
-  HistoryTokenHeaderLayout.Visible := not NoTokenHistoryLabel.Visible;
   HistoryTokenVertScrollBox.Visible := not NoTokenHistoryLabel.Visible;
-  if NoTokenHistoryLabel.Visible then exit;
-
-  CleanScrollBox(HistoryTokenVertScrollBox);
+  HistoryTokenHeaderLayout.Visible := not NoTokenHistoryLabel.Visible;
+  if NoTokenHistoryLabel.Visible then
+    exit;
+  AppCore.TryGetTokenICO(FChosenToken.Text, TokenICO);
   HistoryTokenVertScrollBox.BeginUpdate;
+  CleanScrollBox(HistoryTokenVertScrollBox);
   try
-    format := '0.' + string.Create('0', tICO.FloatSize);
-    for i := 0 to amount-1 do
+    Format := '0.' + string.Create('0', TokenICO.FloatSize);
+    for i := 0 to Length(TokenTransactions) - 1 do
     begin
-      newTransFrame := THistoryTransactionFrame.Create(HistoryTokenVertScrollBox,
-                                                       transArray[i].DateTime,
-                                                       transArray[i].BlockNum,
-                                                       transArray[i].Address,
-                                                       transArray[i].Hash,
-                                                       FormatFloat(format,transArray[i].Amount),
-                                                       transArray[i].Incom);
-      newTransFrame.OnClick := onTokenHistoryFrameClick;
-      newTransFrame.Parent := HistoryTokenVertScrollBox;
+      with TokenTransactions[i] do
+        TokenTransactionFrame := THistoryTransactionFrame.Create(
+          HistoryTokenVertScrollBox, DateTime, BlockNum, Address, Hash,
+          FormatFloat(Format, Value), Incom);
+      TokenTransactionFrame.OnClick := onTokenHistoryFrameClick;
+      TokenTransactionFrame.Parent := HistoryTokenVertScrollBox;
     end;
   finally
     HistoryTokenVertScrollBox.EndUpdate;
-    AlignTokensHeaders;
   end;
 end;
 
 procedure TMainForm.RefreshTokensBalances;
 var
-  splt: TArray<String>;
-  balance: String;
-  i: Integer;
+  SmartKeyBlock: TCSmartKey;
 begin
-  for balance in AppCore.GetLocalTokensBalances do
-  begin
-    splt := balance.Split([':']);
-    AddOrRefreshBalance(splt[0],splt[1].ToExtended);
-  end;
-  TokensListBox.Sort(CustomSortCompare);
+  for SmartKeyBlock in AppCore.GetAllSmartKeyBlocks do
+    AddOrRefreshBalance(SmartKeyBlock);
 
   if TokensListBox.Count > 0 then
   begin
     BalanceTokenLabel.Opacity := 1;
-    AddressTokenLabel.Opacity := 1;
     TokenNameEdit.Enabled := True;
     RecepientAddressEdit.Enabled := True;
     AmountTokenEdit.Enabled := True;
-    ExplorerTabItem.Enabled := True;
-    if chosenToken.IsEmpty then
-      TokensListBox.ListItems[0].OnClick(TokensListBox.ListItems[0])
-    else for i := 0 to TokensListBox.Count-1 do
-         if TokensListBox.Items[i] = chosenToken then
-         begin
-           TokensListBox.ListItems[i].OnClick(TokensListBox.ListItems[i]);
-           break;
-         end;
+    if not Assigned(FChosenToken) then
+      FChosenToken := TokensListBox.ListItems[0];
+    FChosenToken.OnClick(FChosenToken);
   end else
   begin
     BalanceTokenLabel.Opacity := 0;
     BalanceTokenValueLabel.Text := 'No custom tokens yet';
-    AddressTokenLabel.Opacity := 0;
   end;
-end;
-
-procedure TMainForm.RoundRectMouseDown(Sender: TObject; Button: TMouseButton;
-  Shift: TShiftState; X, Y: Single);
-var
-  i: Integer;
-  parent: TTickerFrame;
-  child: TTickerFrame;
-begin
-  if Sender is TTickerFrame then
-    parent := Sender as TTickerFrame
-  else
-    parent := (Sender as TRoundRect).Parent as TTickerFrame;
-  if parent.Ticker = chosenTicker then exit;
-
-  parent.RoundRect.Fill.Color := $FF0072D5;
-  parent.TickerText.TextSettings.FontColor := $FFFFFFFF;
-  parent.Selected := True;
-  chosenTicker := parent.Ticker;
-
-  for i := 0 to TopExplorerHorzLayout.ComponentCount - 1 do
-    if (TopExplorerHorzLayout.Components[i] is TTickerFrame) and
-       ((TopExplorerHorzLayout.Components[i] as TTickerFrame).Ticker <> chosenTicker) and
-       (TopExplorerHorzLayout.Components[i] as TTickerFrame).Selected then
-      begin
-        child := TopExplorerHorzLayout.Components[i] as TTickerFrame;
-        child.TickerText.TextSettings.FontColor := $FD000000;
-        child.RoundRect.Fill.Color := $FFF3F3F3;
-        child.Selected := False;
-        break;
-      end;
 end;
 
 procedure TMainForm.RoundRectTickerMouseDown(Sender: TObject;
   Button: TMouseButton; Shift: TShiftState; X, Y: Single);
+var
+  ParentFrame: TTickerFrame;
 begin
-  RoundRectMouseDown(Sender, Button, Shift, X, Y);  
-  FSearchResultsFrame.Visible := False;  
-  pageNum := 1;
+  ParentFrame := (Sender as TRoundRect).Parent as TTickerFrame;
+  if ParentFrame.Equals(FSelectedFrame) then
+    exit;
+
+  if Assigned(FSelectedFrame) then
+    FSelectedFrame.Selected := False;
+  ParentFrame.Selected := True;
+  FSelectedFrame := ParentFrame;
+  SetLength(FSearchResultTrans, 0);
+
+  FPageNum := 1;
   RefreshPagesLayout;
 end;
 
-procedure TMainForm.AddOrRefreshBalance(AName: String; AValue: Extended);
+procedure TMainForm.AddOrRefreshBalance(ASmartKey: TCSmartKey);
 var
-  i: Integer;
+  Value: Double;
+  Index: Integer;
 begin
-  FBalances.AddOrSetValue(AName,AValue);
-  if TokensListBox.Items.IndexOf(AName) = -1 then
-    AddTokenItem(AName,AValue);
-
-  for i := 0 to TokensListBox.Count-1 do
-  begin
-    if TokensListBox.ListItems[i].Text = AName then
+  Value := AppCore.GetTokenBalance(ASmartKey.SmartID, AppCore.TETAddress);
+  FBalances.AddOrSetValue(ASmartKey.Abreviature, Value);
+  TokensListBox.BeginUpdate;
+  try
+    Index := TokensListBox.Items.IndexOf(ASmartKey.Abreviature);
+    if Index >= 0 then
     begin
-      TokensListBox.ListItems[i].ApplyStyleLookup;
-      if BalanceTokenValueLabel.Text.Contains(AName) then
-        RefreshHeaderBalance(AName);
-      break;
+      TokensListBox.Items.Delete(Index);
+      if BalanceTokenValueLabel.Text.Contains(ASmartKey.Abreviature) then
+        RefreshHeaderBalance(ASmartKey.Abreviature);
     end;
+  finally
+    AddTokenItem(ASmartKey.SmartID, ASmartKey.Abreviature, Value);
+    TokensListBox.Sort(CustomSortCompareStrings);
+    TokensListBox.EndUpdate;
   end;
 end;
 
@@ -1592,27 +1612,25 @@ begin
   
   TThread.CreateAnonymousThread(
   procedure
-  var
-    Transactions: TArray<TExplorerTransactionInfo>;
   begin
-    Transactions := AppCore.SearchTransactionsByAddress(SearchEdit.Text);
+    FSearchResultTrans := AppCore.SearchTransactionsByAddress(SearchEdit.Text);
     AniIndicator1.Enabled := False;
     AniIndicator1.Visible := False;
     TThread.Synchronize(nil,
     procedure
     begin
-      onTransactionSearchingDone(Length(Transactions) > 0);
-      if Length(Transactions) > 0 then
+      onTransactionSearchingDone(Length(FSearchResultTrans) > 0);
+      if Length(FSearchResultTrans) > 0 then
       begin
         SearchEdit.Text := '';
-        if not FSearchResultsFrame.Visible then
+        if not FTickersFrames.Items[0].Visible then
         begin
-          FSearchResultsFrame.Visible := True;
-          FSearchResultsFrame.Position.X := -1;
-          FSearchResultsFrame.RoundRect.OnMouseDown(FSearchResultsFrame, 
-            TMouseButton.mbLeft, [], 0, 0);
-        end;           
-        DrawTransactions(Transactions, True);
+          FSelectedFrame.Selected := False;
+          FSelectedFrame := FTickersFrames.Items[0];
+          FSelectedFrame.Selected := True;
+          FTickersFrames.Items[0].Visible := True;
+        end;
+        RefreshPagesLayout;
       end;
     end);
   end).Start;
@@ -1626,27 +1644,25 @@ begin
   
   TThread.CreateAnonymousThread(
   procedure
-  var
-    Transactions: TArray<TExplorerTransactionInfo>;
   begin
-    Transactions := AppCore.SearchTransactionsByBlockNum(ABlockNumber);
+    FSearchResultTrans := AppCore.SearchTransactionsByBlockNum(ABlockNumber);
     AniIndicator1.Enabled := False;
     AniIndicator1.Visible := False;
     TThread.Synchronize(nil,
     procedure
     begin
-      onTransactionSearchingDone(Length(Transactions) > 0);
-      if Length(Transactions) > 0 then
+      onTransactionSearchingDone(Length(FSearchResultTrans) > 0);
+      if Length(FSearchResultTrans) > 0 then
       begin
         SearchEdit.Text := '';
-        if not FSearchResultsFrame.Visible then
+        if not FTickersFrames.Items[0].Visible then
         begin
-          FSearchResultsFrame.Visible := True;
-          FSearchResultsFrame.Position.X := -1;
-          FSearchResultsFrame.RoundRect.OnMouseDown(FSearchResultsFrame, 
-            TMouseButton.mbLeft, [], 0, 0);
-        end;           
-        DrawTransactions(Transactions, True);
+          FSelectedFrame.Selected := False;
+          FSelectedFrame := FTickersFrames.Items[0];
+          FSelectedFrame.Selected := True;
+          FTickersFrames.Items[0].Visible := True;
+        end;
+        RefreshPagesLayout;
       end;
     end);
   end).Start;
@@ -1660,7 +1676,7 @@ begin
   AniIndicator1.Visible := True;
   AniIndicator1.Enabled := True;
   SearchEdit.Enabled := True;
-  
+
   TThread.CreateAnonymousThread(
   procedure
   var
@@ -1697,21 +1713,21 @@ end;
 
 procedure TMainForm.SearchTokenEditChangeTracking(Sender: TObject);
 var
-  i,invisCount: Integer;
+  i, MatchCount: Integer;
 begin
   TokensListBox.BeginUpdate;
   try
-    invisCount := 0;
+    MatchCount := 0;
     for i := 0 to TokensListBox.Count-1 do
     begin
       TokensListBox.ListItems[i].Visible :=
         TokensListBox.Items[i].StartsWith(SearchTokenEdit.Text);
 
       if TokensListBox.ListItems[i].Visible then
-        Inc(invisCount);
+        Inc(MatchCount);
     end;
     PopupRectangle.Height := SearchTokenEdit.Height +
-        40 * (Min(invisCount,3)) + 32;
+        40 * (Min(MatchCount, 3)) + 36;
   finally
     TokensListBox.EndUpdate;
   end;
@@ -1720,7 +1736,7 @@ end;
 procedure TMainForm.AmountTETEditChangeTracking(Sender: TObject);
 var
   isNumber: Boolean;
-  val,balance: Extended;
+  val,balance: Double;
 begin
   FBalances.TryGetValue('TET', balance);
   isNumber := TryStrToFloat(AmountTETEdit.Text, val);
@@ -1750,77 +1766,64 @@ begin
 end;
 
 procedure TMainForm.SendTETButtonClick(Sender: TObject);
-var
-  response: string;
 begin
+  SendTETButton.Enabled := False;
+  TransTETAniIndicator.Visible := True;
+  TransTETAniIndicator.Enabled := True;
+
   try
-    response := AppCore.DoCoinsTransfer('*',AppCore.SessionKey,SendTETToEdit.Text,
-      AmountTETEdit.Text.ToExtended);
-    SendTETToEdit.Text := '';
-    AmountTETEdit.Text := '';
-    ShowTETTransferStatus('Transaction successful');
+    AppCore.DoTETTransfer('*', AppCore.SessionKey, SendTETToEdit.Text,
+      AmountTETEdit.Text.ToDouble, TETTransferCallBack);
   except
     on E:EValidError do
-      ShowTETTransferStatus(E.Message,True);
-    on E:EUnknownError do
-    begin
-      ShowTETTransferStatus('Unknown error with code ' + E.Message,True);
-      Logs.DoLog('Unknown error during TET transfer with code ' + E.Message,ERROR,tcp);
-    end;
+      ShowTETTransferStatus(E.Message, True);
     on E:Exception do
     begin
-      ShowTETTransferStatus('Unknown error',True);
-      Logs.DoLog('Unknown error during TET transfer with message: ' + E.Message,ERROR,tcp);
+      Logs.DoLog('Unknown error during TET transfer with message: ' + E.Message,
+        TLogType.ERROR, tcp);
+      ShowTETTransferStatus('Unknown error', True);
     end;
   end;
 end;
 
+procedure TMainForm.SendTETToEditKeyDown(Sender: TObject; var Key: Word;
+  var KeyChar: WideChar; Shift: TShiftState);
+begin
+  if SendTETButton.Enabled and (Key = 13) then
+    SendTETButtonClick(Self);
+end;
+
 procedure TMainForm.SendTokenButtonClick(Sender: TObject);
 var
-  response: String;
-  prKey,pubKey: String;
+  SmartKey: TCSmartKey;
+  PrKey, PubKey: string;
 begin
   try
-    AppCore.TryExtractPrivateKeyFromFile(prKey,pubKey);
-    response := AppCore.DoTokenTransfer('*',AppCore.TETAddress,RecepientAddressEdit.Text,
-      AddressTokenLabel.Text, AmountTokenEdit.Text.ToExtended,prKey,pubKey);
+    if AppCore.TryGetSmartKey(FChosenToken.Text, SmartKey) then
+    begin
+      AppCore.TryExtractPrivateKeyFromFile(PrKey, PubKey);
+      SendTokenButton.Enabled := False;
+      TransTokenAniIndicator.Visible := True;
+      TransTokenAniIndicator.Enabled := True;
 
-    RecepientAddressEdit.Text := '';
-    AmountTokenEdit.Text := '';
-    ShowTokenTransferStatus('Transaction accepted for processing');
+      AppCore.DoTokenTransfer('*', AppCore.TETAddress,
+        RecepientAddressEdit.Text, SmartKey.key1,
+        AmountTokenEdit.Text.ToDouble, PrKey, PubKey, TokenTransferCallBack);
+    end;
   except
     on E:EValidError do
-      ShowTokenTransferStatus(E.Message,True);
+      ShowTokenTransferStatus(E.Message, True);
     on E:EFileNotExistsError do
     begin
-      ShowTokenTransferStatus('Unable to send transaction: keys not found',True);
+      ShowTokenTransferStatus('Unable to send transaction: keys not found', True);
       InputPrKeyButton.Visible := True;
     end;
     on E:ESameAddressesError do
-      ShowTokenTransferStatus('Unable to send to yourself',True);
-    on E:EInsufficientFundsError do
-      ShowTokenTransferStatus('Transfer failed: insufficient funds',True);
-    on E:EInvalidSignError do
-      ShowTokenTransferStatus('Transfer failed: validator did not confirm the signature',True);
-    on E:ESocketError do
-    begin
-      ShowTokenTransferStatus('Remote server did not respond, try later',True);
-      Logs.DoLog('Token transfer error: remote server did not respond',ERROR,tcp);
-    end;
-    on E:EValidatorDidNotAnswerError do
-    begin
-      ShowTokenTransferStatus('Validator did not answer, try later',True);
-      Logs.DoLog('Token transfer error: validator did not answer',ERROR,tcp);
-    end;
-    on E:EUnknownError do
-    begin
-      ShowTokenTransferStatus('Unknown error with code ' + E.Message,True);
-      Logs.DoLog('Unknown error during token transfer with code ' + E.Message,ERROR,tcp);
-    end;
+      ShowTokenTransferStatus('Unable to send to yourself', True);
     on E:Exception do
     begin
-      ShowTokenTransferStatus('Unknown error',True);
-      Logs.DoLog('Unknown error during token transfer with message: ' + E.Message,ERROR,tcp);
+      ShowTokenTransferStatus('Unknown error', True);
+      Logs.DoLog('Unknown error during token transfer with message: ' + E.Message, ERROR, tcp);
     end;
   end;
 end;
@@ -1842,6 +1845,9 @@ procedure TMainForm.ShowExplorerTransactionDetails(ATicker, ADateTime,
 var
   TokenICO: TTokenICODat;
 begin
+  if not AppCore.TryGetTokenICO(ATicker, TokenICO) then
+    exit;
+
   DateTimeDetailsText.AutoSize := False;
   DateTimeDetailsText.Text := ADateTime;
   DateTimeDetailsText.AutoSize := True;
@@ -1866,8 +1872,6 @@ begin
   AmountDetailsText.Text := AAmount;
   AmountDetailsText.AutoSize := True;
 
-  AppCore.TryGetTokenICO(ATicker, TokenICO);
-
   TokenDetailsText.AutoSize := False;
   TokenDetailsText.Text := Format('%s (%s)',[ATicker,
     TokenICO.ShortName]);
@@ -1882,7 +1886,7 @@ begin
     ExplorerTabControl.Next;
 end;
 
-procedure TMainForm.ShowTETTransferStatus(const AMessage: String;
+procedure TMainForm.ShowTETTransferStatus(const AMessage: string;
   AIsError: Boolean);
 begin
   TransferTETStatusLabel.Text := AMessage;
@@ -1894,7 +1898,7 @@ begin
   FloatAnimation2.Start;
 end;
 
-procedure TMainForm.ShowTokenCreatingStatus(const AMessage: String;
+procedure TMainForm.ShowTokenCreatingStatus(const AMessage: string;
   AIsError: Boolean);
 begin
   TokenCreatingStatusLabel.Text := AMessage;
@@ -1906,7 +1910,7 @@ begin
   FloatAnimation3.Start;
 end;
 
-procedure TMainForm.ShowTokenTransferStatus(const AMessage: String; AIsError: Boolean);
+procedure TMainForm.ShowTokenTransferStatus(const AMessage: string; AIsError: Boolean);
 begin
   TransferTokenStatusLabel.Text := AMessage;
   if AIsError then

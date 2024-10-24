@@ -124,7 +124,7 @@ type
     BlockNum: Int64;
     Hash: String[CHashLength*2];
     Address: String[TockenLength1];
-    Amount: Extended;
+    Value: Double;
     Incom: Boolean;
   end;
 

@@ -28,8 +28,18 @@ type
   ERequestInProgressError = class(Exception);
 
 const
-  LOGIN_ERROR_TEXT = 'Incorrect login or password';
-  SIGN_UP_ERROR_TEXT = 'Registration error. Try later';
+  LogInErrorText = 'Incorrect login or password';
+  SignUpErrorText = 'Registration error. Try later';
+  KeyExpiredErrorText = 'Session key expired. Please relogin';
+  AddressNotExistsErrorText = 'Address does not exists';
+  InsufficientFundsErrorText = 'Insufficient funds';
+  UnableSendToTyourselfErrorText = 'Unable to send to yourself';
+  TokenAlreadyExistsErrorText = 'Token already exists';
+  InvalidSignErrorText = 'Validator did not confirm the signature';
+  ServerDidNotRespondErrorText = 'RemoteServer did not respond. Try later';
+  ValidatorFailedErrorText = 'Validator returned an error with code 41501';
+  ValidatorDidNotRespondErrorText = 'Validator did not respond. Try later';
+  TransactionInProgressErrorText = 'Previous transaction has not yet been processed. Try later';
 
 implementation
 

@@ -55,7 +55,8 @@ var
 begin
   Result := False;
   for i := 1 to Length(PrKeyMemo.Text) do
-    if Accepted.IndexOf(PrKeyMemo.Text[i]) = -1 then exit;
+    if Accepted.IndexOf(PrKeyMemo.Text[i]) = -1 then
+      exit;
   Result := True;
 end;
 

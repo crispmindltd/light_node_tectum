@@ -17,7 +17,7 @@ type
 
   TNodeServer = class
     strict private
-      FAddress: String;
+      FAddress: string;
       FPort: Word;
       FClients: TList;
       FLock: TCriticalSection;
@@ -31,13 +31,13 @@ type
       procedure AcceptConnections;
       procedure DisconnectClient(ID: Integer);
 
-      function ValidationBegin(AValue: String): Boolean;
-      procedure ValidationDone(const AValue: String);
+      function ValidationBegin(AValue: string): Boolean;
+      procedure ValidationDone(const AValue: string);
     public
       constructor Create;
       destructor Destroy; override;
 
-      procedure Start(AAddress: String; APort: Word);
+      procedure Start(AAddress: string; APort: Word);
       procedure Stop;
   end;
 
@@ -122,7 +122,7 @@ begin
     end).Start;
 end;
 
-procedure TNodeServer.Start(AAddress: String; APort: Word);
+procedure TNodeServer.Start(AAddress: string; APort: Word);
 begin
   if FStatus <> ssStoped then exit;
 
@@ -148,29 +148,30 @@ begin
   FStatus := ssStoped;
 end;
 
-function TNodeServer.ValidationBegin(AValue: String): Boolean;
+function TNodeServer.ValidationBegin(AValue: string): Boolean;
 var
-  idx: Integer;
+  Index: Integer;
 begin
   FLock.Enter;
   try
-    idx := FValidInProgressList.IndexOf(AValue);
-    Result := idx = -1;
-    if Result then FValidInProgressList.Add(AValue);
+    Index := FValidInProgressList.IndexOf(AValue);
+    Result := Index = -1;
+    if Result then
+      FValidInProgressList.Add(AValue);
   finally
     FLock.Leave;
   end;
 end;
 
-procedure TNodeServer.ValidationDone(const AValue: String);
+procedure TNodeServer.ValidationDone(const AValue: string);
 var
-  idx: Integer;
+  Index: Integer;
 begin
   FLock.Enter;
   try
-    idx := FValidInProgressList.IndexOf(AValue);
-    if idx > -1 then
-      FValidInProgressList.Delete(idx);
+    Index := FValidInProgressList.IndexOf(AValue);
+    if Index > -1 then
+      FValidInProgressList.Delete(Index);
   finally
     FLock.Leave;
   end;

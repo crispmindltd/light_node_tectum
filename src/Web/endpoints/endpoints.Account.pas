@@ -61,7 +61,7 @@ begin
       JSON.Free;
     end;
 
-    Response := AppCore.DoAuth(AReqID, login, Password);
+    Response := AppCore.DoAuth(AReqID, Login, Password);
     SplittedResponse := Response.Split([' ']);
     JSON := TJSONObject.Create;
     try

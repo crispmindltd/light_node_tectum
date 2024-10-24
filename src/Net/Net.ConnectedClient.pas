@@ -13,28 +13,30 @@ uses
   SysUtils;
 
 type
-  TCheckFunc = function(AValue: String): Boolean of object;
+  TCheckFunc = function(AValue: string): Boolean of object;
 
   TConnectedClient = class(TThread)
     const
       RECEIVE_DATA_TIMEOUT = 10000;
     private
       FSocket: TSocket;
-      FID: String;
+      FID: string;
       FIsActual: Boolean;
       FOnNewValidationRequest: TCheckFunc;
       FOnValidationDone: TGetStrProc;
 
       procedure Disconnect;
       procedure ReceiveRequest;
-      function GetFullAddress: String;
-      function DoValidation: String;
-      function GetChainBlocksToSend(out AAmount: Integer): TBytesBlocks;
-      function GetTokenICOBlocksToSend(out AAmount: Integer): TBytesBlocks;
-      function GetSmartBlocksToSend(out ASmartID: Integer;
-        out AAmount: Integer): TBytesBlocks;
-      function GetDynBlocksToSend(var ADynID: Integer;
-        out AAmount: Integer): TBytesBlocks;
+      function GetFullAddress: string;
+      function DoValidation: string;
+      function GetTETChainBlocksToSend(out ABlocksNumber: Integer): TBytes;
+      function GetDynTETChainBlocksToSend(out ABlocksNumber: Integer): TBytes;
+      function GetTokenICOBlocksToSend(out ABlocksNumber: Integer): TBytes;
+      function GetSmartKeyBlocksToSend(out ABlocksNumber: Integer): TBytes;
+      function GetTokenChainBlocksToSend(out ATokenID: Integer;
+        out ABlocksNumber: Integer): TBytes;
+      function GetDynTokenChainBlocksToSend(out ATokenID: Integer;
+        out ABlocksNumber: Integer): TBytes;
     protected
       procedure Execute; override;
     public
@@ -42,8 +44,8 @@ type
         AOnValidationDone: TGetStrProc);
       destructor Destroy; override;
 
-      property fullAddress: String read GetFullAddress;
-      property getID: String read FID;
+      property fullAddress: string read GetFullAddress;
+      property getID: string read FID;
       property isActual: Boolean read FIsActual;
   end;
 
@@ -63,8 +65,8 @@ begin
   FOnValidationDone := AOnValidationDone;
   FSocket.ReceiveTimeout := RECEIVE_DATA_TIMEOUT;
   Randomize;
-  FID := 'C' + (Random(9998) + 1).ToString;
-  Logs.DoLog(Format('%s connected, ID = %s',[GetFullAddress, FID]),INCOM);
+  FID := 'C' + (Random(9998) + 1).Tostring;
+  Logs.DoLog(Format('%s connected, ID = %s',[GetFullAddress, FID]), INCOM);
 end;
 
 destructor TConnectedClient.Destroy;
@@ -85,75 +87,48 @@ begin
   {$ENDIF}
 end;
 
-function TConnectedClient.DoValidation: String;
+function TConnectedClient.DoValidation: string;
 var
-  incomCountBytes: array[0..3] of Byte;
-  incomCount: Integer absolute incomCountBytes;
-  reqBytes: TBytes;
-  incomStr: String;
-  splt: TArray<String>;
+  IncomCountBytes: array[0..3] of Byte;
+  IncomCount: Integer absolute IncomCountBytes;
+  IncomBytes: TBytes;
+  IncomStr: string;
+  Splitted: TArray<string>;
 begin
-  FSocket.Receive(incomCountBytes,0,4,[TSocketFlag.WAITALL]);
-  SetLength(reqBytes,incomCount);
-  FSocket.Receive(reqBytes,0,incomCount,[TSocketFlag.WAITALL]);
+  FSocket.Receive(IncomCountBytes, 0, 4, [TSocketFlag.WAITALL]);
+  SetLength(IncomBytes, IncomCount);
+  FSocket.Receive(IncomBytes, 0, IncomCount, [TSocketFlag.WAITALL]);
   try
-    incomStr := TEncoding.ANSI.GetString(reqBytes);
-    splt := incomStr.Trim.Split([' '], '<', '>');
-    if not FOnNewValidationRequest(splt[7]) then
-      Exit(Format('URKError U16 * 41505 <UserKey:%s>',[splt[1]]));
-    Logs.DoLog(Format('<From %s>[%d]: %s',[FID,VALIDATE_COMMAND_CODE,incomStr]),INCOM,tcp);
+    IncomStr := TEncoding.ANSI.GetString(IncomBytes);
+    Splitted := IncomStr.Trim.Split([' '], '<', '>');
+    if not FOnNewValidationRequest(Splitted[7]) then
+      Exit(Format('URKError U16 * 41505 <UserKey:%s>', [Splitted[1]]));
     try
-      if ECDSACheckTextSign(splt[5].Trim(['<','>']),splt[6],HexToBytes(splt[7])) then
+      if ECDSACheckTextSign(Splitted[5].Trim(['<','>']), Splitted[6],
+        HexToBytes(Splitted[7])) then
       try
-        Result := AppCore.SendToConfirm(splt[1],incomStr);
+        Result := AppCore.SendToConfirm(Splitted[1], IncomStr);
       except
         on E:ESocketError do
-          Result := Format('URKError U16 * 41500 <UserKey:%s>',[splt[1]]);
+          Result := Format('URKError U16 * 41500 <UserKey:%s>', [Splitted[1]]);
       end else
-        Result := Format('URKError U16 * 41502 <UserKey:%s>',[splt[1]]);
+        Result := Format('URKError U16 * 41502 <UserKey:%s>', [Splitted[1]]);
     finally
-      FOnValidationDone(splt[7]);
+      FOnValidationDone(Splitted[7]);
     end;
   except
-    Result := Format('URKError U16 * 41501 <UserKey:%s>',[splt[1]]);
+    Result := Format('URKError U16 * 41501 <UserKey:%s>', [Splitted[1]]);
   end;
 end;
 
-function TConnectedClient.GetChainBlocksToSend(out AAmount: Integer): TBytesBlocks;
+function TConnectedClient.GetTETChainBlocksToSend(out ABlocksNumber: Integer): TBytes;
 var
-  incomCountBytes: array[0..3] of Byte;
-  incomCount: Integer absolute incomCountBytes;
+  IncomCountBytes: array[0..3] of Byte;
+  IncomCount: Integer absolute IncomCountBytes;
 begin
-  FSocket.Receive(incomCountBytes,0,4,[TSocketFlag.WAITALL]);
-//  Logs.DoLog(Format('<From %s>[%d]: blockNum=%d',
-//    [FID,CHAIN_SYNC_COMMAND_CODE,incomCount]),INCOM,sync);
-  Result := AppCore.GetChainBlocks(incomCount,AAmount);
-end;
-
-function TConnectedClient.GetDynBlocksToSend(var ADynID: Integer;
-  out AAmount: Integer): TBytesBlocks;
-var
-  dynIDBytes:array[0..3] of Byte;
-  incomDynID: Integer absolute dynIDBytes;
-  incomCountBytes: array[0..3] of Byte;
-  incomBlocksCount: Integer absolute incomCountBytes;
-begin
-  if ADynID = -1 then     //sync chain dynaminc blocks
-  begin
-    incomDynID := ADynID;
-    FSocket.Receive(incomCountBytes,0,4,[TSocketFlag.WAITALL]);
-//    Logs.DoLog(Format('<From %s>[%d]: blockNum=%d',
-//    [FID,CHAIN_DYN_SYNC_COMMAND_CODE,incomBlocksCount]),INCOM,sync);
-  end else
-  begin                   //sync token dynamic blocks
-    FSocket.Receive(dynIDBytes,0,4,[TSocketFlag.WAITALL]);
-    FSocket.Receive(incomCountBytes,0,4,[TSocketFlag.WAITALL]);
-//    Logs.DoLog(Format('<From %s>[%d]: dynID=%d, blockNum=%d',
-//      [FID,SMART_DYN_SYNC_COMMAND_CODE,incomDynID,incomBlocksCount]),INCOM,sync);
-    ADynID := incomDynID;
-  end;
-
-  Result := AppCore.GetDynBlocks(incomDynID,incomBlocksCount,AAmount);
+  FSocket.Receive(IncomCountBytes, 0, 4, [TSocketFlag.WAITALL]);
+  Result := AppCore.GetTETChainBlocks(IncomCount);
+  ABlocksNumber := Length(Result) div AppCore.GetTETChainBlockSize;
 end;
 
 procedure TConnectedClient.Execute;
@@ -166,150 +141,161 @@ begin
     until not FIsActual or Terminated;
   except
     on E:ESocketError do
-      Logs.DoLog(Format('%s unexpectedly disconnected',[FID]),OUTGO);
+      Logs.DoLog(Format('%s unexpectedly disconnected', [FID]), OUTGO);
   end;
 end;
 
-function TConnectedClient.GetFullAddress: String;
+function TConnectedClient.GetDynTETChainBlocksToSend(
+  out ABlocksNumber: Integer): TBytes;
+var
+  IncomCountBytes: array[0..3] of Byte;
+  IncomCount: Integer absolute IncomCountBytes;
 begin
-  Result := Format('%s:%d',[FSocket.Endpoint.Address.Address,FSocket.Endpoint.Port]);
+  FSocket.Receive(IncomCountBytes, 0, 4, [TSocketFlag.WAITALL]);
+  Result := AppCore.GetDynTETChainBlocks(IncomCount);
+  ABlocksNumber := Length(Result) div AppCore.GetDynTETChainBlockSize;
 end;
 
-function TConnectedClient.GetTokenICOBlocksToSend(out AAmount: Integer): TBytesBlocks;
+function TConnectedClient.GetDynTokenChainBlocksToSend(out ATokenID,
+  ABlocksNumber: Integer): TBytes;
 var
-  incomCountBytes: array[0..3] of Byte;
-  incomCount: Integer absolute incomCountBytes;
+  DataBytes: array[0..3] of Byte;
+  DataInt: Integer absolute DataBytes;
 begin
-  FSocket.Receive(incomCountBytes,0,4,[TSocketFlag.WAITALL]);
-//  Logs.DoLog(Format('<From %s>[%d]: blockNum=%d',
-//    [FID,TOKEN_ICO_SYNC_COMMAND_CODE,incomCount]),INCOM,sync);
-  Result := AppCore.GetICOBlocks(incomCount,AAmount);
+  FSocket.Receive(DataBytes, 0, 4, [TSocketFlag.WAITALL]);
+  ATokenID := DataInt;
+  FSocket.Receive(DataBytes, 0, 4, [TSocketFlag.WAITALL]);
+  Result := AppCore.GetDynTokenChainBlocks(ATokenID, DataInt);
+  ABlocksNumber := Length(Result) div AppCore.GetDynTokenChainBlockSize;
 end;
 
-function TConnectedClient.GetSmartBlocksToSend(out ASmartID: Integer;
-  out AAmount: Integer): TBytesBlocks;
-var
-  smIDBytes:array[0..3] of Byte;
-  incomSmartID: Integer absolute smIDBytes;
-  incomCountBytes: array[0..3] of Byte;
-  incomBlocksCount: Integer absolute incomCountBytes;
+function TConnectedClient.GetFullAddress: string;
 begin
-  FSocket.Receive(smIDBytes,0,4,[TSocketFlag.WAITALL]);
-  FSocket.Receive(incomCountBytes,0,4,[TSocketFlag.WAITALL]);
-//  Logs.DoLog(Format('<From %s>[%d]: smartID=%d, blockNum=%d',
-//    [FID,SMART_SYNC_COMMAND_CODE,incomSmartID,incomBlocksCount]),INCOM,sync);
-  Result := AppCore.GetSmartBlocks(incomSmartID,incomBlocksCount,AAmount);
-  ASmartID := incomSmartID;
+  Result := Format('%s:%d',[FSocket.Endpoint.Address.Address,
+    FSocket.Endpoint.Port]);
+end;
+
+function TConnectedClient.GetSmartKeyBlocksToSend(
+  out ABlocksNumber: Integer): TBytes;
+var
+  IncomCountBytes: array[0..3] of Byte;
+  IncomCount: Integer absolute IncomCountBytes;
+begin
+  FSocket.Receive(IncomCountBytes, 0, 4, [TSocketFlag.WAITALL]);
+  Result := AppCore.GetSmartKeyBlocks(IncomCount);
+  ABlocksNumber := Length(Result) div AppCore.GetSmartKeyBlockSize;
+end;
+
+function TConnectedClient.GetTokenICOBlocksToSend(out ABlocksNumber: Integer): TBytes;
+var
+  IncomCountBytes: array[0..3] of Byte;
+  IncomCount: Integer absolute IncomCountBytes;
+begin
+  FSocket.Receive(IncomCountBytes, 0, 4, [TSocketFlag.WAITALL]);
+  Result := AppCore.GetTokenICOBlocks(IncomCount);
+  ABlocksNumber := Length(Result) div AppCore.GetTokenICOBlockSize;
+end;
+
+function TConnectedClient.GetTokenChainBlocksToSend(out ATokenID: Integer;
+  out ABlocksNumber: Integer): TBytes;
+var
+  DataBytes: array[0..3] of Byte;
+  DataInt: Integer absolute DataBytes;
+begin
+  FSocket.Receive(DataBytes, 0, 4, [TSocketFlag.WAITALL]);
+  ATokenID := DataInt;
+  FSocket.Receive(DataBytes, 0, 4, [TSocketFlag.WAITALL]);
+  Result := AppCore.GetTokenChainBlocks(ATokenID, DataInt);
+  ABlocksNumber := Length(Result) div AppCore.GetTokenChainBlockSize;
 end;
 
 procedure TConnectedClient.ReceiveRequest;
 var
-  command: Byte;
-  ID: Integer;
-  tranferResult: String;
-  outgoCountBytes: array[0..3] of Byte;
-  outgoBlocksAmount: Integer absolute outgoCountBytes;
-  bytes: TBytes;
-  toSend: TBytesBlocks;
+  Command: Byte;
+  Response: string;
+  OutgoBytes: array[0..3] of Byte;
+  OutgoBlocksNumber: Integer absolute OutgoBytes;
+  ToSend: TBytes;
+  TokenID: Integer;
 begin
-  FSocket.Receive(command,0,1,[TSocketFlag.WAITALL]);
-  case command of
-    DISCONNECTING_CODE:
+  FSocket.Receive(Command, 0, 1, [TSocketFlag.WAITALL]);
+  case Command of
+    DisconnectingCode:
       begin
         FIsActual := False;
-        Logs.DoLog(Format('%s disconnected',[FID]),OUTGO);
+        Logs.DoLog(Format('%s disconnected', [FID]), OUTGO);
       end;
 
-    VALIDATE_COMMAND_CODE:
+    ValidateCommandCode:
       begin
-        tranferResult := DoValidation;
-        bytes := TEncoding.ANSI.GetBytes(tranferResult);
-        outgoBlocksAmount := Length(bytes);
-        FSocket.Send(outgoCountBytes,0,4);
-        FSocket.Send(bytes,0,outgoBlocksAmount);
-        Logs.DoLog(Format('<To %s>[%d]: %s',[FID,VALIDATE_COMMAND_CODE,
-          tranferResult]),OUTGO,tcp);
+        Response := DoValidation;
+        ToSend := TEncoding.ANSI.GetBytes(Response);
+        OutgoBlocksNumber := Length(ToSend);
+        FSocket.Send(OutgoBytes, 0, 4);
+        FSocket.Send(ToSend, 0, OutgoBlocksNumber);
       end;
 
-    CHAIN_TOTAL_COUNT_COMMAND_CODE:
+    TETChainsTotalNumberCode:
       begin
-        outgoBlocksAmount := AppCore.GetChainBlocksCount;
-        FSocket.Send(outgoCountBytes,0,4);
-
-        Logs.DoLog(Format('<To %s>[%d]: totalCount=%d',
-          [FID,CHAIN_TOTAL_COUNT_COMMAND_CODE,outgoBlocksAmount]),OUTGO,sync);
+        OutgoBlocksNumber := AppCore.GetDynTETChainBlocksCount;
+        FSocket.Send(OutgoBytes, 0, 4);
+        OutgoBlocksNumber := AppCore.GetTETChainBlocksCount;
+        FSocket.Send(OutgoBytes, 0, 4);
       end;
 
-    CHAIN_SYNC_COMMAND_CODE:
+    TETChainSyncCommandCode:
       begin
-        toSend := GetChainBlocksToSend(outgoBlocksAmount);
-        FSocket.Send(outgoCountBytes,0,4);
-        if outgoBlocksAmount = 0 then exit;
-
-        FSocket.Send(toSend,0,outgoBlocksAmount * AppCore.GetChainBlockSize);
-        Logs.DoLog(Format('<To %s>[%d]: blocksSended=%d',
-          [FID,CHAIN_SYNC_COMMAND_CODE,outgoBlocksAmount]),OUTGO,sync);
+        ToSend := GetTETChainBlocksToSend(OutgoBlocksNumber);
+        FSocket.Send(OutgoBytes, 0, 4);
+        if OutgoBlocksNumber > 0 then
+          FSocket.Send(ToSend, 0, Length(ToSend));
       end;
 
-    DYN_CHAIN_TOTAL_COUNT_COMMAND_CODE:
+    DynTETChainSyncCommandCode:
       begin
-        outgoBlocksAmount := AppCore.GetDynBlocksCount(-1);
-        FSocket.Send(outgoCountBytes,0,4);
-
-        Logs.DoLog(Format('<To %s>[%d]: totalCount=%d',
-          [FID,DYN_CHAIN_TOTAL_COUNT_COMMAND_CODE,outgoBlocksAmount]),OUTGO,sync);
+        ToSend := GetDynTETChainBlocksToSend(OutgoBlocksNumber);
+        FSocket.Send(OutgoBytes, 0, 4);
+        if OutgoBlocksNumber > 0 then
+          FSocket.Send(ToSend, 0, Length(ToSend));
       end;
 
-    CHAIN_DYN_SYNC_COMMAND_CODE:
+    TokenICOSyncCommandCode:
       begin
-        ID := -1;
-        toSend := GetDynBlocksToSend(ID,outgoBlocksAmount);
-        FSocket.Send(outgoCountBytes,0,4);
-        if outgoBlocksAmount = 0 then exit;
-
-        FSocket.Send(toSend,0,outgoBlocksAmount * AppCore.GetDynBlockSize(ID));
-        Logs.DoLog(Format('<To %s>[%d]: blocksSended=%d',
-          [FID,CHAIN_DYN_SYNC_COMMAND_CODE,ID,outgoBlocksAmount]),OUTGO,sync);
+        ToSend := GetTokenICOBlocksToSend(OutgoBlocksNumber);
+        FSocket.Send(OutgoBytes, 0, 4);
+        if OutgoBlocksNumber > 0 then
+          FSocket.Send(ToSend, 0, Length(ToSend));
       end;
 
-    TOKEN_ICO_SYNC_COMMAND_CODE:
+    SmartKeySyncCommandCode:
       begin
-        toSend := GetTokenICOBlocksToSend(outgoBlocksAmount);
-        FSocket.Send(outgoCountBytes,0,4);
-        if outgoBlocksAmount = 0 then exit;
-
-        FSocket.Send(toSend,0,outgoBlocksAmount * AppCore.GetICOBlockSize);
-        Logs.DoLog(Format('<To %s>[%d]: blocksSended=%d',
-          [FID,TOKEN_ICO_SYNC_COMMAND_CODE,outgoBlocksAmount]),OUTGO,sync);
+        AppCore.UpdateTokensList;
+        ToSend := GetSmartKeyBlocksToSend(OutgoBlocksNumber);
+        FSocket.Send(OutgoBytes, 0, 4);
+        if OutgoBlocksNumber > 0 then
+          FSocket.Send(ToSend, 0, Length(ToSend));
       end;
 
-    SMART_SYNC_COMMAND_CODE:
+    TokenChainSyncCommandCode:
       begin
-        AppCore.UpdateLists;
-        toSend := GetSmartBlocksToSend(ID,outgoBlocksAmount);
-        FSocket.Send(outgoCountBytes,0,4);
-        if outgoBlocksAmount <= 0 then exit;
-
-        FSocket.Send(toSend,0,outgoBlocksAmount * AppCore.GetSmartBlockSize(ID));
-        Logs.DoLog(Format('<To %s>[%d]: smartID=%d, blocksSended=%d',
-          [FID,SMART_SYNC_COMMAND_CODE,ID,outgoBlocksAmount]),OUTGO,sync);
+        ToSend := GetTokenChainBlocksToSend(TokenID, OutgoBlocksNumber);
+        FSocket.Send(OutgoBytes, 0, 4);
+        if OutgoBlocksNumber > 0 then
+          FSocket.Send(ToSend, 0, Length(ToSend));
       end;
 
-    SMART_DYN_SYNC_COMMAND_CODE:
+    DynTokenChainSyncCommandCode:
       begin
-        toSend := GetDynBlocksToSend(ID,outgoBlocksAmount);
-        FSocket.Send(outgoCountBytes,0,4);
-        if outgoBlocksAmount = 0 then exit;
-
-        FSocket.Send(toSend,0,outgoBlocksAmount * AppCore.GetDynBlockSize(ID));
-        Logs.DoLog(Format('<To %s>[%d]: smartID=%d, blocksSended=%d',
-          [FID,SMART_DYN_SYNC_COMMAND_CODE,ID,outgoBlocksAmount]),OUTGO,sync);
-      end;
+        ToSend := GetDynTokenChainBlocksToSend(TokenID, OutgoBlocksNumber);
+        FSocket.Send(OutgoBytes, 0, 4);
+        if OutgoBlocksNumber > 0 then
+          FSocket.Send(ToSend, 0, Length(ToSend));
+      end
 
     else
       begin
         FIsActual := False;
-        Logs.DoLog(Format('%s disconnected(unknown command)',[FID]),OUTGO);
+        Logs.DoLog(Format('%s disconnected(unknown command)', [FID]), OUTGO);
       end;
   end;
 end;

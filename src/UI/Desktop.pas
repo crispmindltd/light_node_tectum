@@ -13,6 +13,7 @@ uses
   Form.EnterKey,
   Form.Start,
   Math,
+  SyncObjs,
   SysUtils,
   Styles,
   UITypes;
@@ -23,51 +24,45 @@ type
 type
   TUICore = class(TInterfacedObject, IUI)
   private
+    FStartFormCreated: TEvent;
+
     procedure CreateForm(const InstanceClass: TComponentClass;
       var Reference; AsMainForm: Boolean = False);
     procedure SetMainForm(const Reference);
     procedure ShowForm(Form: TCommonCustomForm; AsMainForm: Boolean = False);
     procedure CreateAndShowForm(const InstanceClass: TComponentClass;
       var Reference; AsMainForm: Boolean = False);
-    function IsChainNeedSync(const AName: String): Boolean;
     procedure ReleaseForm(var Form);
     procedure DoReleaseForm(Form: TCommonCustomForm);
+    procedure NullForm(var Form);
   public
     constructor Create;
     destructor Destroy; override;
 
     procedure Run;
-    procedure DoMessage(const AMessage: String);
     procedure ShowMainForm;
     procedure ShowEnterPrivateKeyForm;
-    procedure NullForm(var Form);
-    procedure AddNewChain(const AName: String; AIsSystemChain: Boolean);
-    procedure ShowTotalCountBlocksDownloadRemain;
+    procedure ShowTotalBlocksToDownload(const ABlocksNumberToLoad: UInt64);
     procedure ShowDownloadProgress;
-    procedure NotifyNewChainBlocks;
-    procedure NotifyNewSmartBlocks;
+    procedure ShowDownloadingDone;
+    procedure NotifyNewTETBlocks(const ANeedRefreshBalance: Boolean);
+    procedure NotifyNewToken(const ASmartKey: TCSmartKey);
+    procedure NotifyNewTokenBlocks(const ASmartKey: TCSmartKey;
+      ANeedRefreshBalance: Boolean);
   end;
 
 implementation
-
-procedure TUICore.AddNewChain(const AName: String; AIsSystemChain: Boolean);
-begin
-//  if Assigned(MainForm) then
-//    MainForm.AddChain(AName, AIsSystemChain);
-//  if Assigned(ExplorerForm) then
-//  begin
-//    if ExplorerForm.CurrencyIDComboBox.Items.IndexOf(AName) = -1 then
-//      ExplorerForm.CurrencyIDComboBox.Items.Add(AName);
-//  end;
-end;
 
 { TUI }
 
 constructor TUICore.Create;
 begin
+  FStartFormCreated := TEvent.Create;
+  FStartFormCreated.ResetEvent;
   Application.Initialize;
   CreateAndShowForm(TStartForm, StartForm, True);
   CreateForm(TStylesForm, StylesForm);
+  FStartFormCreated.SetEvent;
 end;
 
 procedure TUICore.CreateAndShowForm(const InstanceClass: TComponentClass;
@@ -89,6 +84,8 @@ end;
 
 destructor TUICore.Destroy;
 begin
+  if Assigned(FStartFormCreated) then
+    FStartFormCreated.Free;
 
   inherited;
 end;
@@ -111,6 +108,16 @@ procedure TUICore.SetMainForm(const Reference);
 begin
 //  if Assigned(TObject(Reference)) then
   Application.MainForm := TCommonCustomForm(Reference);
+end;
+
+procedure TUICore.ShowDownloadingDone;
+begin
+  if not Application.Terminated and Assigned(StartForm) then
+    TThread.Synchronize(nil,
+    procedure
+    begin
+      StartForm.HideProgressBar;
+    end);
 end;
 
 procedure TUICore.ShowDownloadProgress;
@@ -148,28 +155,20 @@ end;
 
 procedure TUICore.ShowMainForm;
 begin
+  FreeAndNil(FStartFormCreated);
   ReleaseForm(StartForm);
   CreateAndShowForm(TMainForm, MainForm, True);
 end;
 
-procedure TUICore.ShowTotalCountBlocksDownloadRemain;
+procedure TUICore.ShowTotalBlocksToDownload(const ABlocksNumberToLoad: UInt64);
 begin
+  FStartFormCreated.WaitFor(5000);
   if Assigned(StartForm) then
     TThread.Synchronize(nil,
     procedure
     begin
-      StartForm.ShowProgressBar(AppCore.DownloadRemain);
+      StartForm.SetProgressBarMaxValue(ABlocksNumberToLoad);
     end);
-end;
-
-procedure TUICore.DoMessage(const AMessage: String);
-begin
-  TThread.Synchronize(nil,
-  procedure
-  begin
-    ShowMessage(AMessage);
-//    if Assigned(MainFormNew) then MainFormNew.DoLog(AMessage);
-  end);
 end;
 
 procedure TUICore.DoReleaseForm(Form: TCommonCustomForm);
@@ -177,28 +176,34 @@ begin
   TAccessCommonCustomForm(Form).ReleaseForm;
 end;
 
-function TUICore.IsChainNeedSync(const AName: String): Boolean;
-begin
-//  Result := MainForm.IsChainNeedSync(AName);
-end;
-
-procedure TUICore.NotifyNewChainBlocks;
+procedure TUICore.NotifyNewTETBlocks(const ANeedRefreshBalance: Boolean);
 begin
   if Assigned(MainForm) then
     TThread.Synchronize(nil,
     procedure
     begin
-      MainForm.NewChainBlocksEvent;
+      MainForm.NewTETChainBlocksEvent(ANeedRefreshBalance);
     end);
 end;
 
-procedure TUICore.NotifyNewSmartBlocks;
+procedure TUICore.NotifyNewToken(const ASmartKey: TCSmartKey);
 begin
   if Assigned(MainForm) then
     TThread.Synchronize(nil,
     procedure
     begin
-      MainForm.NewSmartBlocksEvent;
+      MainForm.NewTokenEvent(ASmartKey);
+    end);
+end;
+
+procedure TUICore.NotifyNewTokenBlocks(const ASmartKey: TCSmartKey;
+  ANeedRefreshBalance: Boolean);
+begin
+  if Assigned(MainForm) then
+    TThread.Synchronize(nil,
+    procedure
+    begin
+      MainForm.NewTokenBlocksEvent(ASmartKey, ANeedRefreshBalance);
     end);
 end;
 

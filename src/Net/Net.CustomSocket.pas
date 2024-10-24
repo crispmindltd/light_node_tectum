@@ -15,18 +15,18 @@ type
     const
       RECEIVE_ANSWER_TIMEOUT = 15000;
     private
-      FID: String;
-      FFullReceived: String;
+      FID: string;
+      FFullReceived: string;
       FResponses: TStringList;
       FSendLock, FReceiveLock: TCriticalSection;
 
-      function GetAnswer(AReqID: String): String;
+      function GetAnswer(AReqID: string): string;
     public
       constructor Create;
       destructor Destroy; override;
 
-      procedure Connect(AAddress: String = '185.180.223.168'; APort: Word = 8760);
-      function DoRequest(AReqID,ARequest: String): String;
+      procedure Connect(AAddress: string = '89.39.104.213'; APort: Word = 8769);
+      function DoRequest(AReqID, ARequest: string): string;
       procedure Disconnect;
   end;
 
@@ -34,19 +34,20 @@ implementation
 
 { TCustomSocket }
 
-procedure TCustomSocket.Connect(AAddress: String; APort: Word);
+procedure TCustomSocket.Connect(AAddress: string; APort: Word);
 var
-  splt: TArray<String>;
+  Splitted: TArray<string>;
 begin
-  if TSocketState.Connected in State then exit;
+  if TSocketState.Connected in State then
+    exit;
 
   try
-    inherited Connect('',AAddress,'',APort);
+    inherited Connect('', AAddress, '', APort);
     Sleep(500);
 
-    splt := ReceiveString.Split([' ']);
-    FID := splt[1];
-    Logs.DoLog(Format('Connected to remote,ID=%s',[FID]),NONE);
+    Splitted := ReceiveString.Split([' ']);
+    FID := Splitted[1];
+    Logs.DoLog(Format('Connected to remote, ID = %s', [FID]), NONE);
   except
     raise ESocketError.Create('');
   end;
@@ -75,59 +76,59 @@ begin
   if TSocketState.Connected in State then
   begin
     {$IFDEF MSWINDOWS}
-      Close(True);
-    {$ELSE IFDEF LINUX}
       Close;
+    {$ELSE IFDEF LINUX}
+      Close(True);
     {$ENDIF}
 
-    Logs.DoLog(Format('<Remote %s> disonnected',[FID]),NONE);
+    Logs.DoLog(Format('<Remote %s> disonnected', [FID]), NONE);
   end;
 end;
 
-function TCustomSocket.DoRequest(AReqID,ARequest: String): String;
+function TCustomSocket.DoRequest(AReqID, ARequest: string): string;
 var
-  timeout: TDateTime;
+  Timeout: TDateTime;
 begin
-  Logs.DoLog(Format('<Remote %s>[%s] %s',[FID,AReqID,ARequest]),OUTGO,tcp);
+  Logs.DoLog(Format('<Remote %s>[%s] %s', [FID, AReqID, ARequest]), OUTGO, tcp);
   FSendLock.Enter;
   try
-    Send(AnsiString(TrimRight(Format('%s %s',[ARequest,AReqID])))+#13);
+    Send(Ansistring(TrimRight(Format('%s %s', [ARequest, AReqID]))) + #13);
     Sleep(100);
   finally
     FSendLock.Leave;
   end;
 
   FReceiveLock.Enter;
-  timeout := IncMilliSecond(Now, RECEIVE_ANSWER_TIMEOUT);
+  Timeout := IncMilliSecond(Now, RECEIVE_ANSWER_TIMEOUT);
   try
     repeat
-      FFullReceived := ReceiveString;
-      while not (FFullReceived.EndsWith(#13#10) or (Now < timeout)) do
+      FFullReceived := Receivestring;
+      while not (FFullReceived.EndsWith(#13#10) or (Now < Timeout)) do
       begin
-        if Now > timeout then
+        if Now > Timeout then
         begin
-          Logs.DoLog(Format('<Remote %s>[%s] did not respond',[FID,AReqID]),ERROR,tcp);
+          Logs.DoLog(Format('<Remote %s>[%s] did not respond', [FID, AReqID]), ERROR, tcp);
           raise ESocketError.Create('Server did not respond');
         end;
         FFullReceived := FFullReceived + ReceiveString;
       end;
       Result := GetAnswer(AReqID);
     until not Result.IsEmpty;
-    Logs.DoLog(Format('<Remote %s>[%s] %s',[FID,AReqID,Result]),INCOM,tcp);
+    Logs.DoLog(Format('<Remote %s>[%s] %s', [FID, AReqID, Result]), INCOM, tcp);
   finally
     FReceiveLock.Leave;
   end;
 end;
 
-function TCustomSocket.GetAnswer(AReqID: String): String;
+function TCustomSocket.GetAnswer(AReqID: string): string;
 var
   i: Integer;
 begin
   Result := '';
-  FResponses.AddStrings(FFullReceived.Split([#13#10]));
+  FResponses.Addstrings(FFullReceived.Split([#13#10]));
   FFullReceived := '';
   for i := 0 to FResponses.Count-1 do
-    if FResponses.Strings[i].Contains(AReqID) then
+    if FResponses.strings[i].Contains(AReqID) then
     begin
       Result := FResponses.Strings[i].Trim;
       FResponses.Delete(i);
