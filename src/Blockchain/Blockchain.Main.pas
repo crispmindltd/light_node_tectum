@@ -54,7 +54,7 @@ type
     function GetDynTETChainBlocksCount: Integer;
     function GetDynTETChainBlocks(ASkip: Integer): TBytes;
     procedure SetDynTETBlocks(ASkip: Integer; ABytes: TBytes);
-    function TryGetDynTETBlock(const ATETAddress: string; out ABlockID: Integer;
+    function TryGetDynTETBlock(ATETAddress: string; var ABlockID: Integer;
       out ADynTET: TTokenBase): Boolean;
 
     function GetICOBlockSize: Integer;
@@ -95,8 +95,8 @@ type
     function GetDynTokenChainBlocks(ATokenID: Integer; ASkip: Integer): TBytes;
     procedure SetDynTokenChainBlocks(ATokenID: Integer; ASkip: Integer;
       ABytes: TBytes);
-    function TryGetDynTokenBlock(ATokenID: Integer; const ATETAddress: string;
-      out ABlockID: Integer; out ADynToken: TCTokensBase): Boolean;
+    function TryGetDynTokenBlock(ATokenID: Integer; ADynTET: TTokenBase;
+      var ABlockNum: Integer; out ADynToken: TCTokensBase): Boolean;
 
     function TryGetTETAddressByUserID(const AUserID: Integer;
       out ATETAddress: string): Boolean;
@@ -612,8 +612,8 @@ begin
   FTETChains.DynBlocks.WriteBlocksAsBytes(ASkip, ABytes);
 end;
 
-function TBlockchain.TryGetDynTETBlock(const ATETAddress: string;
-  out ABlockID: Integer; out ADynTET: TTokenBase): Boolean;
+function TBlockchain.TryGetDynTETBlock(ATETAddress: string; var ABlockID: Integer;
+  out ADynTET: TTokenBase): Boolean;
 begin
   Result := FTETChains.DynBlocks.TryGet(ATETAddress, ABlockID, ADynTET);
 end;
@@ -960,16 +960,13 @@ begin
 end;
 
 function TBlockchain.TryGetDynTokenBlock(ATokenID: Integer;
-  const ATETAddress: string; out ABlockID: Integer;
-  out ADynToken: TCTokensBase): Boolean;
+  ADynTET: TTokenBase; var ABlockNum: Integer; out ADynToken: TCTokensBase): Boolean;
 var
   TokenChainsPair: TTokenChainsPair;
-  DynTET: TTokenBase;
 begin
   Result := False;
-  if TryGetDynTETBlock(ATETAddress, ABlockID, DynTET) and
-     FTokensChains.TryGetValue(ATokenID, TokenChainsPair) then
-    Result := TokenChainsPair.DynBlocks.TryGet(DynTET.OwnerID, ABlockID, ADynToken);
+  if FTokensChains.TryGetValue(ATokenID, TokenChainsPair) then
+    Result := TokenChainsPair.DynBlocks.TryGet(ADynTET.OwnerID, ABlockNum, ADynToken);
 end;
 
 end.
